@@ -1,0 +1,141 @@
+# 各 Controller OpenAPI 文档公共片段
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 管理端 JWT（realm=ADMIN），通过 `/api/auth/login` 或注册获取
+    ClientBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 用户端 JWT（realm=CLIENT），通过 `/client/api/auth/register` 或 `/client/api/auth/login/*` 获取
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: 用户主键 ID
+    RoleId:
+      name: roleId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: 角色主键 ID
+    DepartmentId:
+      name: departmentId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: 部门主键 ID
+    PositionId:
+      name: positionId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: 职位主键 ID
+    RecipientId:
+      name: recipientId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: 站内信收件记录主键 ID
+    FileId:
+      name: fileId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: 文件主键 ID（`plugin_file_metadata.id`）
+
+  schemas:
+    PageParam:
+      type: object
+      description: 统一分页请求（query：current、size）。业务查询 DTO 可继承并追加筛选字段。
+      properties:
+        current:
+          type: integer
+          format: int64
+          minimum: 1
+          default: 1
+          description: 当前页码，从 1 开始
+        size:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: 每页条数，最大 100
+
+    PageVO:
+      type: object
+      description: 统一分页响应
+      properties:
+        records:
+          type: array
+          items: {}
+          description: 当前页数据列表
+        total:
+          type: integer
+          format: int64
+          description: 符合条件的总记录数
+        current:
+          type: integer
+          format: int64
+          description: 当前页码
+        size:
+          type: integer
+          format: int64
+          description: 每页条数
+
+    ResultBase:
+      type: object
+      description: 统一 API 响应外壳
+      properties:
+        code:
+          type: integer
+          description: 业务码，成功为 0
+          example: 0
+        msg:
+          type: string
+          description: 响应消息
+          example: success
+        timestamp:
+          type: integer
+          format: int64
+          description: 响应时间戳（毫秒）
+
+    ResultVoid:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          description: 无业务 data 的成功响应
+
+  responses:
+    Unauthorized:
+      description: 未认证或 Token 无效
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResultBase'
+    Forbidden:
+      description: 无权限
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResultBase'

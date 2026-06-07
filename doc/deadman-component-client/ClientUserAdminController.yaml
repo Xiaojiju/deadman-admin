@@ -1,0 +1,238 @@
+# com.mtfm.deadman.component.client.controller.ClientUserAdminController
+openapi: 3.0.3
+info:
+  title: ClientUserAdminController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    管理端对用户端用户的查询、禁用与注销。
+    走管理端 JWT（`BearerAuth`）与用户端独立数据表，与 `/api/users` 管理端用户不冲突。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/client-users:
+    get:
+      summary: 用户端用户分页列表
+      description: |
+        需要权限码 `client-user:list:read`。
+        分页参数见 `PageParam`（current、size）；筛选见 `ClientUserAdminPageQuery`（keyword、status）。
+      operationId: pageClientUsers
+      tags: [用户端用户管理]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: current
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 10
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 用户编码、昵称、用户名、手机号
+        - name: status
+          in: query
+          schema:
+            type: integer
+            description: 0-禁用 1-正常
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientUserAdminPageVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/client-users/{userId}:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/UserId'
+    get:
+      summary: 用户端用户详情
+      description: 需要权限码 `client-user:list:read`
+      operationId: getClientUserDetail
+      tags: [用户端用户管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientUserAdminDetailVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    delete:
+      summary: 注销用户端用户
+      description: |
+        需要权限码 `client-user:delete`。
+        逻辑删除用户，并清理账号、密码及 JWT 会话。
+      operationId: deleteClientUser
+      tags: [用户端用户管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/client-users/{userId}/disable:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/UserId'
+    put:
+      summary: 禁用用户端用户
+      description: |
+        需要权限码 `client-user:update`。
+        将用户状态设为禁用并使 JWT 会话失效。
+      operationId: disableClientUser
+      tags: [用户端用户管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientUserAdminDetailVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ClientUserAdminSummaryVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userCode:
+          type: string
+        username:
+          type: string
+          nullable: true
+        nickname:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          description: 0-禁用 1-正常
+        createTime:
+          type: string
+          format: date-time
+
+    ClientUserAccountBindingVO:
+      type: object
+      properties:
+        accountType:
+          type: string
+        accountIdentifier:
+          type: string
+        oauthProvider:
+          type: string
+          nullable: true
+          description: 如 wechat-miniprogram
+        verified:
+          type: integer
+        status:
+          type: integer
+
+    ClientUserAdminDetailVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userCode:
+          type: string
+        username:
+          type: string
+          nullable: true
+        nickname:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        status:
+          type: integer
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientUserAccountBindingVO'
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+
+    ClientUserAdminPageVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/PageVO'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/ClientUserAdminSummaryVO'
+
+    ResultClientUserAdminPageVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ClientUserAdminPageVO'
+
+    ResultClientUserAdminDetailVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ClientUserAdminDetailVO'
+
+    ResultVoid:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              nullable: true

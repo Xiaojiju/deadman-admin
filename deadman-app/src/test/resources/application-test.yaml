@@ -1,0 +1,45 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  datasource:
+    url: jdbc:h2:mem:deadman_admin;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations:
+        - classpath:db/schema-h2.sql
+        - classpath:db/client/schema-h2.sql
+        - classpath:db/file/schema-h2.sql
+
+deadman:
+  jwt:
+    secret: deadman-admin-test-secret-key-at-least-32-bytes-long
+    expiration-ms: 3600000
+  user:
+    user-code-prefix: DM
+  bootstrap:
+    admin-enabled: false
+  plugin:
+    file:
+      enabled: true
+      default-provider: local
+    storage-local:
+      enabled: true
+      base-path: ${java.io.tmpdir}/deadman-test-files
+    wechat-miniprogram:
+      enabled: true
+      app-id: test-wechat-app-id
+      app-secret: test-wechat-app-secret
+  component:
+    client:
+      enabled: true
+      jwt:
+        secret: deadman-client-test-secret-key-at-least-32-bytes-long
+        expiration-ms: 3600000
+      user:
+        user-code-prefix: CL

@@ -1,0 +1,272 @@
+# com.mtfm.deadman.plugin.file.controller.FileController
+openapi: 3.0.3
+info:
+  title: FileController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    文件上传、下载与元数据管理。
+    存储后端通过 `FileStorageProvider` SPI 插件化扩展，默认启用本地磁盘 Provider（`local`）。
+
+    **配置：**
+    - `deadman.plugin.file.enabled=true`
+    - `deadman.plugin.file.default-provider=local`
+    - `deadman.plugin.storage-local.enabled=true`
+    - `deadman.plugin.storage-local.base-path`：本地存储根目录
+    - `deadman.plugin.storage-local.public-url-prefix`：公开访问路径前缀，默认 `/files`
+
+    **公开直链（本地存储）：**
+    上传成功后 `accessUrl` 返回如 `/files/{bizType}/{yyyy/MM/dd}/{uuid}.ext` 的路径，
+    可通过 `GET /files/**` 匿名访问（无需 JWT），由本地存储插件映射到磁盘目录。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/files/upload:
+    post:
+      summary: 上传文件
+      description: |
+        需要权限码 `file:upload`。
+        使用 `multipart/form-data` 上传；`providerId` 为空时使用 `deadman.plugin.file.default-provider`（默认 `local`）。
+        单文件大小受 `deadman.plugin.file.max-file-size` 限制（默认 10MB）。
+      operationId: uploadFile
+      tags: [文件管理]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUploadForm'
+      responses:
+        '200':
+          description: 成功，返回文件元数据（含 `accessUrl` 直链）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultFileMetadataVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/files/providers:
+    get:
+      summary: 已注册的存储 Provider 列表
+      description: 需要权限码 `file:read`。返回当前 JVM 中已装配的 Provider 标识，如 `local`。
+      operationId: listFileProviders
+      tags: [文件管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultStringList'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/files/{fileId}:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/FileId'
+    get:
+      summary: 查询文件元数据
+      description: 需要权限码 `file:read`。
+      operationId: getFileMetadata
+      tags: [文件管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultFileMetadataVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+    delete:
+      summary: 删除文件
+      description: |
+        需要权限码 `file:delete`。
+        逻辑删除元数据并尝试删除底层存储对象。
+      operationId: deleteFile
+      tags: [文件管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/files/{fileId}/download:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/FileId'
+    get:
+      summary: 下载文件
+      description: |
+        需要权限码 `file:download`。
+        响应为文件二进制流，非 `Result` JSON 包装；
+        `Content-Disposition` 为 `attachment`，文件名使用 UTF-8 编码。
+      operationId: downloadFile
+      tags: [文件管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 文件流
+          headers:
+            Content-Disposition:
+              description: 附件文件名，如 `attachment; filename*=UTF-8''demo.txt`
+              schema:
+                type: string
+            Content-Type:
+              description: MIME 类型，未知时为 `application/octet-stream`
+              schema:
+                type: string
+            Content-Length:
+              description: 文件大小（字节）
+              schema:
+                type: integer
+                format: int64
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /files/{storagePath}:
+    get:
+      summary: 公开访问本地存储文件（直链）
+      description: |
+        **无需 JWT**，由 `deadman-plugin-storage-local` 将 `public-url-prefix`（默认 `/files`）映射到本地磁盘目录。
+        实际路径为 `/files/**` 通配，此处用 `storagePath` 表示通配段，如 `avatar/2026/06/07/xxx.png`。
+        仅当存储 Provider 为 `local` 且文件存在时可访问；OSS 等远程 Provider 请使用其返回的完整 `accessUrl`。
+      operationId: publicAccessLocalFile
+      tags: [文件管理-公开直链]
+      parameters:
+        - name: storagePath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 存储相对路径（可含多级目录）
+          example: avatar/2026/06/07/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png
+      responses:
+        '200':
+          description: 文件内容
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: 文件不存在
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    FileUploadForm:
+      type: object
+      required: [file]
+      properties:
+        file:
+          type: string
+          format: binary
+          description: 上传文件
+        bizType:
+          type: string
+          description: 业务分类，用于存储子目录划分（如 `avatar`、`export`）
+          example: avatar
+        providerId:
+          type: string
+          description: 存储 Provider 标识，为空时使用默认 Provider
+          example: local
+
+    FileMetadataVO:
+      type: object
+      description: 文件元数据
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 文件主键
+        fileCode:
+          type: string
+          description: 对外文件编码
+          example: Fa1b2c3d4e5f6789012345678abcdef
+        originalFilename:
+          type: string
+          description: 原始文件名
+          example: photo.png
+        contentType:
+          type: string
+          description: MIME 类型
+          example: image/png
+        sizeBytes:
+          type: integer
+          format: int64
+          description: 文件大小（字节）
+        providerId:
+          type: string
+          description: 存储 Provider 标识
+          example: local
+        accessUrl:
+          type: string
+          description: 可直接访问的 URL（本地存储时为 `/files/...` 相对路径）
+          example: /files/avatar/2026/06/07/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png
+        bizType:
+          type: string
+          description: 业务分类
+          example: avatar
+        uploaderUserId:
+          type: integer
+          format: int64
+          description: 上传人用户 ID
+        createTime:
+          type: string
+          format: date-time
+          description: 创建时间
+
+    ResultFileMetadataVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/FileMetadataVO'
+
+    ResultStringList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: string
+              description: Provider 标识列表
+              example: [local]

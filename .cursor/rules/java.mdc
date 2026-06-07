@@ -1,0 +1,205 @@
+---
+description: deadman-admin Maven 多模块、Java 21、Spring Boot 4 后端开发规范
+alwaysApply: true
+---
+
+# deadman-admin 开发规范
+
+## 技术栈
+
+- Java 21（虚拟线程已在 `application.yaml` 启用）
+- Spring Boot 4.0.6
+- Spring Security + JWT（无状态）
+- MyBatis-Plus 3.5.x
+- MySQL 8+（生产）；集成测试使用 H2 MySQL 兼容模式
+- Redis（Spring Cache）
+- Lombok、Spring Validation、Jackson 3
+
+编码：UTF-8，缩进 4 空格，单行建议不超过 120 字符。
+
+## Maven 多模块结构
+
+```
+deadman-admin/          # 父 POM，dependencyManagement
+├── deadman-common/     # 公共层
+├── deadman-core/       # 基础设施
+├── deadman-system/     # 用户与 RBAC
+├── deadman-security/   # 认证授权
+└── deadman-app/        # 启动与组装（main、application.yaml、集成测试）
+```
+
+### 依赖方向（严禁环依赖）
+
+```
+common ← core ← system ← security ← app
+```
+
+| 模块 | 包根 | 职责 | 典型内容 |
+|------|------|------|----------|
+| **deadman-common** | `com.mtfm.deadman.common` | 跨模块共享、无业务库表 | `Result`/`ResultCode`、常量、枚举、`PermissionCode`、`BusinessException`、`GlobalExceptionHandler`、`spi`（如 `UserAuthorityCache`）、`util` |
+| **deadman-core** | `com.mtfm.deadman.core` | 可覆盖的基础设施 | `RedisConfig`、`JacksonWebConfig`、`MybatisPlusConfig`、`DeadmanProperties`、`PasswordEncoderRegistry`、`autoconfigure.DeadmanCoreAutoConfiguration` |
+| **deadman-system** | `com.mtfm.deadman.system` | 用户与 RBAC 领域 | `entity`、`mapper`、`service`、`controller`（角色/权限目录）、`dto`/`vo`、`config`（如 `RbacDataInitializer`） |
+| **deadman-security** | `com.mtfm.deadman.security` | 认证与授权 | JWT、`SecurityConfig`、`AuthCredentialsService`、`AuthPermissionService`、认证相关 `controller`/`dto`/`vo`、`BootstrapSuperAdminAssigner` |
+| **deadman-app** | `com.mtfm.deadman.app` | 可运行组装 | `DeadmanAdminApplication`、`application.yaml`、`db/schema.sql`、集成测试 |
+
+### 新增代码放哪
+
+- 统一响应、错误码、权限码枚举 → **common**
+- Redis / MyBatis / Jackson / 全局配置属性 → **core**
+- 用户表、角色表、RBAC 业务与 `/api/roles`、`/api/permissions` → **system**
+- 登录注册、JWT、Spring Security、`/api/auth`、`/api/users/me` → **security**
+- 环境配置、启动类、DB 脚本、端到端测试 → **app**
+
+**禁止**：`system` 依赖 `security`（通过 `UserAuthorityCache` SPI 解耦）；`common` 依赖任何业务模块。
+
+### 模块自动装配
+
+各业务模块在 `src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 注册 `*AutoConfiguration`，使用 `@ComponentScan` / `@MapperScan`（system 的 Mapper 扫描在 `DeadmanSystemAutoConfiguration`）。
+
+在 **app** 或自定义组装模块中，可用 `@Primary`、`@ConditionalOnMissingBean` 覆盖 core/security 的默认 `@Configuration` Bean。
+
+## 分层与命名
+
+模块内标准分包（按职责选用，勿跨模块复制）：
+
+- `controller`：参数校验、`Result` 封装，不写业务逻辑
+- `service`：业务与事务（`@Transactional(rollbackFor = Exception.class)`）
+- `mapper`：继承 `BaseMapper<T>`
+- `entity`：`@TableName`、`@TableId`、`@TableLogic`、`@Version`
+- `dto`：入参；`vo`：出参
+- `config`：本模块 Spring 配置
+- `autoconfigure`：仅放 `*AutoConfiguration`
+
+## Spring Security
+
+- JWT 无状态；`JwtAuthenticationFilter` + `AppUserDetailsService`
+- 放行：`POST /api/auth/register`、`POST /api/auth/login`、`/error`
+- 方法权限：`@PreAuthorize("hasAuthority('权限码')")`，权限码定义在 `PermissionCode`
+- 业务密码：`PasswordEncoderRegistry`（core），非单一 BCrypt Bean
+- 注册/登录/签发 Token：`AuthCredentialsService`（security），不在 `UserService`
+
+## MyBatis-Plus
+
+- 分页方言：`DbType.MYSQL`（`MybatisPlusConfig`）
+- 优先 `LambdaQueryWrapper`，避免循环查库
+- 逻辑删除：`isDeleted`（0/1）；时间字段 `createTime`/`updateTime` 自动填充
+- 主键：`IdType.ASSIGN_ID`（雪花）
+- DDL：`deadman-app/src/main/resources/db/schema.sql`（MySQL，`COMMENT` 注释）
+
+## Redis 缓存
+
+- 缓存名使用 `CacheNames` 常量；key 前缀见 `RedisKeyConstants` / `application.yaml` 中 `deadman:cache:`
+- 必须设置 TTL，禁止永久缓存
+- 读：`@Cacheable`；失效：`@CacheEvict`；角色变更通过 `UserAuthorityCache` 失效用户权限缓存
+
+## API 约定
+
+- RESTful；统一返回 `Result<T>`
+- 校验：`@Valid` + `@NotBlank` / `@NotNull` / `@Size`
+- 分页参数：`current`、`size`（若新增分页接口）
+- 敏感接口必须鉴权
+
+## 注释规范（强制）
+
+**AI 生成或修改的 Java 代码必须带注释**，禁止提交无说明的裸类/方法/字段。注释使用中文，说明业务含义；禁止无意义注释。
+
+### Record（dto / vo）
+
+类上写 JavaDoc，用 `@param` 逐项说明每个 record 组件（与组件声明顺序一致）：
+
+```java
+/**
+ * 部门详情。
+ *
+ * @param id         部门主键
+ * @param parentId   上级部门 ID
+ * @param deptCode   部门编码
+ * @param deptName   部门名称
+ * @param sortOrder  排序号
+ * @param status     状态
+ * @param createTime 创建时间
+ * @param updateTime 更新时间
+ */
+public record DepartmentVO(
+        Long id,
+        Long parentId,
+        String deptCode,
+        String deptName,
+        Integer sortOrder,
+        Integer status,
+        LocalDateTime createTime,
+        LocalDateTime updateTime) {
+}
+```
+
+### Controller / Service 方法
+
+每个 public 方法必须有 JavaDoc，说明功能、`@param`、`@return`（void 可省略 return）：
+
+```java
+/**
+ * 分配用户角色
+ *
+ * @param userId  用户 ID
+ * @param request 分配用户角色请求
+ * @return 更新后的用户详情
+ */
+@PutMapping("/{userId}/roles")
+@PreAuthorize("hasAuthority('role:user:assign')")
+public Result<UserAdminDetailVO> assignRoles(
+        @PathVariable Long userId, @Valid @RequestBody AssignUserRolesRequest request) {
+    return Result.ok(userAdminService.assignUserRoles(userId, request));
+}
+```
+
+### POJO（entity / vo 等 Lombok 类）
+
+类上写一行功能说明；**每个字段**用 `/** ... */` 单行注释：
+
+```java
+/**
+ * 当前登录用户资料（不含内部用户 ID）。
+ */
+@Data
+@Builder
+public class UserProfileVO {
+
+    /** 用户编码 */
+    private String userCode;
+    /** 主登录用户名（USERNAME 类型账号标识，未绑定时为 null） */
+    private String username;
+    /** 用户昵称 */
+    private String nickname;
+    // ...
+}
+```
+
+### 其他
+
+- **entity**：字段注释与表字段 `COMMENT` 语义一致
+- **类**：非 Record 的 `service` / `config` / `mapper` 接口等须有类级 JavaDoc
+- **复杂业务逻辑**：关键分支加行内注释说明「为什么」
+
+## 编码约束
+
+- Lombok：`@Data`、`@Builder`、`@RequiredArgsConstructor`、`@Slf4j`
+- 合理使用 Java 21（Record、虚拟线程等），避免过度设计
+- 集合指定泛型；常量 `static final` 大写
+- 日志用 SLF4J，禁止 `System.out.println`
+- 配置走环境变量 / `DeadmanProperties`，禁止硬编码密钥
+
+## 禁止事项
+
+- Controller 写业务逻辑；模块间环依赖
+- 在 `system` 中直接引用 `security` 的类（除测试外）；在 `common` 中放业务 Entity/Mapper
+- Druid 连接池；无 TTL 的 Redis 缓存；吞掉不处理的 `Exception`
+- 循环内查库；`System.exit()`
+
+## 本地与测试
+
+```bash
+./mvnw -pl deadman-app spring-boot:run   # 启动
+./mvnw verify                            # 测试（H2，profile=test）
+```
+
+数据库初始化见 `README.md`；环境变量模板见 `.env.example`。

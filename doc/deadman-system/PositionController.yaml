@@ -1,0 +1,225 @@
+# com.mtfm.deadman.system.controller.PositionController
+openapi: 3.0.3
+info:
+  title: PositionController
+  version: 0.0.1-SNAPSHOT
+  description: 职位管理（可归属部门或为全局职位）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/positions:
+    get:
+      summary: 职位列表
+      description: |
+        需要权限码 `position:list:read`。
+        传入 departmentId 时返回该部门职位及 departmentId 为 null 的全局职位。
+      operationId: listPositions
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: departmentId
+          in: query
+          required: false
+          description: 按部门筛选（含全局职位）
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPositionList'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    post:
+      summary: 创建职位
+      description: |
+        需要权限码 `position:create`。
+        positionCode 全局唯一；departmentId 为 null 表示全局职位。
+      operationId: createPosition
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePositionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPositionVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/positions/{positionId}:
+    parameters:
+      - name: positionId
+        in: path
+        required: true
+        description: 职位主键
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: 职位详情
+      description: 需要权限码 `position:list:read`
+      operationId: getPosition
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPositionVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    put:
+      summary: 更新职位
+      description: 需要权限码 `position:update`。请求体字段为 null 表示不修改。
+      operationId: updatePosition
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePositionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPositionVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    delete:
+      summary: 删除职位
+      description: |
+        需要权限码 `position:delete`。
+        存在关联用户时不允许删除。
+      operationId: deletePosition
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreatePositionRequest:
+      type: object
+      required: [positionCode, positionName]
+      properties:
+        departmentId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 所属部门 ID，null 表示全局职位
+        positionCode:
+          type: string
+          description: 职位编码，大写字母开头，全局唯一
+          pattern: '^[A-Z][A-Z0-9_]{1,63}$'
+        positionName:
+          type: string
+          maxLength: 128
+        sortOrder:
+          type: integer
+          description: 排序号，默认 0
+
+    UpdatePositionRequest:
+      type: object
+      properties:
+        departmentId:
+          type: integer
+          format: int64
+          description: 所属部门 ID
+        positionName:
+          type: string
+          maxLength: 128
+        sortOrder:
+          type: integer
+        status:
+          type: integer
+          description: 0-禁用 1-启用
+
+    PositionVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        departmentId:
+          type: integer
+          format: int64
+          nullable: true
+        positionCode:
+          type: string
+        positionName:
+          type: string
+        sortOrder:
+          type: integer
+        status:
+          type: integer
+          description: 0-禁用 1-启用
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+
+    ResultPositionVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/PositionVO'
+
+    ResultPositionList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PositionVO'

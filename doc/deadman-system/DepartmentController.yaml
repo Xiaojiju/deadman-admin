@@ -1,0 +1,273 @@
+# com.mtfm.deadman.system.controller.DepartmentController
+openapi: 3.0.3
+info:
+  title: DepartmentController
+  version: 0.0.1-SNAPSHOT
+  description: 组织部门管理（树形结构）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/departments:
+    get:
+      summary: 部门列表
+      description: |
+        需要权限码 `dept:list:read`。
+        返回扁平列表，按 sortOrder、deptCode 升序。
+      operationId: listDepartments
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDepartmentList'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    post:
+      summary: 创建部门
+      description: |
+        需要权限码 `dept:create`。
+        deptCode 全局唯一；parentId 为 null 表示根部门。
+      operationId: createDepartment
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDepartmentRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDepartmentVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/departments/tree:
+    get:
+      summary: 部门树
+      description: 需要权限码 `dept:list:read`。根部门在顶层，children 递归嵌套。
+      operationId: departmentTree
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDepartmentTreeList'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/departments/{departmentId}:
+    parameters:
+      - name: departmentId
+        in: path
+        required: true
+        description: 部门主键
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: 部门详情
+      description: 需要权限码 `dept:list:read`
+      operationId: getDepartment
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDepartmentVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    put:
+      summary: 更新部门
+      description: |
+        需要权限码 `dept:update`。
+        请求体字段为 null 表示不修改；不可将上级设为自己或形成环。
+      operationId: updateDepartment
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDepartmentRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDepartmentVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    delete:
+      summary: 删除部门
+      description: |
+        需要权限码 `dept:delete`。
+        存在下级部门或关联用户时不允许删除。
+      operationId: deleteDepartment
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreateDepartmentRequest:
+      type: object
+      required: [deptCode, deptName]
+      properties:
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 上级部门 ID，null 表示根部门
+        deptCode:
+          type: string
+          description: 部门编码，大写字母开头，全局唯一
+          pattern: '^[A-Z][A-Z0-9_]{1,63}$'
+        deptName:
+          type: string
+          maxLength: 128
+          description: 部门名称
+        sortOrder:
+          type: integer
+          description: 排序号，默认 0
+
+    UpdateDepartmentRequest:
+      type: object
+      properties:
+        parentId:
+          type: integer
+          format: int64
+          description: 上级部门 ID
+        deptName:
+          type: string
+          maxLength: 128
+        sortOrder:
+          type: integer
+        status:
+          type: integer
+          description: 0-禁用 1-启用
+
+    DepartmentVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+        deptCode:
+          type: string
+        deptName:
+          type: string
+        sortOrder:
+          type: integer
+        status:
+          type: integer
+          description: 0-禁用 1-启用
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+
+    DepartmentTreeVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+        deptCode:
+          type: string
+        deptName:
+          type: string
+        sortOrder:
+          type: integer
+        status:
+          type: integer
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepartmentTreeVO'
+
+    ResultDepartmentVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/DepartmentVO'
+
+    ResultDepartmentList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/DepartmentVO'
+
+    ResultDepartmentTreeList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/DepartmentTreeVO'

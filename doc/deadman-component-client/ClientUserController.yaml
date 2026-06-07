@@ -1,0 +1,60 @@
+# com.mtfm.deadman.component.client.controller.ClientUserController
+openapi: 3.0.3
+info:
+  title: ClientUserController
+  version: 0.0.1-SNAPSHOT
+  description: 用户端当前用户资料（`GET /client/api/users/me`）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /client/api/users/me:
+    get:
+      summary: 当前用户端用户资料
+      description: 需要用户端 JWT（`ClientBearerAuth`）。
+      operationId: clientCurrentProfile
+      tags: [用户端用户]
+      security:
+        - ClientBearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientUserProfileVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    ClientBearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/ClientBearerAuth'
+
+  schemas:
+    ClientUserProfileVO:
+      type: object
+      properties:
+        userCode:
+          type: string
+        username:
+          type: string
+          description: 主登录用户名
+        nickname:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          description: 0-禁用 1-正常
+
+    ResultClientUserProfileVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ClientUserProfileVO'

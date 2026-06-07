@@ -1,0 +1,61 @@
+# com.mtfm.deadman.core.component.DeadmanComponentController
+openapi: 3.0.3
+info:
+  title: DeadmanComponentController
+  version: 0.0.1-SNAPSHOT
+  description: 组件目录 — 查询当前服务端已装配的 components 模块（无需认证）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/components:
+    get:
+      summary: 已装配组件列表
+      description: |
+        公开接口。返回各 `DeadmanComponentDescriptor` 注册项，供前端动态展示用户端等能力入口。
+      operationId: listComponents
+      tags: [组件目录]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDeadmanComponentList'
+
+components:
+  schemas:
+    DeadmanComponentVO:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 组件唯一编码，如 client
+        name:
+          type: string
+          description: 展示名称
+        description:
+          type: string
+          description: 组件说明
+        apiPrefix:
+          type: string
+          description: API 路径前缀，如 /client/api
+        order:
+          type: integer
+          description: 前端展示排序
+        uiHints:
+          type: object
+          additionalProperties: true
+          description: 前端扩展提示（如 authBasePath、features）
+
+    ResultDeadmanComponentList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/DeadmanComponentVO'

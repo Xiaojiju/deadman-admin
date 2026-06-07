@@ -1,0 +1,128 @@
+# com.mtfm.deadman.security.controller.UserController
+openapi: 3.0.3
+info:
+  title: UserController
+  version: 0.0.1-SNAPSHOT
+  description: 当前登录用户资料（`GET /api/users/me`，与管理端 `/api/users` 列表不冲突）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/users/me:
+    get:
+      summary: 当前用户资料
+      description: |
+        需要权限码 `user:profile:read`。不暴露内部用户 ID。
+        返回主用户名、手机号、部门/职位、用户状态、已绑定账号列表（含第三方 oauthProvider）。
+      operationId: me
+      tags: [用户资料]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserProfileVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    put:
+      summary: 更新当前用户资料
+      description: |
+        需要权限码 `user:profile:update`。请求体与管理端 `UpdateUserRequest` 一致；
+        仅更新 nickname、avatar、phone；status、departmentId、positionIds 将被忽略。
+      operationId: updateMe
+      tags: [用户资料]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../deadman-system/UserAdminController.yaml#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserProfileVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    UserAccountBindingVO:
+      type: object
+      properties:
+        accountType:
+          type: string
+          description: USERNAME / PHONE / OAUTH
+        accountIdentifier:
+          type: string
+        oauthProvider:
+          type: string
+          nullable: true
+          description: 第三方类型，如 wechat、github（仅 OAUTH）
+        verified:
+          type: integer
+        status:
+          type: integer
+          description: 账号状态 0-禁用 1-正常
+
+    UserProfileVO:
+      type: object
+      properties:
+        userCode:
+          type: string
+        username:
+          type: string
+          nullable: true
+          description: USERNAME 类型主登录名
+        nickname:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+          description: 绑定手机号（PHONE 账号）
+        department:
+          $ref: '../deadman-system/UserAdminController.yaml#/components/schemas/OrgRefVO'
+          description: 所属部门简要信息
+        positions:
+          type: array
+          items:
+            $ref: '../deadman-system/UserAdminController.yaml#/components/schemas/OrgRefVO'
+          description: 已绑定职位列表
+        status:
+          type: integer
+          description: 用户状态 0-禁用 1-正常
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserAccountBindingVO'
+        createTime:
+          type: string
+          format: date-time
+
+    ResultUserProfileVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserProfileVO'

@@ -1,0 +1,394 @@
+# com.mtfm.deadman.system.controller.UserAdminController
+openapi: 3.0.3
+info:
+  title: UserAdminController
+  version: 0.0.1-SNAPSHOT
+  description: 管理端用户 CRUD、停用、角色关联（与 security UserController 的 /me 路径不冲突）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/users:
+    get:
+      summary: 用户分页列表
+      description: |
+        需要权限码 `user:list:read`。
+        分页参数见 `PageParam`（current、size）；筛选见 `UserAdminPageQuery`（keyword、status）。
+      operationId: pageUsers
+      tags: [用户管理]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: current
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 10
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: integer
+            description: 0-禁用 1-正常
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserAdminPageVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    post:
+      summary: 新增用户
+      description: |
+        需要权限码 `user:create`。默认绑定 USER 角色。
+        可选绑定手机号（PHONE 账号）、部门与职位。
+      operationId: createUser
+      tags: [用户管理]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserAdminDetailVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/users/{userId}:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/UserId'
+    get:
+      summary: 用户详情
+      description: 需要权限码 `user:list:read`
+      operationId: getUserDetail
+      tags: [用户管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserAdminDetailVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    put:
+      summary: 更新用户
+      description: |
+        需要权限码 `user:update`。
+        可更新昵称、头像、状态、手机号、部门、职位；null 字段表示不修改。
+        SUPER_ADMIN 不可停用。
+      operationId: updateUser
+      tags: [用户管理]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserAdminDetailVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    delete:
+      summary: 删除用户
+      description: 需要权限码 `user:delete`。逻辑删除；SUPER_ADMIN 不可删。
+      operationId: deleteUser
+      tags: [用户管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/users/{userId}/password:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/UserId'
+    put:
+      summary: 重置用户密码
+      description: 需要权限码 `user:password:reset`。管理员设置新密码，无需原密码（用户忘记密码场景）。
+      operationId: resetUserPassword
+      tags: [用户管理]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetUserPasswordRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/users/{userId}/roles:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/UserId'
+    put:
+      summary: 分配用户角色
+      description: 需要权限码 `role:user:assign`。覆盖式绑定（与 PUT /api/roles/users/{userId} 等价）。
+      operationId: assignUserRolesByUserAdmin
+      tags: [用户管理]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignUserRolesRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserAdminDetailVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreateUserRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 64
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        nickname:
+          type: string
+          maxLength: 64
+        avatar:
+          type: string
+          maxLength: 512
+          description: 自定义头像 URL
+        phone:
+          type: string
+          pattern: '^1[3-9]\d{9}$'
+          description: 中国大陆手机号，绑定为 PHONE 类型账号
+        departmentId:
+          type: integer
+          format: int64
+          description: 所属部门 ID
+        positionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 职位 ID 列表，可绑定多个，须与用户部门匹配
+
+    ResetUserPasswordRequest:
+      type: object
+      required: [newPassword]
+      properties:
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 128
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          maxLength: 64
+        avatar:
+          type: string
+          maxLength: 512
+        status:
+          type: integer
+          description: 0-禁用 1-正常
+        phone:
+          type: string
+          pattern: '^1[3-9]\d{9}$'
+          description: 绑定手机号
+        departmentId:
+          type: integer
+          format: int64
+          description: 所属部门 ID
+        positionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 职位 ID 列表，非 null 时覆盖式更新（可为空数组表示清空）
+
+    OrgRefVO:
+      type: object
+      description: 部门或职位简要引用
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 主键
+        code:
+          type: string
+          description: 编码（deptCode / positionCode）
+        name:
+          type: string
+          description: 名称
+
+    AssignUserRolesRequest:
+      type: object
+      required: [roleIds]
+      properties:
+        roleIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+
+    UserAdminSummaryVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userCode:
+          type: string
+        username:
+          type: string
+        nickname:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        department:
+          $ref: '#/components/schemas/OrgRefVO'
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgRefVO'
+          description: 已绑定职位列表
+        status:
+          type: integer
+        roleCodes:
+          type: array
+          items:
+            type: string
+        createTime:
+          type: string
+          format: date-time
+
+    UserAdminDetailVO:
+      allOf:
+        - $ref: '#/components/schemas/UserAdminSummaryVO'
+        - type: object
+          properties:
+            updateTime:
+              type: string
+              format: date-time
+
+    UserAdminPageQuery:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/PageParam'
+        - type: object
+          properties:
+            keyword:
+              type: string
+            status:
+              type: integer
+              description: 0-禁用 1-正常
+
+    UserAdminPageVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/PageVO'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserAdminSummaryVO'
+
+    ResultUserAdminPageVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserAdminPageVO'
+
+    ResultUserAdminDetailVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserAdminDetailVO'
+
+    ResultVoid:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              nullable: true
