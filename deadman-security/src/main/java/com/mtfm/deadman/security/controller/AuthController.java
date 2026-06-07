@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 认证接口：注册、修改密码、获取当前用户权限。
- * <p>登录由 {@link com.mtfm.deadman.security.authentication.JsonUsernamePasswordAuthenticationFilter} 处理。
+ * <p>登录由 {@link com.mtfm.deadman.security.authentication.provider.AdminPasswordLoginProvider} 的 Filter 处理。
  */
 @RestController
 @RequestMapping("/api/auth")

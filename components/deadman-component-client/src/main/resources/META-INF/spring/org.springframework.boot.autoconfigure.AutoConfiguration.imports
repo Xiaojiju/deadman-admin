@@ -1,1 +1,2 @@
 com.mtfm.deadman.component.client.autoconfigure.DeadmanClientComponentAutoConfiguration
+com.mtfm.deadman.component.client.wechat.ClientWechatIntegrationAutoConfiguration

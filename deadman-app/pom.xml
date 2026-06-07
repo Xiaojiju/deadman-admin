@@ -40,10 +40,6 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-component-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-wechat</artifactId>
         </dependency>
         <dependency>

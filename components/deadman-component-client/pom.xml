@@ -26,6 +26,10 @@
         <dependency>
             <groupId>com.mtfm</groupId>
             <artifactId>deadman-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-wechat</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
