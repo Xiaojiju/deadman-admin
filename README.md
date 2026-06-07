@@ -47,7 +47,7 @@ common ← core ← system ← security ← app
 | **common** | 统一响应、错误码、工具、跨模块 SPI（如 `UserAuthorityCache`） |
 | **core** | 可覆盖的基础设施 Bean、组件目录 `GET /api/components` |
 | **system** | 用户/部门/职位/RBAC 表与业务，不依赖 security |
-| **security** | 登录注册、JWT、`PermissionContributor` 聚合 |
+| **security** | 登录 Provider 统一管理、JWT、`PermissionContributor` / OAuth 注入 SPI 聚合 |
 | **notification** | 站内信发送、收件箱、与 WebSocket 通道联动 |
 | **plugins** | 工具或基础设施扩展，通过 SPI 接入，默认不依赖 system/security |
 | **components** | 独立 API 前缀与用户体系的业务域（如用户端） |
@@ -131,12 +131,25 @@ java -jar deadman-app/target/deadman-app-0.0.1-SNAPSHOT.jar
 
 ## API 与认证
 
+### 多用户体系与 LoginProvider 框架
+
+`deadman-security` 提供统一的 **LoginProvider 管理器**（`LoginProviderGroupManager`），支持在同一应用中并存多套用户体系：
+
+| 组 ID | API 前缀 | 说明 |
+|-------|----------|------|
+| `admin` | `/api/**` | 管理端（`user_base`），密码登录 `POST /api/auth/login` |
+| `client` | `/client/api/**` | 用户端组件（`client_user_base`），多 Provider 登录 |
+
+各用户体系通过 `LoginProviderGroupContributor` 绑定 endpoint 前缀，通过独立 `SecurityFilterChain`（不同 `@Order`）隔离；同一 Filter 类（`ProviderLoginFilter`）按 endpoint 路由到对应组的 `AuthenticationManager`。
+
+OAuth 类登录（如微信小程序）通过 `OAuthLoginUserService` SPI 注入目标体系，插件侧用 `login-bindings` 配置可同时服务多个组。详见 [plugins/README.md](plugins/README.md#deadman-plugin-wechat)、[components/README.md](components/README.md#deadman-component-client)。
+
 ### 路径前缀
 
 | 前缀 | 说明 | Token |
 |------|------|-------|
 | `/api/**` | 管理端 REST API | 管理端 JWT（`POST /api/auth/login`） |
-| `/client/api/**` | 用户端组件 API | 用户端 JWT（`POST /client/api/auth/register` 或 `/client/api/auth/login/*`） |
+| `/client/api/**` | 用户端组件 API | 用户端 JWT（注册或 `/client/api/auth/login/*`，含 wechat-miniprogram） |
 | `/ws/**` | WebSocket（握手可带 `?token=`） | 按通道 `WebSocketAuthenticator` |
 | `/files/**` | 本地存储公开直链 | 无需 Token（需 `deadman-plugin-storage-local`） |
 
@@ -179,11 +192,11 @@ java -jar deadman-app/target/deadman-app-0.0.1-SNAPSHOT.jar
 | 模块 | 能力摘要 |
 |------|----------|
 | **websocket** | 多通道 WebSocket、`MessageDispatcher` 持久化与重试，表 `plugin_ws_message` |
-| **wechat** | 小程序登录 `POST /client/api/auth/login/wechat-miniprogram`、手机号绑定 |
+| **wechat** | 小程序登录（`login-bindings` 多端）、`WechatPhoneBindingHandler` SPI；与 client 桥接后提供手机号绑定 |
 | **excel** | 注入 `DeadExcelService`：POJO/Record 导入导出、`DeadExcelColumns` 自定义列 |
 | **file** | 上传下载 API、`FileStorageProvider` SPI、元数据表 `plugin_file_metadata` |
 | **storage-local** | 默认 `local` Provider，磁盘存储 + `GET /files/**` 直链 |
-| **component-client** | 独立用户表与 JWT，路径 `/client/api`，可扩展 `ClientLoginProvider` |
+| **component-client** | 独立用户表与 JWT，路径 `/client/api`；`ClientLoginProvider` + OAuth/wechat 桥接 |
 
 存储扩展：实现 `FileStorageProvider` 并注册为 Spring Bean，配置 `deadman.plugin.file.default-provider` 即可切换。
 

@@ -7,7 +7,7 @@
 | 模块 | 配置前缀 | 职责 | OpenAPI |
 |------|----------|------|---------|
 | [deadman-plugin-websocket](#deadman-plugin-websocket) | `deadman.plugin.websocket` | WebSocket 多通道消息、持久化与重试 | — |
-| [deadman-plugin-wechat](#deadman-plugin-wechat) | `deadman.plugin.wechat-miniprogram` | 微信小程序登录与手机号绑定 | [WechatMiniprogramController.yaml](../doc/deadman-plugin-wechat/WechatMiniprogramController.yaml) |
+| [deadman-plugin-wechat](#deadman-plugin-wechat) | `deadman.plugin.wechat-miniprogram` | 微信小程序登录（多端 login-bindings）、OAuth/手机号 SPI | [WechatMiniprogramController.yaml](../doc/deadman-plugin-wechat/WechatMiniprogramController.yaml) |
 | [deadman-plugin-excel](#deadman-plugin-excel) | `deadman.plugin.excel` | EasyExcel 导入导出工具包 | — |
 | [deadman-plugin-file](#deadman-plugin-file) | `deadman.plugin.file` | 文件上传下载、`FileStorageProvider` SPI | [FileController.yaml](../doc/deadman-plugin-file/FileController.yaml) |
 | [deadman-plugin-storage-local](#deadman-plugin-storage-local) | `deadman.plugin.storage-local` | 本地磁盘存储 Provider（依赖 file 插件） | 见 file 文档 `/files/**` |
@@ -35,7 +35,8 @@
 |------|------|
 | `deadman-common`、`deadman-core` | 依赖 `deadman-system`（除特殊桥接） |
 | 依赖其他插件（如 `storage-local` → `file`） | 插件内直接写管理端 JWT 逻辑 |
-| 依赖 `components`（如 wechat → client） | 与 `system` / `security` 形成环依赖 |
+| 依赖 `deadman-security`（登录 SPI、OAuth 注入 SPI） | 与 `system` / `security` 形成环依赖 |
+| 通过 SPI 与 **component** 桥接（如 wechat 手机号绑定） | 插件硬依赖 component 业务类 |
 
 业务适配（如管理端 WebSocket 鉴权）放在 `deadman-app` 或对应 **component** 中实现 SPI。
 
@@ -104,15 +105,17 @@ inboxMessageChannel.dispatch("NEW_MESSAGE", String.valueOf(userId), Map.of("noti
 
 ## deadman-plugin-wechat
 
-微信小程序能力，对接**用户端组件**（`deadman-component-client`）。
+微信小程序能力，**与具体用户体系解耦**：仅依赖 `deadman-security` 的登录 Provider 框架与 OAuth 注入 SPI；与 `deadman-component-client` 等业务组件通过 **桥接层** 在 app 中组装。
 
 | 能力 | 说明 |
 |------|------|
-| 小程序登录 | 实现 `ClientLoginProvider`，路径 `POST /client/api/auth/login/wechat-miniprogram` |
-| 手机号绑定 | `POST /client/api/wechat-miniprogram/phone/bind` |
-| 用户开通 | 实现 `ClientUserProvisioner`，首次登录自动建用户端账号 |
+| 小程序登录 | 实现 `LoginProvider`，按 `login-bindings` 可同时注册到多个用户体系组 |
+| 手机号绑定 SPI | `WechatPhoneBindingHandler`，由用户体系组件实现（如 client 桥接） |
+| OAuth 用户注入 | 通过 `OAuthLoginUserService`（security SPI），由目标用户体系提供实现 |
 
-**配置示例：**
+### 多端登录（login-bindings）
+
+每项 binding 会动态注册一个独立的微信登录 Provider，endpoint 由目标组的 `authBasePath` + 路径段决定：
 
 ```yaml
 deadman:
@@ -121,9 +124,41 @@ deadman:
       enabled: true
       app-id: ${DEADMAN_WECHAT_MINIPROGRAM_APP_ID}
       app-secret: ${DEADMAN_WECHAT_MINIPROGRAM_APP_SECRET}
+      login-bindings:
+        - group-id: client
+        - group-id: admin          # 可选：管理端也支持微信登录
+          login-path-segment: wechat-miniprogram   # 可选，默认 wechat-miniprogram
 ```
 
-**依赖：** `deadman-common`、`deadman-core`、`deadman-component-client`
+| group-id | 登录 endpoint（默认路径段） |
+|----------|----------------------------|
+| `client` | `POST /client/api/auth/login/wechat-miniprogram` |
+| `admin` | `POST /api/auth/wechat-miniprogram`（需 admin 组实现 `OAuthLoginUserService`） |
+
+### 与 client 组件桥接
+
+wechat 插件**不依赖** client 模块。在 `deadman-app` 同时引入两者时，client 自动装配桥接：
+
+| 桥接类 | 职责 |
+|--------|------|
+| `ClientOAuthLoginUserService` | 实现 `OAuthLoginUserService`，微信登录注入 client 用户 |
+| `ClientWechatPhoneBindingHandler` | 实现 `WechatPhoneBindingHandler`，绑定手机号到 client 账号 |
+| `ClientWechatMiniprogramController` | `POST /client/api/wechat-miniprogram/phone/bind` |
+
+桥接开关：`deadman.component.client.wechat.enabled`（默认 `true`，需 classpath 同时存在 wechat 插件）。
+
+### 扩展新用户体系
+
+1. 实现 `LoginProviderGroupContributor` 注册 API 前缀与认证路径
+2. 实现 `OAuthLoginUserService`（`loginGroupId` 与组一致）
+3. （可选）实现 `WechatPhoneBindingHandler`
+4. 在 `login-bindings` 中增加 `group-id: {your-group}`
+
+无需修改 wechat 插件源码。
+
+**依赖：** `deadman-common`、`deadman-core`、`deadman-security`
+
+**OpenAPI：** 手机号绑定接口见 [ClientWechatMiniprogramController](../doc/deadman-plugin-wechat/WechatMiniprogramController.yaml)（由 client 桥接提供）
 
 ---
 
