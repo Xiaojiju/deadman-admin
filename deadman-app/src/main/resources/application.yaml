@@ -1,6 +1,17 @@
+server:
+  tomcat:
+    # 与 spring.servlet.multipart 保持一致，避免 Tomcat 先于 Spring 以 1MB 默认限制拦截上传
+    max-http-form-post-size: ${DEADMAN_PLUGIN_FILE_MAX_REQUEST_SIZE:15MB}
+    max-swallow-size: ${DEADMAN_PLUGIN_FILE_MAX_REQUEST_SIZE:15MB}
+
 spring:
   application:
     name: deadman-admin
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${DEADMAN_PLUGIN_FILE_MAX_SIZE:10MB}
+      max-request-size: ${DEADMAN_PLUGIN_FILE_MAX_REQUEST_SIZE:15MB}
   threads:
     virtual:
       enabled: true

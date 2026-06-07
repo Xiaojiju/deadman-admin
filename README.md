@@ -29,7 +29,7 @@ deadman-admin/                          # 父 POM（依赖版本管理）
 │   ├── deadman-plugin-excel/           # EasyExcel 导入导出工具包
 │   ├── deadman-plugin-file/            # 文件上传下载与存储 SPI
 │   └── deadman-plugin-storage-local/   # 本地磁盘存储 Provider
-├── components/                         # 可插拔业务组件
+├── components/                         # 可插拔业务组件（见 components/README.md）
 │   └── deadman-component-client/       # 用户端（独立 JWT，/client/api）
 └── deadman-app/                        # 默认组装与启动入口
 ```
@@ -174,7 +174,7 @@ java -jar deadman-app/target/deadman-app-0.0.1-SNAPSHOT.jar
 
 ## 插件与组件速览
 
-详细说明见 [plugins/README.md](plugins/README.md)。
+详细说明见 [plugins/README.md](plugins/README.md)、[components/README.md](components/README.md)。
 
 | 模块 | 能力摘要 |
 |------|----------|

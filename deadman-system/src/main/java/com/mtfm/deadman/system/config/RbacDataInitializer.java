@@ -38,8 +38,10 @@ public class RbacDataInitializer implements ApplicationRunner {
     @Transactional(rollbackFor = Exception.class)
     public void run(ApplicationArguments args) {
         initSuperAdminRole();
-        initDefaultUserRole();
-        userAuthorityCache.evictAllUserAuthorities();
+        boolean changed = initDefaultUserRole();
+        if (changed) {
+            userAuthorityCache.evictAllUserAuthorities();
+        }
     }
 
     private void initSuperAdminRole() {
@@ -56,14 +58,14 @@ public class RbacDataInitializer implements ApplicationRunner {
                 new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, roleId));
     }
 
-    private void initDefaultUserRole() {
+    private boolean initDefaultUserRole() {
         SysRole role = ensureRole(SysRoleCodes.USER, "普通用户", "注册后默认角色，系统内置不可删除", 1);
         List<String> codes = List.of(
                 SystemPermissions.Auth.PASSWORD_CHANGE,
                 SystemPermissions.Auth.PERMISSIONS_READ,
                 SystemPermissions.User.PROFILE_READ,
                 SystemPermissions.User.PROFILE_UPDATE);
-        replaceAllPermissions(role.getId(), codes);
+        return ensurePermissions(role.getId(), codes);
     }
 
     private SysRole ensureRole(String roleCode, String roleName, String description, int systemBuiltin) {
@@ -84,12 +86,26 @@ public class RbacDataInitializer implements ApplicationRunner {
         return role;
     }
 
-    private void replaceAllPermissions(Long roleId, List<String> permissionCodes) {
-        sysRolePermissionMapper.delete(
-                new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, roleId));
+    /**
+     * 增量绑定角色权限，已存在则跳过（避免覆盖其他模块为同一角色绑定的权限）。
+     *
+     * @param roleId          角色 ID
+     * @param permissionCodes 权限码列表
+     * @return 是否新增了绑定
+     */
+    private boolean ensurePermissions(Long roleId, List<String> permissionCodes) {
+        boolean changed = false;
         for (String code : permissionCodes) {
-            sysRolePermissionMapper.insert(
-                    SysRolePermission.builder().roleId(roleId).permissionCode(code).build());
+            long count = sysRolePermissionMapper.selectCount(new LambdaQueryWrapper<SysRolePermission>()
+                    .eq(SysRolePermission::getRoleId, roleId)
+                    .eq(SysRolePermission::getPermissionCode, code));
+            if (count == 0) {
+                sysRolePermissionMapper.insert(
+                        SysRolePermission.builder().roleId(roleId).permissionCode(code).build());
+                log.info("已为角色 {} 绑定权限 {}", roleId, code);
+                changed = true;
+            }
         }
+        return changed;
     }
 }
