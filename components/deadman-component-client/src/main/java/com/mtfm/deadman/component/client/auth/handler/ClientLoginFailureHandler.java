@@ -2,7 +2,10 @@ package com.mtfm.deadman.component.client.auth.handler;
 
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.common.result.ResultCode;
-import com.mtfm.deadman.component.client.spi.ClientLoginProvider;
+import com.mtfm.deadman.component.client.constants.ClientAuthConstants;
+import com.mtfm.deadman.security.authentication.provider.LoginProvider;
+import com.mtfm.deadman.security.authentication.provider.LoginProviderGroup;
+import com.mtfm.deadman.security.authentication.provider.LoginProviderGroupManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +30,7 @@ public class ClientLoginFailureHandler implements AuthenticationFailureHandler {
 
     private final JsonMapper jsonMapper;
     private final CompositeClientLoginFailureCallback failureCallback;
-    private final List<ClientLoginProvider> loginProviders;
+    private final LoginProviderGroupManager loginProviderGroupManager;
 
     @Override
     public void onAuthenticationFailure(
@@ -45,8 +48,11 @@ public class ClientLoginFailureHandler implements AuthenticationFailureHandler {
 
     private String resolveProviderId(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        for (ClientLoginProvider provider : loginProviders) {
-            if (uri != null && uri.endsWith("/login/" + provider.loginPathSegment())) {
+        LoginProviderGroup clientGroup = loginProviderGroupManager.requireGroup(ClientAuthConstants.LOGIN_GROUP_ID);
+        List<LoginProvider> providers = loginProviderGroupManager.listProviders(ClientAuthConstants.LOGIN_GROUP_ID);
+        for (LoginProvider provider : providers) {
+            String endpoint = provider.resolveLoginEndpoint(clientGroup);
+            if (uri != null && uri.equals(endpoint)) {
                 return provider.providerId();
             }
         }

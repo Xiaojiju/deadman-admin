@@ -1,12 +1,13 @@
 package com.mtfm.deadman.component.client.config;
 
-import com.mtfm.deadman.component.client.auth.filter.ClientProviderLoginFilter;
 import com.mtfm.deadman.component.client.auth.handler.ClientLoginFailureHandler;
 import com.mtfm.deadman.component.client.auth.handler.ClientLoginSuccessHandler;
 import com.mtfm.deadman.component.client.auth.handler.ClientSecurityJsonHandlers;
 import com.mtfm.deadman.component.client.auth.jwt.ClientJwtAuthenticationFilter;
-import com.mtfm.deadman.component.client.auth.provider.ClientLoginProviderAuthenticationProvider;
-import com.mtfm.deadman.component.client.spi.ClientLoginProvider;
+import com.mtfm.deadman.component.client.constants.ClientAuthConstants;
+import com.mtfm.deadman.security.authentication.provider.LoginProviderGroup;
+import com.mtfm.deadman.security.authentication.provider.LoginProviderGroupManager;
+import com.mtfm.deadman.security.authentication.provider.LoginProviderSecuritySupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,18 +16,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.List;
-
 /**
- * 用户端独立 SecurityFilterChain，与管理端 Filter 完全隔离。
+ * 用户端独立 SecurityFilterChain，与管理端 Filter 完全隔离，AuthenticationManager 由 security 统一 Provider 管理器提供。
  */
 @Configuration
 @ConditionalOnClass(SecurityFilterChain.class)
@@ -39,20 +36,7 @@ public class ClientSecurityConfiguration {
     private final ClientSecurityJsonHandlers clientSecurityJsonHandlers;
     private final ClientLoginSuccessHandler clientLoginSuccessHandler;
     private final ClientLoginFailureHandler clientLoginFailureHandler;
-    private final List<ClientLoginProvider> loginProviders;
-
-    /**
-     * 用户端独立 AuthenticationManager，仅包含用户端 LoginProvider。
-     *
-     * @return 认证管理器
-     */
-    @Bean
-    AuthenticationManager clientAuthenticationManager() {
-        java.util.List<AuthenticationProvider> providers = loginProviders.stream()
-                .<AuthenticationProvider>map(ClientLoginProviderAuthenticationProvider::new)
-                .toList();
-        return new ProviderManager(providers);
-    }
+    private final LoginProviderGroupManager loginProviderGroupManager;
 
     /**
      * 用户端安全过滤链，仅匹配 /client/api/**。
@@ -62,10 +46,11 @@ public class ClientSecurityConfiguration {
      */
     @Bean
     @Order(20)
-    SecurityFilterChain clientSecurityFilterChain(
-            HttpSecurity http, AuthenticationManager clientAuthenticationManager) throws Exception {
+    SecurityFilterChain clientSecurityFilterChain(HttpSecurity http) throws Exception {
+        LoginProviderGroup clientGroup = loginProviderGroupManager.requireGroup(ClientAuthConstants.LOGIN_GROUP_ID);
+        AuthenticationManager clientAuthenticationManager =
+                loginProviderGroupManager.requireAuthenticationManager(ClientAuthConstants.LOGIN_GROUP_ID);
         String authBase = clientComponentProperties.getAuth().getBasePath();
-        String loginPrefix = clientComponentProperties.getAuth().getLoginPathPrefix();
 
         http.securityMatcher("/client/api/**")
                 .authenticationManager(clientAuthenticationManager)
@@ -77,9 +62,9 @@ public class ClientSecurityConfiguration {
                         .accessDeniedHandler(clientSecurityJsonHandlers))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.POST, authBase + "/register").permitAll();
-                    for (ClientLoginProvider provider : loginProviders) {
+                    for (var provider : loginProviderGroupManager.listProviders(ClientAuthConstants.LOGIN_GROUP_ID)) {
                         auth.requestMatchers(
-                                        HttpMethod.POST, authBase + loginPrefix + "/" + provider.loginPathSegment())
+                                        HttpMethod.POST, provider.resolveLoginEndpoint(clientGroup))
                                 .permitAll();
                     }
                     auth.requestMatchers("/error").permitAll();
@@ -87,16 +72,13 @@ public class ClientSecurityConfiguration {
                 })
                 .addFilterBefore(clientJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        for (ClientLoginProvider provider : loginProviders) {
-            String loginEndpoint = authBase + loginPrefix + "/" + provider.loginPathSegment();
-            ClientProviderLoginFilter filter = new ClientProviderLoginFilter(
-                    provider,
-                    loginEndpoint,
-                    clientAuthenticationManager,
-                    clientLoginSuccessHandler,
-                    clientLoginFailureHandler);
-            http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
-        }
+        LoginProviderSecuritySupport.registerProviderLoginFilters(
+                http,
+                clientGroup,
+                loginProviderGroupManager,
+                clientAuthenticationManager,
+                clientLoginSuccessHandler,
+                clientLoginFailureHandler);
 
         return http.build();
     }

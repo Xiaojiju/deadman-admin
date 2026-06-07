@@ -70,6 +70,8 @@ deadman:
       enabled: ${DEADMAN_PLUGIN_WECHAT_MINIPROGRAM_ENABLED:true}
       app-id: ${DEADMAN_WECHAT_MINIPROGRAM_APP_ID:}
       app-secret: ${DEADMAN_WECHAT_MINIPROGRAM_APP_SECRET:}
+      login-bindings:
+        - group-id: admin
     excel:
       enabled: ${DEADMAN_PLUGIN_EXCEL_ENABLED:true}
     file:

@@ -8,6 +8,9 @@ public final class ClientAuthConstants {
     /** JWT claim：用户体系标识，固定为 CLIENT */
     public static final String JWT_REALM = "CLIENT";
 
+    /** 用户端登录 Provider 组标识 */
+    public static final String LOGIN_GROUP_ID = "client";
+
     /** JWT claim：对外用户编码 */
     public static final String JWT_USER_CODE = "userCode";
 

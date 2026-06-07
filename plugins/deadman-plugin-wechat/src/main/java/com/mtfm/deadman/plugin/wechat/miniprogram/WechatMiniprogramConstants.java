@@ -5,7 +5,7 @@ package com.mtfm.deadman.plugin.wechat.miniprogram;
  */
 public final class WechatMiniprogramConstants {
 
-    /** OAuth 提供商标识，写入 client_user_account.oauth_provider */
+    /** OAuth 提供商标识，写入各用户体系 OAuth 账号表 */
     public static final String OAUTH_PROVIDER = "wechat-miniprogram";
 
     /** 登录 Provider 路径段 */
