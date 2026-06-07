@@ -33,14 +33,17 @@
 | 允许 | 禁止 |
 |------|------|
 | `deadman-common`、`deadman-core` | 依赖 `deadman-system` |
-| `deadman-security`（optional，用于 `PermissionContributor`） | 组件依赖 `security` 的业务实现类（仅 SPI 接口） |
-| 被 **plugin** 依赖（如 wechat → client） | 与管理端用户表混用 |
+| `deadman-security` | 登录 Provider 框架、`PermissionContributor`、OAuth 注入 SPI |
+| optional 依赖 `deadman-plugin-wechat`（桥接层） | 组件依赖 `security` 的业务实现类（仅 SPI 接口） |
+| 被 **plugin** 通过 SPI 桥接（如 wechat 手机号绑定） | 与管理端用户表混用 |
 
 ---
 
 ## deadman-component-client
 
 独立**用户端（C 端）**用户体系：与管理系统 `user_base` 完全隔离，使用独立 JWT（`realm=CLIENT`）与独立 Security 过滤链（`@Order(20)`，`/client/api/**`）。
+
+登录认证统一由 **`deadman-security` 的 `LoginProviderGroupManager`** 管理：client 组件通过 `ClientLoginProviderGroupContributor` 注册 endpoint 前缀，不再自建 Provider 管理器。
 
 ### 能力概览
 
@@ -79,6 +82,8 @@ deadman:
         user-code-prefix: CL
       security:
         multi-session-enabled: true
+      wechat:
+        enabled: true   # 与 wechat 插件同时引入时，自动桥接手机号绑定等能力
 ```
 
 环境变量见根目录 [.env.example](../.env.example)。
@@ -95,6 +100,8 @@ deadman:
 |------|------|------|
 | POST | `/client/api/auth/register` | 公开 |
 | POST | `/client/api/auth/login/password` | 公开 |
+| POST | `/client/api/auth/login/wechat-miniprogram` | 公开（需 wechat 插件 + login-bindings 含 client） |
+| POST | `/client/api/wechat-miniprogram/phone/bind` | 用户端 JWT（client-wechat 桥接） |
 | GET | `/client/api/users/me` | 用户端 JWT |
 | PUT | `/client/api/users/me` | 用户端 JWT |
 | GET | `/api/client-users` | 管理端 JWT + `client-user:list:read` |
@@ -105,11 +112,11 @@ deadman:
 
 ### SPI 扩展
 
-组件通过 Spring Bean 聚合 SPI，供插件或业务模块扩展登录与用户开通逻辑。
+组件通过 Spring Bean 聚合 SPI，供插件或业务模块扩展登录与用户开通逻辑。登录 Provider 归属 **`deadman-security` 统一框架**（`LoginProvider` / `LoginProviderGroupManager`）。
 
 #### ClientLoginProvider
 
-每种登录方式实现一个 Bean，自动注册独立登录 Filter。
+继承 security 的 `LoginProvider`，固定 `loginGroupId = "client"`。每种登录方式实现一个 Bean，由 `LoginProviderGroupManager` 聚合并自动注册独立登录 Filter。
 
 ```java
 @Component
@@ -130,27 +137,42 @@ public class PasswordClientLoginProvider implements ClientLoginProvider {
 ```
 
 - 完整路径：`{auth.basePath}/login/{loginPathSegment}`，默认 `/client/api/auth/login/{providerId}`。
-- 微信登录由 `deadman-plugin-wechat` 提供 `WechatMiniprogramLoginProvider`。
+- 微信登录由 `deadman-plugin-wechat` 按 `login-bindings` 动态注册，无需实现 `ClientLoginProvider`。
 
-#### ClientUserProvisioner
+#### ClientUserProvisioner / ClientOAuthLoginUserService
 
-首次通过第三方登录创建用户端账号时调用（无本地用户则开通）。
+- `ClientUserProvisioner`：首次 OAuth 登录时创建用户端账号（无本地用户则开通）。
+- `ClientOAuthLoginUserService`：实现 security 的 `OAuthLoginUserService`，供微信等 OAuth 插件按 `loginGroupId=client` 注入用户。
 
 #### ClientLoginFailureCallback
 
 登录失败后的扩展回调（审计、风控等），可注册多个，由 `CompositeClientLoginFailureCallback` 聚合。
 
+#### 与 wechat 插件桥接
+
+client 对 wechat 为 **optional 依赖**，仅在两者同时引入时装配 `ClientWechatIntegrationAutoConfiguration`：
+
+| 类 | SPI / 职责 |
+|----|------------|
+| `ClientOAuthLoginUserService` | `OAuthLoginUserService` |
+| `ClientWechatPhoneBindingHandler` | `WechatPhoneBindingHandler` |
+| `ClientWechatMiniprogramController` | 手机号绑定 HTTP 接口 |
+
 ### 与管理端的关系
 
 ```
-管理系统用户 (user_base)          用户端用户 (client_user_base)
-        │                                    │
-        │  管理端 JWT                         │  用户端 JWT
-        ▼                                    ▼
-   /api/**                           /client/api/**
-        │                                    │
-        └──────── /api/client-users ─────────┘
-                  （管理端查/管 C 端用户）
+                    deadman-security
+              LoginProviderGroupManager
+                     /            \
+            group: admin      group: client
+                 │                  │
+    管理系统 (user_base)    用户端 (client_user_base)
+         │  管理端 JWT            │  用户端 JWT
+         ▼                        ▼
+    /api/**                 /client/api/**
+         │                        │
+         │    /api/client-users   │  wechat 桥接（optional）
+         └──────── 管理 C 端 ──────┘    /client/api/wechat-miniprogram/**
 ```
 
 ---
@@ -164,11 +186,12 @@ public class PasswordClientLoginProvider implements ClientLoginProvider {
    - `Deadman{Name}ComponentAutoConfiguration`
    - `{Name}ComponentProperties`，前缀 `deadman.component.{kebab-name}`
    - `{Name}ComponentRegistration` → `DeadmanComponentDescriptor` Bean
-5. 若需独立 Security 链：单独 `@Configuration` + `@Order`，`securityMatcher` 限定组件 API 前缀。
-6. 若需管理端权限：实现 `PermissionContributor`（依赖 `deadman-security` 中接口，optional 依赖）。
-7. DDL 放在 `src/main/resources/db/{name}/schema.sql`，表名建议 `component_{name}_*` 或业务语义前缀（如 `client_user_*`）。
-8. 在 [doc/](../doc/README.md) 下按 Controller 补充 OpenAPI YAML。
-9. **禁止**依赖 `deadman-system`；跨体系能力通过 SPI 或 `deadman-app` 桥接。
+5. 若需独立 Security 链：单独 `@Configuration` + `@Order`，`securityMatcher` 限定组件 API 前缀；登录 Provider 通过 `LoginProviderGroupContributor` 注册到 security 统一管理器。
+6. 若需管理端权限：实现 `PermissionContributor`（依赖 `deadman-security`）。
+7. 若需 OAuth 登录：实现 `OAuthLoginUserService`（`loginGroupId` 与组一致）。
+8. DDL 放在 `src/main/resources/db/{name}/schema.sql`，表名建议 `component_{name}_*` 或业务语义前缀（如 `client_user_*`）。
+9. 在 [doc/](../doc/README.md) 下按 Controller 补充 OpenAPI YAML。
+10. **禁止**依赖 `deadman-system`；跨体系能力通过 SPI 或 `deadman-app` 桥接。
 
 ### 组件 vs 插件选型
 
