@@ -36,15 +36,26 @@ public class NotificationRbacInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         SysRole userRole = sysRoleMapper.selectOne(
                 new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, SysRoleCodes.USER));
-        if (userRole != null) {
-            ensurePermissions(userRole.getId(), List.of(
-                    NotificationPermissions.INBOX_READ,
-                    NotificationPermissions.INBOX_UPDATE));
+        if (userRole == null) {
+            return;
         }
-        userAuthorityCache.evictAllUserAuthorities();
+        boolean changed = ensurePermissions(
+                userRole.getId(),
+                List.of(NotificationPermissions.INBOX_READ, NotificationPermissions.INBOX_UPDATE));
+        if (changed) {
+            userAuthorityCache.evictAllUserAuthorities();
+        }
     }
 
-    private void ensurePermissions(Long roleId, List<String> permissionCodes) {
+    /**
+     * 增量绑定角色权限，已存在则跳过。
+     *
+     * @param roleId          角色 ID
+     * @param permissionCodes 权限码列表
+     * @return 是否新增了绑定
+     */
+    private boolean ensurePermissions(Long roleId, List<String> permissionCodes) {
+        boolean changed = false;
         for (String code : permissionCodes) {
             long count = sysRolePermissionMapper.selectCount(new LambdaQueryWrapper<SysRolePermission>()
                     .eq(SysRolePermission::getRoleId, roleId)
@@ -53,7 +64,9 @@ public class NotificationRbacInitializer implements ApplicationRunner {
                 sysRolePermissionMapper.insert(
                         SysRolePermission.builder().roleId(roleId).permissionCode(code).build());
                 log.info("已为角色 {} 绑定权限 {}", roleId, code);
+                changed = true;
             }
         }
+        return changed;
     }
 }

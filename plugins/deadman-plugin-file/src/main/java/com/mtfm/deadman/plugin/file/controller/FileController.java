@@ -43,7 +43,7 @@ public class FileController {
      * @param loginUser  当前登录用户
      * @return 文件元数据
      */
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.file.permission.FilePermissions).UPLOAD)")
     public Result<FileMetadataVO> upload(
             @RequestParam("file") MultipartFile file,
