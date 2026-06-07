@@ -1,0 +1,145 @@
+# com.mtfm.deadman.component.client.controller.ClientAuthController
+# 登录路径由 ClientProviderLoginFilter + ClientLoginProvider 处理（无独立 Controller），一并收录便于对接。
+openapi: 3.0.3
+info:
+  title: ClientAuthController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    用户端认证 — 注册与登录（API 前缀 `/client/api/auth`）。
+    登录成功均返回 `ClientAuthTokenVO`（用户端 JWT，`realm=CLIENT`）。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /client/api/auth/register:
+    post:
+      summary: 用户端注册
+      description: |
+        公开接口。创建用户端账号并签发 JWT。
+        用户名 3–64 字符，密码 8–64 字符。
+      operationId: clientRegister
+      tags: [用户端认证]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRegisterRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientAuthTokenVO'
+
+  /client/api/auth/login/password:
+    post:
+      summary: 用户端用户名密码登录
+      description: |
+        公开接口。由 `PasswordClientLoginProvider` 处理。
+        路径规则：`{authBasePath}/login/{providerId}`，默认 `/client/api/auth/login/password`。
+      operationId: clientLoginPassword
+      tags: [用户端认证]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientLoginPasswordRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientAuthTokenVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+
+  /client/api/auth/login/wechat-miniprogram:
+    post:
+      summary: 微信小程序登录
+      description: |
+        公开接口。由 `deadman-plugin-wechat` 的 `WechatMiniprogramLoginProvider` 处理。
+        使用 `wx.login` 返回的 `code`；首次登录自动创建用户（OAuth 提供商 `wechat-miniprogram`）。
+        需启用 `deadman.plugin.wechat-miniprogram.enabled=true`。
+      operationId: clientLoginWechatMiniprogram
+      tags: [用户端认证]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WechatMiniprogramLoginRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientAuthTokenVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+
+components:
+  schemas:
+    ClientRegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 64
+        password:
+          type: string
+          minLength: 8
+          maxLength: 64
+        nickname:
+          type: string
+          maxLength: 64
+
+    ClientLoginPasswordRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    WechatMiniprogramLoginRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: 微信小程序 wx.login 临时登录凭证
+
+    ClientAuthTokenVO:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          description: 过期秒数
+        userCode:
+          type: string
+        nickname:
+          type: string
+
+    ResultClientAuthTokenVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ClientAuthTokenVO'

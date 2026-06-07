@@ -1,0 +1,97 @@
+# com.mtfm.deadman.system.controller.PermissionController
+openapi: 3.0.3
+info:
+  title: PermissionController
+  version: 0.0.1-SNAPSHOT
+  description: 权限码目录（枚举只读）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/permissions/catalog:
+    get:
+      summary: 权限码目录（按分组）
+      description: 需要权限码 `role:list:read`
+      operationId: permissionCatalog
+      tags: [权限]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPermissionGroupList'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/permissions:
+    get:
+      summary: 权限码列表（平铺）
+      description: 需要权限码 `role:list:read`
+      operationId: permissionListFlat
+      tags: [权限]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPermissionItemList'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PermissionItemVO:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+
+    PermissionGroupVO:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionItemVO'
+
+    ResultPermissionGroupList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PermissionGroupVO'
+
+    ResultPermissionItemList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PermissionItemVO'

@@ -1,0 +1,69 @@
+# com.mtfm.deadman.plugin.wechat.miniprogram.controller.WechatMiniprogramController
+openapi: 3.0.3
+info:
+  title: WechatMiniprogramController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    微信小程序扩展接口（手机号绑定等）。
+    登录见 [ClientAuthController.yaml](../deadman-component-client/ClientAuthController.yaml) 的 `POST /client/api/auth/login/wechat-miniprogram`。
+    需启用 `deadman.plugin.wechat-miniprogram.enabled=true`。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /client/api/wechat-miniprogram/phone/bind:
+    post:
+      summary: 绑定微信手机号
+      description: |
+        需要用户端 JWT（`ClientBearerAuth`）。
+        使用小程序 `getPhoneNumber` 按钮返回的 `code` 解密手机号并绑定到当前用户端账号。
+      operationId: wechatBindPhone
+      tags: [微信小程序]
+      security:
+        - ClientBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WechatBindPhoneRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWechatBindPhoneVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    ClientBearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/ClientBearerAuth'
+
+  schemas:
+    WechatBindPhoneRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: getPhoneNumber 返回的手机号动态令牌
+
+    WechatBindPhoneVO:
+      type: object
+      properties:
+        phone:
+          type: string
+          description: 绑定后的纯手机号
+
+    ResultWechatBindPhoneVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/WechatBindPhoneVO'

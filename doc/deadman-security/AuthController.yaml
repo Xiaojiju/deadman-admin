@@ -1,0 +1,193 @@
+# com.mtfm.deadman.security.controller.AuthController
+openapi: 3.0.3
+info:
+  title: AuthController
+  version: 0.0.1-SNAPSHOT
+  description: 认证 — 注册、登录、改密、当前用户权限
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/auth/register:
+    post:
+      summary: 用户注册
+      description: 公开接口。创建用户并返回 JWT，默认绑定 USER 角色。
+      operationId: register
+      tags: [认证]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAuthTokenVO'
+
+  /api/auth/login:
+    post:
+      summary: 用户登录
+      description: 公开接口。
+      operationId: login
+      tags: [认证]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAuthTokenVO'
+
+  /api/auth/permissions:
+    get:
+      summary: 当前用户权限
+      description: 需要权限码 `auth:permissions:read`
+      operationId: currentPermissions
+      tags: [认证]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserAuthorityVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/auth/password:
+    put:
+      summary: 修改密码
+      description: 需要权限码 `auth:password:change`
+      operationId: changePassword
+      tags: [认证]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 64
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        nickname:
+          type: string
+          maxLength: 64
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    ChangePasswordRequest:
+      type: object
+      required: [oldPassword, newPassword]
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 128
+
+    AuthTokenVO:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+        userCode:
+          type: string
+        nickname:
+          type: string
+
+    UserAuthorityVO:
+      type: object
+      properties:
+        roleCodes:
+          type: array
+          items:
+            type: string
+        permissionCodes:
+          type: array
+          items:
+            type: string
+        superAdmin:
+          type: boolean
+
+    ResultAuthTokenVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AuthTokenVO'
+
+    ResultUserAuthorityVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserAuthorityVO'
+
+    ResultVoid:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              nullable: true

@@ -1,0 +1,184 @@
+# com.mtfm.deadman.notification.controller.NotificationInboxController
+openapi: 3.0.3
+info:
+  title: NotificationInboxController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    站内信收件箱 — 当前登录用户查看、未读统计与已读标记。
+    数据来源于 `sys_notification_recipient` 持久化表。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/notifications/inbox:
+    get:
+      summary: 收件箱分页
+      description: |
+        需要权限码 `notification:inbox:read`。
+        仅返回当前登录用户的收件记录，按接收时间倒序。
+      operationId: pageNotificationInbox
+      tags: [站内信]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: current
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 10
+        - name: readStatus
+          in: query
+          required: false
+          description: 阅读状态筛选；0-未读 1-已读，不传表示全部
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultNotificationInboxPage'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/notifications/inbox/unread-count:
+    get:
+      summary: 未读数量
+      description: 需要权限码 `notification:inbox:read`
+      operationId: notificationUnreadCount
+      tags: [站内信]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLong'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/notifications/inbox/{recipientId}/read:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/RecipientId'
+    post:
+      summary: 标记单条已读
+      description: |
+        需要权限码 `notification:inbox:update`。
+        仅允许操作属于当前用户的收件记录。
+      operationId: markNotificationRead
+      tags: [站内信]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/notifications/inbox/read-all:
+    post:
+      summary: 全部标记已读
+      description: 需要权限码 `notification:inbox:update`。将当前用户所有未读站内信标为已读。
+      operationId: markAllNotificationsRead
+      tags: [站内信]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    NotificationInboxVO:
+      type: object
+      properties:
+        recipientId:
+          type: integer
+          format: int64
+          description: 收件记录主键（标记已读时使用）
+        notificationId:
+          type: integer
+          format: int64
+          description: 通知主键
+        title:
+          type: string
+          description: 标题
+        content:
+          type: string
+          description: 正文
+        readStatus:
+          type: integer
+          description: 阅读状态；0-未读 1-已读
+          enum: [0, 1]
+        readTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: 阅读时间
+        createTime:
+          type: string
+          format: date-time
+          description: 接收时间
+
+    PageNotificationInboxVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/PageVO'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationInboxVO'
+
+    ResultNotificationInboxPage:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/PageNotificationInboxVO'
+
+    ResultLong:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: integer
+              format: int64
+              description: 未读条数
