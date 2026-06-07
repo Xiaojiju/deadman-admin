@@ -5,7 +5,7 @@
 ## 目录
 
 | 模块 | 文件 | Controller |
-|------|------|------------|
+| ------ | ------ | ------------ |
 | deadman-security | [AuthController.yaml](deadman-security/AuthController.yaml) | 注册、登录、改密、当前权限 |
 | deadman-security | [UserController.yaml](deadman-security/UserController.yaml) | 当前用户资料 |
 | deadman-system | [UserAdminController.yaml](deadman-system/UserAdminController.yaml) | 管理端用户 CRUD |
