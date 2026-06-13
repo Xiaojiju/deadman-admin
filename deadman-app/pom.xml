@@ -44,6 +44,10 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
+            <artifactId>deadman-support-wechat</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-excel</artifactId>
         </dependency>
         <dependency>

@@ -42,6 +42,9 @@ public enum ResultCode {
     POSITION_DEPT_MISMATCH(12014, "职位所属部门与用户部门不一致"),
     PHONE_EXISTS(12021, "手机号已被其他用户绑定"),
 
+    OAUTH_ALREADY_BOUND(12031, "该第三方账号已被其他用户绑定"),
+    WECHAT_BIND_TOKEN_INVALID(12032, "微信绑定临时令牌无效或已过期"),
+
     FILE_NOT_FOUND(13001, "文件不存在"),
     FILE_TOO_LARGE(13002, "文件大小超出限制"),
     FILE_STORAGE_ERROR(13003, "文件存储失败"),
