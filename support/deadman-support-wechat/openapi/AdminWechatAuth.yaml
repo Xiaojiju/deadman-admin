@@ -1,0 +1,250 @@
+# com.mtfm.deadman.support.wechat.auth.AdminWechatMiniprogramLoginProvider
+# com.mtfm.deadman.support.wechat.auth.AdminWechatBindLoginProvider
+# 登录路径由 ProviderLoginFilter + LoginProvider 处理（无独立 Controller），一并收录便于对接。
+openapi: 3.0.3
+info:
+  title: AdminWechatAuth
+  version: 0.0.1-SNAPSHOT
+  description: |
+    管理端微信小程序 OAuth 登录与绑定（API 前缀 `/api/auth`）。
+
+    由 `deadman-support-wechat` 桥接模块提供，**仅适用于 admin 用户体系**：
+    - 与 client 不同，管理端**不会**在首次微信登录时自动开通用户；
+    - openid 未绑定时返回临时 `bindToken`，需调用绑定接口完成用户名密码二次认证。
+
+    前置条件：
+    - `deadman.plugin.wechat-miniprogram.enabled=true` 且 `login-bindings` 含 `group-id: admin`
+    - `deadman.support.wechat.enabled=true`（默认 true）
+    - 已配置 `app-id` / `app-secret`
+
+    典型流程：
+    1. 小程序 `wx.login` 获取 `code` → `POST /api/auth/wechat-miniprogram`
+    2. 若返回 `needBind=true` → 用户输入管理端账号密码 → `POST /api/auth/wechat-miniprogram/bind`
+    3. 绑定成功后返回管理端 JWT，与 `POST /api/auth/login` 相同
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/auth/wechat-miniprogram:
+    post:
+      summary: 管理端微信小程序登录
+      description: |
+        公开接口。由 `AdminWechatMiniprogramLoginProvider` 处理（覆盖插件默认 admin 实现）。
+
+        使用 `wx.login` 返回的 `code` 调用微信 `jscode2session`：
+        - **已绑定**：openid 已在 `user_account`（OAUTH / wechat-miniprogram）中关联管理端用户，直接返回 JWT；
+        - **未绑定**：将会话信息写入 Redis，返回临时 `bindToken`（TTL 见 `deadman.support.wechat.bind-token-ttl`，默认 10 分钟），
+          客户端需引导用户输入管理端用户名密码并调用绑定接口。
+      operationId: adminLoginWechatMiniprogram
+      tags: [管理端微信认证]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WechatMiniprogramLoginRequest'
+            examples:
+              wxLogin:
+                summary: wx.login code
+                value:
+                  code: "081abcXYZ..."
+      responses:
+        '200':
+          description: |
+            成功。`data` 形态取决于是否已绑定：
+            - 已绑定 → `AuthTokenVO`（含 accessToken）
+            - 未绑定 → `AdminWechatPendingBindVO`（含 bindToken）
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ResultAuthTokenVO'
+                  - $ref: '#/components/schemas/ResultAdminWechatPendingBindVO'
+              examples:
+                alreadyBound:
+                  summary: openid 已绑定，直接登录
+                  value:
+                    code: 0
+                    msg: success
+                    timestamp: 1718265600000
+                    data:
+                      accessToken: eyJhbGciOiJIUzI1NiJ9...
+                      tokenType: Bearer
+                      expiresIn: 86400
+                      userCode: DM001
+                      nickname: 系统管理员
+                needBind:
+                  summary: openid 未绑定，需二次认证
+                  value:
+                    code: 0
+                    msg: success
+                    timestamp: 1718265600000
+                    data:
+                      bindToken: a1b2c3d4e5f6789012345678901234ab
+                      expiresIn: 600
+                      needBind: true
+        '401':
+          description: |
+            微信 code 无效、code 为空或微信 API 调用失败等业务认证失败。
+            HTTP 状态码仍为 200 时，`code` 字段为业务错误码（如 40100）。
+          content:
+            application/json:
+              schema:
+                $ref: '../../../doc/_shared/components.yaml#/components/schemas/ResultBase'
+              examples:
+                invalidCode:
+                  summary: code 无效
+                  value:
+                    code: 40100
+                    msg: 未认证
+                    timestamp: 1718265600000
+
+  /api/auth/wechat-miniprogram/bind:
+    post:
+      summary: 管理端微信 OAuth 绑定（用户名密码二次认证）
+      description: |
+        公开接口。由 `AdminWechatBindLoginProvider` 处理。
+
+        使用第一步返回的 `bindToken` 配合管理端用户名、密码：
+        1. 校验并一次性消费 Redis 中的待绑定会话（含 openid）；
+        2. 校验用户名密码；
+        3. 将 openid 写入 `user_account`（OAUTH / wechat-miniprogram）；
+        4. 签发管理端 JWT 并返回。
+
+        注意：`bindToken` 仅能使用一次，过期后需重新 `wx.login` 并调用登录接口。
+      operationId: adminBindWechatMiniprogram
+      tags: [管理端微信认证]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminWechatBindRequest'
+            examples:
+              bind:
+                summary: 绑定并登录
+                value:
+                  bindToken: a1b2c3d4e5f6789012345678901234ab
+                  username: admin
+                  password: admin123456
+      responses:
+        '200':
+          description: 绑定成功，返回管理端 JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAuthTokenVO'
+              examples:
+                success:
+                  summary: 绑定成功
+                  value:
+                    code: 0
+                    msg: success
+                    timestamp: 1718265600000
+                    data:
+                      accessToken: eyJhbGciOiJIUzI1NiJ9...
+                      tokenType: Bearer
+                      expiresIn: 86400
+                      userCode: DM001
+                      nickname: 系统管理员
+        '401':
+          description: |
+            认证失败：用户名密码错误、bindToken 无效或已过期。
+            HTTP 状态码仍为 200 时，`code` 字段为业务错误码。
+          content:
+            application/json:
+              schema:
+                $ref: '../../../doc/_shared/components.yaml#/components/schemas/ResultBase'
+              examples:
+                passwordMismatch:
+                  summary: 用户名或密码错误（10005）
+                  value:
+                    code: 10005
+                    msg: 用户名或密码错误
+                    timestamp: 1718265600000
+                bindTokenInvalid:
+                  summary: 临时令牌无效或过期（12032）
+                  value:
+                    code: 12032
+                    msg: 微信绑定临时令牌无效或已过期
+                    timestamp: 1718265600000
+
+components:
+  schemas:
+    WechatMiniprogramLoginRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: 微信小程序 wx.login 临时登录凭证
+
+    AdminWechatBindRequest:
+      type: object
+      required: [bindToken, username, password]
+      properties:
+        bindToken:
+          type: string
+          description: 第一步登录返回的临时绑定令牌
+        username:
+          type: string
+          description: 管理端用户名（USERNAME 类型账号标识）
+        password:
+          type: string
+          format: password
+          description: 管理端密码
+
+    AuthTokenVO:
+      type: object
+      description: 管理端 JWT，与 POST /api/auth/login 响应一致
+      properties:
+        accessToken:
+          type: string
+          description: JWT 访问令牌
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          description: 过期秒数
+        userCode:
+          type: string
+          description: 用户对外编码
+        nickname:
+          type: string
+          description: 用户昵称
+
+    AdminWechatPendingBindVO:
+      type: object
+      description: openid 未绑定时返回，需继续调用绑定接口
+      properties:
+        bindToken:
+          type: string
+          description: 临时绑定令牌，一次性有效
+        expiresIn:
+          type: integer
+          format: int64
+          description: bindToken 有效秒数
+        needBind:
+          type: boolean
+          description: 是否需要进一步绑定，固定为 true
+          example: true
+
+    ResultAuthTokenVO:
+      allOf:
+        - $ref: '../../../doc/_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AuthTokenVO'
+
+    ResultAdminWechatPendingBindVO:
+      allOf:
+        - $ref: '../../../doc/_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AdminWechatPendingBindVO'

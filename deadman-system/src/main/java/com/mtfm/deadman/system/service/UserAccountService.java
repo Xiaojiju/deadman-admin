@@ -129,6 +129,36 @@ public class UserAccountService extends ServiceImpl<UserAccountMapper, UserAccou
     }
 
     /**
+     * 将 OAuth 账号绑定到指定用户；若 openid 已被其他用户占用则抛出业务异常。
+     *
+     * @param userId   用户 ID
+     * @param provider OAuth 提供商标识
+     * @param subject  OAuth 用户唯一标识（如 openid）
+     */
+    public void bindOAuth(Long userId, String provider, String subject) {
+        if (!StringUtils.hasText(provider) || !StringUtils.hasText(subject)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "OAuth 绑定参数不完整");
+        }
+        UserAccount existing = findByOAuth(provider, subject);
+        if (existing != null) {
+            if (!existing.getUserId().equals(userId)) {
+                throw new BusinessException(ResultCode.OAUTH_ALREADY_BOUND);
+            }
+            return;
+        }
+        UserAccount account = UserAccount.builder()
+                .userId(userId)
+                .accountType(AccountType.OAUTH.getCode())
+                .accountIdentifier(subject)
+                .oauthProvider(provider)
+                .oauthSubject(subject)
+                .verified(1)
+                .status(UserStatus.ACTIVE.getValue())
+                .build();
+        save(account);
+    }
+
+    /**
      * 批量加载用户手机号。
      *
      * @param userIds 用户 ID 列表

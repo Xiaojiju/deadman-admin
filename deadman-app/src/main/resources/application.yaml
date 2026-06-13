@@ -68,8 +68,8 @@ deadman:
         batch-size: 50
     wechat-miniprogram:
       enabled: ${DEADMAN_PLUGIN_WECHAT_MINIPROGRAM_ENABLED:true}
-      app-id: ${DEADMAN_WECHAT_MINIPROGRAM_APP_ID:}
-      app-secret: ${DEADMAN_WECHAT_MINIPROGRAM_APP_SECRET:}
+      app-id: ${DEADMAN_WECHAT_MINIPROGRAM_APP_ID:wx5611b71860ce3e06}
+      app-secret: ${DEADMAN_WECHAT_MINIPROGRAM_APP_SECRET:7a7250503bf7c9c5d4173e0ecb96d4dd}
       login-bindings:
         - group-id: admin
     excel:
@@ -82,13 +82,7 @@ deadman:
       enabled: ${DEADMAN_PLUGIN_STORAGE_LOCAL_ENABLED:true}
       base-path: ${FILE_STORAGE_PATH:./data/files}
       public-url-prefix: /files
-  component:
-    client:
-      enabled: ${DEADMAN_COMPONENT_CLIENT_ENABLED:true}
-      jwt:
-        secret: ${DEADMAN_CLIENT_JWT_SECRET:8f3c2a1b9e7d6c5a4b3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b}
-        expiration-ms: ${DEADMAN_CLIENT_JWT_EXPIRATION_MS:604800000}
-      user:
-        user-code-prefix: ${DEADMAN_CLIENT_USER_CODE_PREFIX:CL}
-      security:
-        multi-session-enabled: ${DEADMAN_CLIENT_MULTI_SESSION_ENABLED:true}
+  support:
+    wechat:
+      enabled: ${DEADMAN_SUPPORT_WECHAT_ENABLED:true}
+      bind-token-ttl: ${DEADMAN_SUPPORT_WECHAT_BIND_TOKEN_TTL:10m}

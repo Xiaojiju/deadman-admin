@@ -9,7 +9,20 @@ public final class RedisKeyConstants {
 
     public static final String USER_PROFILE = PREFIX + ":user:profile:";
 
+    /** 管理端微信 OAuth 待绑定临时令牌前缀 */
+    public static final String ADMIN_WECHAT_BIND = PREFIX + ":wechat:admin:bind:";
+
     private RedisKeyConstants() {
+    }
+
+    /**
+     * 构建管理端微信待绑定临时令牌 Redis key。
+     *
+     * @param bindToken 临时绑定令牌
+     * @return 完整 Redis key
+     */
+    public static String adminWechatBindKey(String bindToken) {
+        return ADMIN_WECHAT_BIND + bindToken;
     }
 
     /**
