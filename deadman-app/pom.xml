@@ -48,6 +48,10 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-data-scope</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-excel</artifactId>
         </dependency>
         <dependency>

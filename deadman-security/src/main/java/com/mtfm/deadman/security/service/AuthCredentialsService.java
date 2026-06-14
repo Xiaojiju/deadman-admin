@@ -10,11 +10,14 @@ import com.mtfm.deadman.security.dto.auth.RegisterRequest;
 import com.mtfm.deadman.security.vo.auth.AuthTokenVO;
 import com.mtfm.deadman.system.entity.UserAccount;
 import com.mtfm.deadman.system.entity.UserBase;
+import com.mtfm.deadman.common.event.user.UserCreatedEvent;
+import com.mtfm.deadman.common.event.user.UserCreationSource;
 import com.mtfm.deadman.system.service.UserAccountService;
 import com.mtfm.deadman.system.service.UserPasswordService;
 import com.mtfm.deadman.system.service.UserService;
 import com.mtfm.deadman.system.util.UserCodeGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -32,6 +35,7 @@ public class AuthCredentialsService {
     private final RoleAdminService roleAdminService;
     private final AuthTokenService authTokenService;
     private final DeadmanProperties deadmanProperties;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 用户注册并签发 JWT。
@@ -65,6 +69,7 @@ public class AuthCredentialsService {
 
         userPasswordService.createPassword(userBase.getId(), request.password());
         roleAdminService.assignDefaultUserRole(userBase.getId());
+        eventPublisher.publishEvent(new UserCreatedEvent(userBase.getId(), UserCreationSource.REGISTER));
 
         return authTokenService.issueToken(userBase);
     }
@@ -117,8 +122,9 @@ public class AuthCredentialsService {
 
         userPasswordService.createPassword(userBase.getId(), password);
         roleAdminService.assignSuperAdminRole(userBase.getId());
+        eventPublisher.publishEvent(
+                new UserCreatedEvent(userBase.getId(), UserCreationSource.BOOTSTRAP_SUPER_ADMIN));
 
         return userCode;
     }
-
 }

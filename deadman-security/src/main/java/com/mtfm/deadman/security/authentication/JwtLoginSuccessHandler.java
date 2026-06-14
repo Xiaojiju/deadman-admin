@@ -33,10 +33,10 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     /**
      * 构造登录成功处理器，聚合可选的待绑定 OAuth 处理器。
      *
-     * @param authTokenService               JWT 签发服务
-     * @param userService                    用户服务
-     * @param jsonMapper                     JSON 映射器
-     * @param pendingOAuthBindLoginHandlers  待绑定 OAuth 处理器列表，无实现时为空列表
+     * @param authTokenService              JWT 签发服务
+     * @param userService                   用户服务
+     * @param jsonMapper                    JSON 映射器
+     * @param pendingOAuthBindLoginHandlers 待绑定 OAuth 处理器列表，无实现时为空列表
      */
     public JwtLoginSuccessHandler(
             AuthTokenService authTokenService,
@@ -46,8 +46,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
         this.authTokenService = authTokenService;
         this.userService = userService;
         this.jsonMapper = jsonMapper;
-        this.pendingOAuthBindLoginHandlers =
-                pendingOAuthBindLoginHandlers == null ? List.of() : pendingOAuthBindLoginHandlers;
+        this.pendingOAuthBindLoginHandlers = pendingOAuthBindLoginHandlers == null ? List.of()
+                : pendingOAuthBindLoginHandlers;
     }
 
     @Override

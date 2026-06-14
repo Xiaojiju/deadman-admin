@@ -1,6 +1,7 @@
 package com.mtfm.deadman.security;
 
 import com.mtfm.deadman.common.constants.SysRoleCodes;
+import com.mtfm.deadman.common.spi.DataScopeAuthPrincipal;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,7 +16,7 @@ import java.util.Set;
  * 用户绑定多角色时，角色编码与权限码均会去重合并。
  */
 @Getter
-public class LoginUser implements UserDetails {
+public class LoginUser implements UserDetails, DataScopeAuthPrincipal {
 
     /** 用户ID */
     private final Long userId;
@@ -72,6 +73,16 @@ public class LoginUser implements UserDetails {
      */
     public boolean isSuperAdmin() {
         return roleCodes.contains(SysRoleCodes.SUPER_ADMIN);
+    }
+
+    @Override
+    public boolean superAdmin() {
+        return isSuperAdmin();
+    }
+
+    @Override
+    public Long userId() {
+        return userId;
     }
 
     /**

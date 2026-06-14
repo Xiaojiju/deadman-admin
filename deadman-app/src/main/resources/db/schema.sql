@@ -82,6 +82,31 @@ CREATE TABLE IF NOT EXISTS sys_user_role (
     CONSTRAINT fk_sys_user_role_role_id FOREIGN KEY (role_id) REFERENCES sys_role (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户与角色多对多关联';
 
+-- 用户数据权限（与角色独立）
+CREATE TABLE IF NOT EXISTS user_data_scope (
+    id          BIGINT       NOT NULL COMMENT '主键',
+    user_id     BIGINT       NOT NULL COMMENT '用户 ID，关联 user_base.id',
+    scope_type  VARCHAR(32)  NOT NULL DEFAULT 'DEPT' COMMENT '数据范围：ALL/DEPT/DEPT_AND_CHILD/SELF/CUSTOM',
+    create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_user_data_scope_user (user_id),
+    CONSTRAINT fk_user_data_scope_user_id FOREIGN KEY (user_id) REFERENCES user_base (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户数据权限配置，与角色独立';
+
+-- 用户 CUSTOM 数据权限可见部门
+CREATE TABLE IF NOT EXISTS user_data_scope_dept (
+    id          BIGINT    NOT NULL COMMENT '主键',
+    user_id     BIGINT    NOT NULL COMMENT '用户 ID，关联 user_base.id',
+    dept_id     BIGINT    NOT NULL COMMENT '可见部门 ID，关联 sys_department.id',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_user_data_scope_dept (user_id, dept_id),
+    KEY idx_user_data_scope_dept_user (user_id),
+    CONSTRAINT fk_user_data_scope_dept_user_id FOREIGN KEY (user_id) REFERENCES user_base (id),
+    CONSTRAINT fk_user_data_scope_dept_dept_id FOREIGN KEY (dept_id) REFERENCES sys_department (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户 CUSTOM 数据权限可见部门';
+
 -- 角色权限码关联（权限码来自枚举，不在此表维护定义）
 CREATE TABLE IF NOT EXISTS sys_role_permission (
     id              BIGINT        NOT NULL COMMENT '关联主键',

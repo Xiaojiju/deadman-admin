@@ -11,6 +11,7 @@
 | [deadman-plugin-excel](#deadman-plugin-excel) | `deadman.plugin.excel` | EasyExcel 导入导出工具包 | — |
 | [deadman-plugin-file](#deadman-plugin-file) | `deadman.plugin.file` | 文件上传下载、`FileStorageProvider` SPI | [FileController.yaml](../doc/deadman-plugin-file/FileController.yaml) |
 | [deadman-plugin-storage-local](#deadman-plugin-storage-local) | `deadman.plugin.storage-local` | 本地磁盘存储 Provider（依赖 file 插件） | 见 file 文档 `/files/**` |
+| [deadman-plugin-data-scope](#deadman-plugin-data-scope) | `deadman.plugin.data-scope` | 数据权限：`@DataScope` + `@DataColumn` + MyBatis-Plus SQL 拼接 | — |
 
 ## 插拔方式
 
@@ -268,6 +269,56 @@ deadman:
 **依赖：** `deadman-plugin-file`（须同时引入 file 插件）
 
 扩展 OSS/S3：新建 `deadman-plugin-storage-oss` 等模块，实现 `FileStorageProvider` 并注册 Bean，将 `deadman.plugin.file.default-provider` 改为对应 ID。
+
+---
+
+## deadman-plugin-data-scope
+
+管理端行级数据权限：用户独立的 `user_data_scope` 配置决定可见范围（与角色解耦）。**插件自包含**，移除后 common/system/security 无残留。
+
+| 数据范围 | 说明 |
+|----------|------|
+| `ALL` | 全部数据 |
+| `DEPT` | 本部门（未配置用户默认） |
+| `DEPT_AND_CHILD` | 本部门及下级 |
+| `SELF` | 仅本人 |
+| `CUSTOM` | 自定义，可见部门见 `user_data_scope_dept` |
+
+**API：**
+- `GET/PUT /api/users/{userId}/data-scope` — 查询/分配数据范围
+- 用户详情 VO 不再包含 dataScope，请单独调用上述接口
+
+**运行时：** 登录后预热 Redis 缓存；`DataScopeContextFilter` 注入请求上下文；`@DataScope` 开启调用链过滤；MyBatis 拦截器读取 `@DataColumn` 拼接 SQL。
+
+**注解（`deadman-plugin-data-scope` 模块内 `annotation` 包）：**
+
+| 注解 | 作用 |
+|------|------|
+| `@DataScope` | Service/Controller 方法或类启用数据隔离 |
+| `@DataScopeIgnore` | 忽略数据隔离 |
+| `@DataColumn(dept=, user=)` | Mapper 声明部门/用户过滤列（表名默认从实体 `@TableName` 推导） |
+
+业务模块（如 `deadman-system`）依赖 `deadman-plugin-data-scope` 打注解；`deadman-app` 引入同一插件后切面与拦截器生效。插件通过 common SPI 与 system 解耦，无 Maven 环依赖。
+
+**与 core 集成：** 用户领域事件在 `deadman-common`；system 发布、插件监听；SPI：`DataScopeUserBridge`、`DataScopeDepartmentTreeBridge`。
+
+**配置：**
+
+```yaml
+deadman:
+  plugin:
+    data-scope:
+      enabled: true
+      # columns:  # 可选 YAML 兜底，大项目优先用 @DataColumn
+      #   some_table:
+      #     dept-column: dept_id
+      #     user-column: user_id
+```
+
+**示例：**
+
+- `UserBaseMapper`：`@DataColumn(dept = "department_id", user = "id")`
+- `UserAdminQueryService.pageUsers`：`@DataScope`
 
 ---
 

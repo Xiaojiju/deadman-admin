@@ -69,6 +69,25 @@ CREATE TABLE IF NOT EXISTS sys_user_role (
     CONSTRAINT uk_sys_user_role UNIQUE (user_id, role_id)
 );
 
+CREATE TABLE IF NOT EXISTS user_data_scope (
+    id          BIGINT       NOT NULL,
+    user_id     BIGINT       NOT NULL,
+    scope_type  VARCHAR(32)  NOT NULL DEFAULT 'DEPT',
+    create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_user_data_scope_user UNIQUE (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_data_scope_dept (
+    id          BIGINT    NOT NULL,
+    user_id     BIGINT    NOT NULL,
+    dept_id     BIGINT    NOT NULL,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_user_data_scope_dept UNIQUE (user_id, dept_id)
+);
+
 CREATE TABLE IF NOT EXISTS sys_role_permission (
     id              BIGINT        NOT NULL,
     role_id         BIGINT        NOT NULL,

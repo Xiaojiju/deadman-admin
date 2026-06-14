@@ -34,7 +34,7 @@ public class UserAdminController {
 
     /**
      * 用户分页列表
-     * 
+     *
      * @param query 用户分页查询参数
      * @return 用户分页列表
      */
@@ -46,7 +46,7 @@ public class UserAdminController {
 
     /**
      * 用户详情
-     * 
+     *
      * @param userId 用户ID
      * @return 用户详情
      */
@@ -58,7 +58,7 @@ public class UserAdminController {
 
     /**
      * 新增用户
-     * 
+     *
      * @param request 新增用户请求
      * @return 新增用户
      */
@@ -70,7 +70,7 @@ public class UserAdminController {
 
     /**
      * 更新用户
-     * 
+     *
      * @param userId  用户ID
      * @param request 更新用户请求
      * @return 更新用户
@@ -83,7 +83,7 @@ public class UserAdminController {
 
     /**
      * 删除用户
-     * 
+     *
      * @param userId 用户ID
      * @return 删除用户
      */
@@ -110,7 +110,7 @@ public class UserAdminController {
 
     /**
      * 分配用户角色
-     * 
+     *
      * @param userId  用户ID
      * @param request 分配用户角色请求
      * @return 分配用户角色

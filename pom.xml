@@ -20,6 +20,7 @@
     <modules>
         <module>deadman-common</module>
         <module>deadman-core</module>
+        <module>plugins/deadman-plugin-data-scope</module>
         <module>deadman-system</module>
         <module>deadman-notification</module>
         <module>deadman-security</module>
@@ -100,6 +101,11 @@
             <dependency>
                 <groupId>com.mtfm</groupId>
                 <artifactId>deadman-plugin-storage-local</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
+                <artifactId>deadman-plugin-data-scope</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
