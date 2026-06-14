@@ -11,7 +11,7 @@
 | [deadman-plugin-excel](#deadman-plugin-excel) | `deadman.plugin.excel` | EasyExcel 导入导出工具包 | — |
 | [deadman-plugin-file](#deadman-plugin-file) | `deadman.plugin.file` | 文件上传下载、`FileStorageProvider` SPI | [FileController.yaml](../doc/deadman-plugin-file/FileController.yaml) |
 | [deadman-plugin-storage-local](#deadman-plugin-storage-local) | `deadman.plugin.storage-local` | 本地磁盘存储 Provider（依赖 file 插件） | 见 file 文档 `/files/**` |
-| [deadman-plugin-data-scope](#deadman-plugin-data-scope) | `deadman.plugin.data-scope` | 数据权限：`@DataScope` + `@DataColumn` + MyBatis-Plus SQL 拼接 | — |
+| [deadman-plugin-data-scope](#deadman-plugin-data-scope) | `deadman.plugin.data-scope` | 数据权限：`@DataScope` + `@DataColumn` + MyBatis-Plus SQL 拼接 | [UserDataScopeAdminController.yaml](../doc/deadman-plugin-data-scope/UserDataScopeAdminController.yaml) |
 
 ## 插拔方式
 
@@ -287,6 +287,8 @@ deadman:
 **API：**
 - `GET/PUT /api/users/{userId}/data-scope` — 查询/分配数据范围
 - 用户详情 VO 不再包含 dataScope，请单独调用上述接口
+
+**OpenAPI：** [UserDataScopeAdminController.yaml](../doc/deadman-plugin-data-scope/UserDataScopeAdminController.yaml)
 
 **运行时：** 登录后预热 Redis 缓存；`DataScopeContextFilter` 注入请求上下文；`@DataScope` 开启调用链过滤；MyBatis 拦截器读取 `@DataColumn` 拼接 SQL。
 

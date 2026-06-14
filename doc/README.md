@@ -21,6 +21,7 @@
 | deadman-component-client | [ClientUserAdminController.yaml](deadman-component-client/ClientUserAdminController.yaml) | 管理端操作用户端用户 |
 | deadman-plugin-wechat | [WechatMiniprogramController.yaml](deadman-plugin-wechat/WechatMiniprogramController.yaml) | 微信小程序手机号绑定 |
 | deadman-plugin-file | [FileController.yaml](deadman-plugin-file/FileController.yaml) | 文件上传、下载与元数据 |
+| deadman-plugin-data-scope | [UserDataScopeAdminController.yaml](deadman-plugin-data-scope/UserDataScopeAdminController.yaml) | 用户数据范围查询与分配 |
 
 公共片段：[\_shared/components.yaml](_shared/components.yaml)（管理端/用户端 JWT、`Result`、`PageParam` / `PageVO`、通用 401/403）。
 

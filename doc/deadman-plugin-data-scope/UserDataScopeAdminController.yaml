@@ -1,0 +1,145 @@
+# com.mtfm.deadman.plugin.datascope.controller.UserDataScopeAdminController
+openapi: 3.0.3
+info:
+  title: UserDataScopeAdminController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    用户数据权限（行级数据范围）独立管理接口，与角色 RBAC 解耦。
+    配置存储于 `user_data_scope` / `user_data_scope_dept`，运行时由插件拦截器按 `@DataScope` + `@DataColumn` 生效。
+
+    **说明：**
+    - 用户详情 `GET /api/users/{userId}` **不包含** dataScope，需单独调用本组接口。
+    - 未配置用户默认数据范围为 `DEPT`（本部门）。
+    - 引导创建的超级管理员默认为 `ALL`。
+    - 需启用插件：`deadman.plugin.data-scope.enabled=true`（默认 true）。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/users/{userId}/data-scope:
+    parameters:
+      - $ref: '../_shared/components.yaml#/components/parameters/UserId'
+    get:
+      summary: 查询用户数据范围
+      description: |
+        需要权限码 `user:list:read`。
+        返回用户当前数据范围类型；`CUSTOM` 时附带可见部门 ID 列表。
+      operationId: getUserDataScope
+      tags: [数据权限]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDataScopeVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+        '404':
+          description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+    put:
+      summary: 分配用户数据范围
+      description: |
+        需要权限码 `user:update`。
+        覆盖式更新用户数据范围，并刷新运行时 Redis 缓存。
+        `scopeType=CUSTOM` 时 `customDeptIds` 必填且非空。
+      operationId: assignUserDataScope
+      tags: [数据权限]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignUserDataScopeRequest'
+      responses:
+        '200':
+          description: 成功，返回更新后的配置
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDataScopeVO'
+        '400':
+          description: 参数校验失败（如 CUSTOM 未传部门列表）
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+        '404':
+          description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    DataScopeType:
+      type: string
+      enum: [ALL, CUSTOM, DEPT_AND_CHILD, DEPT, SELF]
+      description: |
+        数据范围类型（与用户角色独立）：
+        - `ALL`：全部数据
+        - `CUSTOM`：自定义可见部门（见 customDeptIds）
+        - `DEPT_AND_CHILD`：本部门及下级部门
+        - `DEPT`：仅本部门（未配置时的默认值）
+        - `SELF`：仅本人
+
+    AssignUserDataScopeRequest:
+      type: object
+      required: [scopeType]
+      properties:
+        scopeType:
+          $ref: '#/components/schemas/DataScopeType'
+        customDeptIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: CUSTOM 范围下的可见部门 ID 列表；其他类型可省略或传空
+
+    DataScopeVO:
+      type: object
+      description: 用户数据权限配置视图
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: 用户 ID
+        scopeType:
+          type: string
+          description: 数据范围类型枚举名
+          example: DEPT
+        customDeptIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: CUSTOM 可见部门 ID 列表（已排序）
+
+    ResultDataScopeVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/DataScopeVO'
