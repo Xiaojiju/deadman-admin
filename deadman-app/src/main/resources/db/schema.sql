@@ -35,8 +35,7 @@ CREATE TABLE IF NOT EXISTS user_account (
     update_time         TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
     UNIQUE KEY uk_user_account_login (account_type, account_identifier, oauth_provider),
-    KEY idx_user_account_user_id (user_id, is_deleted),
-    CONSTRAINT fk_user_account_user_id FOREIGN KEY (user_id) REFERENCES user_base (id)
+    KEY idx_user_account_user_id (user_id, is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户登录账号，支持用户名/手机/OAuth 等';
 
 -- 用户密码（一用户仅一条）
@@ -50,8 +49,7 @@ CREATE TABLE IF NOT EXISTS user_password (
     create_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_user_password_user_id (user_id),
-    CONSTRAINT fk_user_password_user_id FOREIGN KEY (user_id) REFERENCES user_base (id)
+    UNIQUE KEY uk_user_password_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户密码，一用户一条；encoder_id 记录所用 PasswordEncoder';
 
 -- 角色
@@ -77,9 +75,7 @@ CREATE TABLE IF NOT EXISTS sys_user_role (
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_user_role (user_id, role_id),
-    KEY idx_sys_user_role_user (user_id),
-    CONSTRAINT fk_sys_user_role_user_id FOREIGN KEY (user_id) REFERENCES user_base (id),
-    CONSTRAINT fk_sys_user_role_role_id FOREIGN KEY (role_id) REFERENCES sys_role (id)
+    KEY idx_sys_user_role_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户与角色多对多关联';
 
 -- 用户数据权限（与角色独立）
@@ -90,8 +86,7 @@ CREATE TABLE IF NOT EXISTS user_data_scope (
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_user_data_scope_user (user_id),
-    CONSTRAINT fk_user_data_scope_user_id FOREIGN KEY (user_id) REFERENCES user_base (id)
+    UNIQUE KEY uk_user_data_scope_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户数据权限配置，与角色独立';
 
 -- 用户 CUSTOM 数据权限可见部门
@@ -102,9 +97,7 @@ CREATE TABLE IF NOT EXISTS user_data_scope_dept (
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (id),
     UNIQUE KEY uk_user_data_scope_dept (user_id, dept_id),
-    KEY idx_user_data_scope_dept_user (user_id),
-    CONSTRAINT fk_user_data_scope_dept_user_id FOREIGN KEY (user_id) REFERENCES user_base (id),
-    CONSTRAINT fk_user_data_scope_dept_dept_id FOREIGN KEY (dept_id) REFERENCES sys_department (id)
+    KEY idx_user_data_scope_dept_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户 CUSTOM 数据权限可见部门';
 
 -- 角色权限码关联（权限码来自枚举，不在此表维护定义）
@@ -114,8 +107,7 @@ CREATE TABLE IF NOT EXISTS sys_role_permission (
     permission_code VARCHAR(128)  NOT NULL COMMENT '权限码，对应 PermissionCode 枚举',
     create_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_role_permission (role_id, permission_code),
-    CONSTRAINT fk_sys_role_permission_role_id FOREIGN KEY (role_id) REFERENCES sys_role (id)
+    UNIQUE KEY uk_sys_role_permission (role_id, permission_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色与权限码关联，权限定义由代码枚举维护';
 
 -- 部门（树形组织结构）
@@ -159,9 +151,7 @@ CREATE TABLE IF NOT EXISTS sys_user_position (
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_user_position (user_id, position_id),
     KEY idx_sys_user_position_user (user_id),
-    KEY idx_sys_user_position_position (position_id),
-    CONSTRAINT fk_sys_user_position_user_id FOREIGN KEY (user_id) REFERENCES user_base (id),
-    CONSTRAINT fk_sys_user_position_position_id FOREIGN KEY (position_id) REFERENCES sys_position (id)
+    KEY idx_sys_user_position_position (position_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户与职位多对多关联';
 
 -- 用户端组件表结构见 deadman-component-client：
