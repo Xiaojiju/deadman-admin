@@ -1,5 +1,8 @@
 package com.mtfm.deadman.security.permission;
 
+import com.mtfm.deadman.common.permission.PermissionGroupDescriptor;
+import com.mtfm.deadman.common.permission.PermissionItemDescriptor;
+import com.mtfm.deadman.common.spi.PermissionContributor;
 import com.mtfm.deadman.system.permission.SystemPermissions;
 import org.springframework.stereotype.Component;
 

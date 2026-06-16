@@ -57,7 +57,7 @@ paths:
       summary: 新增用户
       description: |
         需要权限码 `user:create`。默认绑定 USER 角色。
-        可选绑定手机号（PHONE 账号）、部门与职位。
+        可选绑定手机号（PHONE 账号）、多部门与职位绑定。
       operationId: createUser
       tags: [用户管理]
       security:
@@ -180,7 +180,7 @@ paths:
       - $ref: '../_shared/components.yaml#/components/parameters/UserId'
     put:
       summary: 分配用户角色
-      description: 需要权限码 `role:user:assign`。覆盖式绑定（与 PUT /api/roles/users/{userId} 等价）。
+      description: 需要权限码 `role:user:assign`。覆盖式绑定角色 ID 列表。
       operationId: assignUserRolesByUserAdmin
       tags: [用户管理]
       security:
@@ -232,16 +232,21 @@ components:
           type: string
           pattern: '^1[3-9]\d{9}$'
           description: 中国大陆手机号，绑定为 PHONE 类型账号
-        departmentId:
-          type: integer
-          format: int64
-          description: 所属部门 ID
-        positionIds:
+        departmentIds:
           type: array
           items:
             type: integer
             format: int64
-          description: 职位 ID 列表，可绑定多个，须与用户部门匹配
+          description: 所属部门 ID 列表
+        primaryDepartmentId:
+          type: integer
+          format: int64
+          description: 主部门 ID，为空时取 departmentIds 首项
+        positionBindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserPositionBindingRequest'
+          description: 用户在各部门下的职位绑定
 
     ResetUserPasswordRequest:
       type: object
@@ -268,16 +273,42 @@ components:
           type: string
           pattern: '^1[3-9]\d{9}$'
           description: 绑定手机号
-        departmentId:
-          type: integer
-          format: int64
-          description: 所属部门 ID
-        positionIds:
+        departmentIds:
           type: array
           items:
             type: integer
             format: int64
-          description: 职位 ID 列表，非 null 时覆盖式更新（可为空数组表示清空）
+          description: 所属部门 ID 列表，非 null 时覆盖式更新
+        primaryDepartmentId:
+          type: integer
+          format: int64
+          description: 主部门 ID，非 null 时更新
+        positionBindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserPositionBindingRequest'
+          description: 职位绑定列表，非 null 时覆盖式更新（可为空数组表示清空）
+
+    UserPositionBindingRequest:
+      type: object
+      required: [departmentId, positionId]
+      properties:
+        departmentId:
+          type: integer
+          format: int64
+          description: 部门 ID，用户须已绑定该部门
+        positionId:
+          type: integer
+          format: int64
+          description: 职位 ID，须归属该部门或为全局职位
+
+    UserPositionBindingVO:
+      type: object
+      properties:
+        department:
+          $ref: '#/components/schemas/OrgRefVO'
+        position:
+          $ref: '#/components/schemas/OrgRefVO'
 
     OrgRefVO:
       type: object
@@ -322,13 +353,19 @@ components:
         phone:
           type: string
           nullable: true
-        department:
+        primaryDepartment:
           $ref: '#/components/schemas/OrgRefVO'
-        positions:
+          description: 主部门
+        departments:
           type: array
           items:
             $ref: '#/components/schemas/OrgRefVO'
-          description: 已绑定职位列表
+          description: 所属部门列表
+        positionBindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserPositionBindingVO'
+          description: 职位绑定列表
         status:
           type: integer
         roleCodes:

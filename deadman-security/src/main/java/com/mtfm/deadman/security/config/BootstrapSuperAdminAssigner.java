@@ -6,7 +6,7 @@ import com.mtfm.deadman.core.config.properties.DeadmanProperties;
 import com.mtfm.deadman.security.service.AuthCredentialsService;
 import com.mtfm.deadman.security.service.AuthPermissionService;
 import com.mtfm.deadman.system.entity.UserAccount;
-import com.mtfm.deadman.security.service.RoleAdminService;
+import com.mtfm.deadman.system.service.RoleAdminService;
 import com.mtfm.deadman.system.service.UserAccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

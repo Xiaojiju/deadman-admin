@@ -37,9 +37,6 @@ public class UserBase {
     /** 头像 URL */
     private String avatar;
 
-    /** 所属部门 ID */
-    private Long departmentId;
-
     /** 用户状态：0-禁用，1-正常，参见 {@link com.mtfm.deadman.common.enums.UserStatus} */
     private Integer status;
 

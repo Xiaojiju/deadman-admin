@@ -1,28 +1,28 @@
-package com.mtfm.deadman.system.service;
+package com.mtfm.deadman.system.domain.user;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.enums.AccountType;
 import com.mtfm.deadman.common.enums.UserStatus;
+import com.mtfm.deadman.common.event.user.UserCreatedEvent;
+import com.mtfm.deadman.common.event.user.UserCreationSource;
+import com.mtfm.deadman.common.event.user.UserDeletedEvent;
+import com.mtfm.deadman.common.event.user.UserUpdatedEvent;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.common.spi.UserAuthorityCache;
 import com.mtfm.deadman.common.spi.UserRoleAssignment;
 import com.mtfm.deadman.core.config.properties.DeadmanProperties;
-import com.mtfm.deadman.system.dto.role.AssignUserRolesRequest;
+import com.mtfm.deadman.system.aspect.ProtectSuperAdminUser;
+import com.mtfm.deadman.system.domain.department.DepartmentOperations;
+import com.mtfm.deadman.system.domain.position.UserPositionOperations;
 import com.mtfm.deadman.system.dto.user.CreateUserRequest;
-import com.mtfm.deadman.system.dto.user.ResetUserPasswordRequest;
 import com.mtfm.deadman.system.dto.user.UpdateUserRequest;
-import com.mtfm.deadman.system.entity.SysUserRole;
 import com.mtfm.deadman.system.entity.UserAccount;
 import com.mtfm.deadman.system.entity.UserBase;
-import com.mtfm.deadman.system.entity.UserPassword;
-import com.mtfm.deadman.common.event.user.UserCreatedEvent;
-import com.mtfm.deadman.common.event.user.UserCreationSource;
-import com.mtfm.deadman.common.event.user.UserDeletedEvent;
-import com.mtfm.deadman.common.event.user.UserUpdatedEvent;
-import com.mtfm.deadman.system.mapper.SysUserRoleMapper;
+import com.mtfm.deadman.system.service.UserAccountService;
+import com.mtfm.deadman.system.service.UserBaseService;
+import com.mtfm.deadman.system.service.UserPasswordService;
+import com.mtfm.deadman.system.service.UserService;
 import com.mtfm.deadman.system.util.UserCodeGenerator;
-import com.mtfm.deadman.system.vo.user.UserAdminDetailVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -32,43 +32,37 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 /**
- * 管理端用户写操作：创建、更新、删除、密码重置与角色分配。
+ * 用户领域写操作：创建、更新、删除及账号/组织/角色编排。
  */
 @Service
 @RequiredArgsConstructor
-public class UserAdminMutationService {
+public class UserOperations {
 
     private final UserBaseService userBaseService;
     private final UserService userService;
     private final UserAccountService userAccountService;
     private final UserPasswordService userPasswordService;
     private final UserRoleAssignment userRoleAssignment;
-    private final SysUserRoleMapper sysUserRoleMapper;
     private final UserAuthorityCache userAuthorityCache;
     private final DeadmanProperties deadmanProperties;
-    private final UserOrgService userOrgService;
-    private final UserPositionService userPositionService;
-    private final UserAdminQueryService userAdminQueryService;
-    private final UserAdminGuard userAdminGuard;
+    private final DepartmentOperations departmentOperations;
+    private final UserPositionOperations userPositionOperations;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 新增用户并绑定默认 USER 角色。
      *
      * @param request 新增用户请求
-     * @return 新建用户详情
+     * @return 新建用户 ID
      */
     @Transactional(rollbackFor = Exception.class)
-    public UserAdminDetailVO createUser(CreateUserRequest request) {
+    public Long createUser(CreateUserRequest request) {
         if (userAccountService.existsUsername(request.username())) {
             throw new BusinessException(ResultCode.ACCOUNT_EXISTS);
         }
         if (StringUtils.hasText(request.phone()) && userAccountService.existsPhone(request.phone(), null)) {
             throw new BusinessException(ResultCode.PHONE_EXISTS);
         }
-
-        UserOrgService.OrgAssignment org =
-                userOrgService.resolveForCreate(request.departmentId(), request.positionIds());
 
         String userCode = UserCodeGenerator.generate(deadmanProperties.getUser().getUserCodePrefix());
         String nickname = StringUtils.hasText(request.nickname()) ? request.nickname() : request.username();
@@ -77,12 +71,13 @@ public class UserAdminMutationService {
                 .userCode(userCode)
                 .nickname(nickname)
                 .avatar(request.avatar())
-                .departmentId(org.departmentId())
                 .status(UserStatus.ACTIVE.getValue())
                 .build();
         userBaseService.save(userBase);
 
-        userPositionService.replaceUserPositions(userBase.getId(), org.departmentId(), org.positionIds());
+        departmentOperations.replaceUserDepartments(
+                userBase.getId(), request.departmentIds(), request.primaryDepartmentId());
+        userPositionOperations.replaceUserPositionBindings(userBase.getId(), request.positionBindings());
 
         UserAccount account = UserAccount.builder()
                 .userId(userBase.getId())
@@ -98,7 +93,7 @@ public class UserAdminMutationService {
         userRoleAssignment.assignDefaultUserRole(userBase.getId());
         eventPublisher.publishEvent(new UserCreatedEvent(userBase.getId(), UserCreationSource.ADMIN));
 
-        return userAdminQueryService.getUserDetail(userBase.getId());
+        return userBase.getId();
     }
 
     /**
@@ -106,73 +101,69 @@ public class UserAdminMutationService {
      *
      * @param userId  用户 ID
      * @param request 更新请求
-     * @return 更新后的用户详情
      */
     @Transactional(rollbackFor = Exception.class)
-    public UserAdminDetailVO updateUser(Long userId, UpdateUserRequest request) {
+    @ProtectSuperAdminUser(condition = "#request.status() != null && #request.status() == 0")
+    public void updateUser(Long userId, UpdateUserRequest request) {
         UserBase user = userBaseService.requireById(userId);
-        if (request.status() != null && request.status() == UserStatus.DISABLED.getValue()) {
-            userAdminGuard.assertNotSuperAdminUser(userId);
-        }
 
-        boolean changed = false;
+        boolean baseChanged = false;
+        boolean departmentChanged = false;
         if (request.nickname() != null) {
             user.setNickname(request.nickname());
-            changed = true;
+            baseChanged = true;
         }
         if (request.avatar() != null) {
             user.setAvatar(request.avatar());
-            changed = true;
+            baseChanged = true;
         }
         if (request.status() != null) {
-            validateStatus(request.status());
             user.setStatus(request.status());
             syncAccountStatus(userId, request.status());
-            changed = true;
+            baseChanged = true;
         }
-        Long departmentId = user.getDepartmentId();
-        boolean departmentChanged = false;
-        if (request.departmentId() != null) {
-            departmentId = request.departmentId();
-            user.setDepartmentId(departmentId);
-            changed = true;
+        if (request.departmentIds() != null) {
+            departmentOperations.replaceUserDepartments(
+                    userId, request.departmentIds(), request.primaryDepartmentId());
+            departmentChanged = true;
+        } else if (request.primaryDepartmentId() != null) {
+            departmentOperations.replaceUserDepartments(
+                    userId, departmentOperations.findDepartmentIdsByUser(userId), request.primaryDepartmentId());
             departmentChanged = true;
         }
-        if (request.positionIds() != null) {
-            userPositionService.replaceUserPositions(userId, departmentId, request.positionIds());
-            changed = true;
-        } else if (request.departmentId() != null) {
-            userOrgService.validatePositionsForDepartment(
-                    departmentId, userPositionService.getPositionIdsByUserId(userId));
+        if (request.positionBindings() != null) {
+            userPositionOperations.replaceUserPositionBindings(userId, request.positionBindings());
         }
         if (request.phone() != null) {
             userAccountService.bindOrUpdatePhone(userId, request.phone());
-            changed = true;
         }
 
-        if (changed) {
+        boolean anyChanged = baseChanged || departmentChanged || request.positionBindings() != null || request.phone() != null;
+        if (baseChanged) {
             userBaseService.updateById(user);
+        }
+        if (anyChanged) {
             userAuthorityCache.evictUserAuthorities(userId);
             evictProfileCache(user.getUserCode());
             eventPublisher.publishEvent(new UserUpdatedEvent(userId, departmentChanged));
         }
-        return userAdminQueryService.getUserDetail(userId);
     }
 
     /**
-     * 逻辑删除用户。
+     * 逻辑删除用户及全部关联数据。
      *
      * @param userId 用户 ID
      */
     @Transactional(rollbackFor = Exception.class)
+    @ProtectSuperAdminUser
     public void deleteUser(Long userId) {
         UserBase user = userBaseService.requireById(userId);
-        userAdminGuard.assertNotSuperAdminUser(userId);
 
-        sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
-        userPositionService.removeByUserId(userId);
-        userAccountService.remove(new LambdaQueryWrapper<UserAccount>().eq(UserAccount::getUserId, userId));
-        userPasswordService.remove(new LambdaQueryWrapper<UserPassword>().eq(UserPassword::getUserId, userId));
+        userRoleAssignment.removeAllUserRoles(userId);
+        departmentOperations.removeAllDepartmentsForUser(userId);
+        userPositionOperations.removeByUserId(userId);
+        userAccountService.removeByUserId(userId);
+        userPasswordService.removeByUserId(userId);
         userBaseService.removeById(userId);
 
         userAuthorityCache.evictUserAuthorities(userId);
@@ -184,25 +175,24 @@ public class UserAdminMutationService {
      * 为用户分配角色（覆盖式）。
      *
      * @param userId  用户 ID
-     * @param request 角色 ID 列表
-     * @return 更新后的用户详情
+     * @param roleIds 角色 ID 列表
      */
     @Transactional(rollbackFor = Exception.class)
-    public UserAdminDetailVO assignUserRoles(Long userId, AssignUserRolesRequest request) {
-        userRoleAssignment.assignUserRoles(userId, request.roleIds());
-        return userAdminQueryService.getUserDetail(userId);
+    @ProtectSuperAdminUser(condition = "@roleAssignmentGuard.wouldRemoveSuperAdmin(#userId, #roleIds)")
+    public void assignUserRoles(Long userId, List<Long> roleIds) {
+        userRoleAssignment.assignUserRoles(userId, roleIds);
     }
 
     /**
-     * 管理端重置用户密码（用于用户忘记密码等场景）。
+     * 管理端重置用户密码。
      *
-     * @param userId  用户 ID
-     * @param request 新密码请求
+     * @param userId      用户 ID
+     * @param newPassword 新密码
      */
     @Transactional(rollbackFor = Exception.class)
-    public void resetUserPassword(Long userId, ResetUserPasswordRequest request) {
+    public void resetUserPassword(Long userId, String newPassword) {
         UserBase user = userBaseService.requireById(userId);
-        userPasswordService.resetPassword(userId, request.newPassword());
+        userPasswordService.resetPassword(userId, newPassword);
         evictProfileCache(user.getUserCode());
     }
 
@@ -212,15 +202,8 @@ public class UserAdminMutationService {
         }
     }
 
-    private void validateStatus(Integer status) {
-        if (status != UserStatus.ACTIVE.getValue() && status != UserStatus.DISABLED.getValue()) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "状态仅支持 0-禁用 或 1-正常");
-        }
-    }
-
     private void syncAccountStatus(Long userId, Integer status) {
-        List<UserAccount> accounts = userAccountService.list(
-                new LambdaQueryWrapper<UserAccount>().eq(UserAccount::getUserId, userId));
+        List<UserAccount> accounts = userAccountService.listByUserId(userId);
         for (UserAccount account : accounts) {
             account.setStatus(status);
         }

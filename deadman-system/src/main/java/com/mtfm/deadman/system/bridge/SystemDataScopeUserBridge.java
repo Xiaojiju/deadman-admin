@@ -1,9 +1,8 @@
 package com.mtfm.deadman.system.bridge;
 
 import com.mtfm.deadman.common.spi.DataScopeUserBridge;
-import com.mtfm.deadman.system.entity.UserBase;
+import com.mtfm.deadman.system.domain.department.DepartmentOperations;
 import com.mtfm.deadman.system.service.UserBaseService;
-import com.mtfm.deadman.system.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class SystemDataScopeUserBridge implements DataScopeUserBridge {
 
     private final UserBaseService userBaseService;
-    private final UserService userService;
+    private final DepartmentOperations departmentOperations;
 
     @Override
     public void requireExists(Long userId) {
@@ -24,7 +23,6 @@ public class SystemDataScopeUserBridge implements DataScopeUserBridge {
 
     @Override
     public Long findDepartmentId(Long userId) {
-        UserBase userBase = userService.getById(userId);
-        return userBase == null ? null : userBase.getDepartmentId();
+        return departmentOperations.findPrimaryDepartmentId(userId);
     }
 }

@@ -152,6 +152,42 @@ paths:
         '403':
           $ref: '../_shared/components.yaml#/components/responses/Forbidden'
 
+  /api/departments/{departmentId}/users:
+    parameters:
+      - name: departmentId
+        in: path
+        required: true
+        description: 部门主键
+        schema:
+          type: integer
+          format: int64
+    put:
+      summary: 覆盖式绑定部门成员
+      description: |
+        需要权限码 `dept:update`。
+        覆盖该部门现有成员；不在列表中的用户将从该部门移除（主部门被移除时会自动调整）。
+      operationId: assignDepartmentUsers
+      tags: [组织]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignDepartmentUsersRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -194,6 +230,17 @@ components:
         status:
           type: integer
           description: 0-禁用 1-启用
+
+    AssignDepartmentUsersRequest:
+      type: object
+      required: [userIds]
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 用户 ID 列表，覆盖该部门现有成员
 
     DepartmentVO:
       type: object

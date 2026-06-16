@@ -29,7 +29,7 @@ public class SysRolePermission {
     /** 角色主键 {@link SysRole#id} */
     private Long roleId;
 
-    /** 权限码，对应 {@link com.mtfm.deadman.security.permission.PermissionCatalog} 中已注册项 */
+    /** 权限码，对应 {@link com.mtfm.deadman.common.spi.PermissionCatalog} 中已注册项 */
     private String permissionCode;
 
     /** 创建时间 */

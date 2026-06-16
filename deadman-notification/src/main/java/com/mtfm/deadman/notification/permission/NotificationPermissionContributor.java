@@ -1,7 +1,7 @@
 package com.mtfm.deadman.notification.permission;
 
-import com.mtfm.deadman.security.permission.PermissionContributor;
-import com.mtfm.deadman.security.permission.PermissionGroupDescriptor;
+import com.mtfm.deadman.common.spi.PermissionContributor;
+import com.mtfm.deadman.common.permission.PermissionGroupDescriptor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

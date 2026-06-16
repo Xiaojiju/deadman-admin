@@ -35,7 +35,7 @@ paths:
       summary: 更新当前用户资料
       description: |
         需要权限码 `user:profile:update`。请求体与管理端 `UpdateUserRequest` 一致；
-        仅更新 nickname、avatar、phone；status、departmentId、positionIds 将被忽略。
+        仅更新 nickname、avatar、phone；status、departmentIds、primaryDepartmentId、positionBindings 将被忽略。
       operationId: updateMe
       tags: [用户资料]
       security:
@@ -100,14 +100,19 @@ components:
           type: string
           nullable: true
           description: 绑定手机号（PHONE 账号）
-        department:
+        primaryDepartment:
           $ref: '../deadman-system/UserAdminController.yaml#/components/schemas/OrgRefVO'
-          description: 所属部门简要信息
-        positions:
+          description: 主部门
+        departments:
           type: array
           items:
             $ref: '../deadman-system/UserAdminController.yaml#/components/schemas/OrgRefVO'
-          description: 已绑定职位列表
+          description: 所属部门列表
+        positionBindings:
+          type: array
+          items:
+            $ref: '../deadman-system/UserAdminController.yaml#/components/schemas/UserPositionBindingVO'
+          description: 用户在各部门下的职位绑定
         status:
           type: integer
           description: 用户状态 0-禁用 1-正常

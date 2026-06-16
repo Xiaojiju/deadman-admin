@@ -24,4 +24,16 @@ public @interface DataColumn {
 
     /** 物理表名；为空时从实体 {@code @TableName} 推导 */
     String table() default "";
+
+    /** 通过关联表过滤部门时的关联表名 */
+    String deptJoinTable() default "";
+
+    /** 关联表中指向主表用户 ID 的列名 */
+    String deptJoinUserColumn() default "user_id";
+
+    /** 关联表中部门 ID 列名 */
+    String deptJoinDeptColumn() default "dept_id";
+
+    /** 是否仅匹配主部门（关联表需含 is_primary 列） */
+    boolean deptJoinPrimaryOnly() default false;
 }

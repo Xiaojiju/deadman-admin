@@ -9,6 +9,11 @@ import org.apache.ibatis.annotations.Mapper;
  * 用户基础信息 Mapper。
  */
 @Mapper
-@DataColumn(dept = "department_id", user = "id")
+@DataColumn(
+        user = "id",
+        deptJoinTable = "sys_user_department",
+        deptJoinUserColumn = "user_id",
+        deptJoinDeptColumn = "dept_id",
+        deptJoinPrimaryOnly = true)
 public interface UserBaseMapper extends BaseMapper<UserBase> {
 }

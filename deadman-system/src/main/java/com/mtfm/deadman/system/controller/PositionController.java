@@ -37,7 +37,7 @@ public class PositionController {
      * @return 职位列表
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('position:list:read')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).POSITION_LIST_READ)")
     public Result<List<PositionVO>> list(@RequestParam(required = false) Long departmentId) {
         return Result.ok(positionAdminService.listPositions(departmentId));
     }
@@ -49,7 +49,7 @@ public class PositionController {
      * @return 职位详情
      */
     @GetMapping("/{positionId}")
-    @PreAuthorize("hasAuthority('position:list:read')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).POSITION_LIST_READ)")
     public Result<PositionVO> detail(@PathVariable Long positionId) {
         return Result.ok(positionAdminService.getPosition(positionId));
     }
@@ -61,7 +61,7 @@ public class PositionController {
      * @return 新建职位详情
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('position:create')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).POSITION_CREATE)")
     public Result<PositionVO> create(@Valid @RequestBody CreatePositionRequest request) {
         return Result.ok(positionAdminService.createPosition(request));
     }
@@ -74,7 +74,7 @@ public class PositionController {
      * @return 更新后的职位详情
      */
     @PutMapping("/{positionId}")
-    @PreAuthorize("hasAuthority('position:update')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).POSITION_UPDATE)")
     public Result<PositionVO> update(@PathVariable Long positionId, @Valid @RequestBody UpdatePositionRequest request) {
         return Result.ok(positionAdminService.updatePosition(positionId, request));
     }
@@ -86,7 +86,7 @@ public class PositionController {
      * @return 空响应
      */
     @DeleteMapping("/{positionId}")
-    @PreAuthorize("hasAuthority('position:delete')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).POSITION_DELETE)")
     public Result<Void> delete(@PathVariable Long positionId) {
         positionAdminService.deletePosition(positionId);
         return Result.ok();

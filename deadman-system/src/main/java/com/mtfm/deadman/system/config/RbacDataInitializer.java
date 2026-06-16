@@ -9,6 +9,7 @@ import com.mtfm.deadman.system.entity.SysRole;
 import com.mtfm.deadman.system.entity.SysRolePermission;
 import com.mtfm.deadman.system.mapper.SysRoleMapper;
 import com.mtfm.deadman.system.mapper.SysRolePermissionMapper;
+import com.mtfm.deadman.system.support.RolePermissionInitializerSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -33,6 +34,7 @@ public class RbacDataInitializer implements ApplicationRunner {
     private final SysRoleMapper sysRoleMapper;
     private final SysRolePermissionMapper sysRolePermissionMapper;
     private final UserAuthorityCache userAuthorityCache;
+    private final RolePermissionInitializerSupport rolePermissionInitializerSupport;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -65,7 +67,7 @@ public class RbacDataInitializer implements ApplicationRunner {
                 SystemPermissions.Auth.PERMISSIONS_READ,
                 SystemPermissions.User.PROFILE_READ,
                 SystemPermissions.User.PROFILE_UPDATE);
-        return ensurePermissions(role.getId(), codes);
+        return rolePermissionInitializerSupport.ensurePermissions(sysRolePermissionMapper, role.getId(), codes);
     }
 
     private SysRole ensureRole(String roleCode, String roleName, String description, int systemBuiltin) {
@@ -84,28 +86,5 @@ public class RbacDataInitializer implements ApplicationRunner {
         sysRoleMapper.insert(role);
         log.info("已初始化系统角色: {}", roleCode);
         return role;
-    }
-
-    /**
-     * 增量绑定角色权限，已存在则跳过（避免覆盖其他模块为同一角色绑定的权限）。
-     *
-     * @param roleId          角色 ID
-     * @param permissionCodes 权限码列表
-     * @return 是否新增了绑定
-     */
-    private boolean ensurePermissions(Long roleId, List<String> permissionCodes) {
-        boolean changed = false;
-        for (String code : permissionCodes) {
-            long count = sysRolePermissionMapper.selectCount(new LambdaQueryWrapper<SysRolePermission>()
-                    .eq(SysRolePermission::getRoleId, roleId)
-                    .eq(SysRolePermission::getPermissionCode, code));
-            if (count == 0) {
-                sysRolePermissionMapper.insert(
-                        SysRolePermission.builder().roleId(roleId).permissionCode(code).build());
-                log.info("已为角色 {} 绑定权限 {}", roleId, code);
-                changed = true;
-            }
-        }
-        return changed;
     }
 }

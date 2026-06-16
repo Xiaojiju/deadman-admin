@@ -24,6 +24,7 @@
 | deadman-component-client | [ClientUserController.yaml](deadman-component-client/ClientUserController.yaml) | 用户端当前用户资料 |
 | deadman-component-client | [ClientUserAdminController.yaml](deadman-component-client/ClientUserAdminController.yaml) | 管理端操作用户端用户 |
 | deadman-plugin-wechat | [WechatMiniprogramController.yaml](deadman-plugin-wechat/WechatMiniprogramController.yaml) | 微信小程序手机号绑定 |
+| deadman-plugin-wechat | [WechatLoginProviderRegistration.md](deadman-plugin-wechat/WechatLoginProviderRegistration.md) | 微信 LoginProvider 注册与覆盖机制 |
 | deadman-plugin-file | [FileController.yaml](deadman-plugin-file/FileController.yaml) | 文件上传、下载与元数据 |
 | deadman-plugin-data-scope | [UserDataScopeAdminController.yaml](deadman-plugin-data-scope/UserDataScopeAdminController.yaml) | 用户数据范围查询与分配 |
 

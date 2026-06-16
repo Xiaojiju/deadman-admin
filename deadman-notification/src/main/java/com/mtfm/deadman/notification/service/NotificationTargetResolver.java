@@ -8,8 +8,10 @@ import com.mtfm.deadman.notification.dto.SendNotificationRequest;
 import com.mtfm.deadman.notification.enums.NotificationTargetType;
 import com.mtfm.deadman.system.entity.SysDepartment;
 import com.mtfm.deadman.system.entity.SysPosition;
+import com.mtfm.deadman.system.entity.SysUserDepartment;
 import com.mtfm.deadman.system.entity.SysUserPosition;
 import com.mtfm.deadman.system.entity.UserBase;
+import com.mtfm.deadman.system.mapper.SysUserDepartmentMapper;
 import com.mtfm.deadman.system.mapper.SysUserPositionMapper;
 import com.mtfm.deadman.system.service.SysDepartmentService;
 import com.mtfm.deadman.system.service.SysPositionService;
@@ -32,6 +34,7 @@ public class NotificationTargetResolver {
     private final UserService userService;
     private final SysDepartmentService sysDepartmentService;
     private final SysPositionService sysPositionService;
+    private final SysUserDepartmentMapper sysUserDepartmentMapper;
     private final SysUserPositionMapper sysUserPositionMapper;
 
     /**
@@ -77,11 +80,19 @@ public class NotificationTargetResolver {
                 throw new BusinessException(ResultCode.BAD_REQUEST, "部门不存在: " + departmentId);
             }
         }
-        List<UserBase> users = userService.lambdaQuery()
-                .in(UserBase::getDepartmentId, departmentIds)
-                .eq(UserBase::getStatus, UserStatus.ACTIVE.getValue())
-                .list();
-        return toActiveUserIdSet(users);
+        List<SysUserDepartment> bindings = sysUserDepartmentMapper.selectList(new LambdaQueryWrapper<SysUserDepartment>()
+                .in(SysUserDepartment::getDeptId, departmentIds));
+        Set<Long> userIds = new LinkedHashSet<>();
+        for (SysUserDepartment binding : bindings) {
+            UserBase user = userService.getById(binding.getUserId());
+            if (user != null && isActive(user)) {
+                userIds.add(binding.getUserId());
+            }
+        }
+        if (userIds.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "部门下无有效用户");
+        }
+        return userIds;
     }
 
     private Set<Long> resolveByPositions(List<Long> positionIds) {

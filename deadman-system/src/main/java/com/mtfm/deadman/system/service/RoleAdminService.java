@@ -1,14 +1,14 @@
-package com.mtfm.deadman.security.service;
+package com.mtfm.deadman.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.constants.SysRoleCodes;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.common.spi.PermissionCatalog;
 import com.mtfm.deadman.common.spi.UserAuthorityCache;
 import com.mtfm.deadman.common.spi.UserRoleAssignment;
 import com.mtfm.deadman.common.util.DedupUtils;
-import com.mtfm.deadman.security.permission.PermissionCatalog;
 import com.mtfm.deadman.system.dto.role.AssignRolePermissionsRequest;
 import com.mtfm.deadman.system.dto.role.AssignUserRolesRequest;
 import com.mtfm.deadman.system.dto.role.CreateRoleRequest;
@@ -18,8 +18,6 @@ import com.mtfm.deadman.system.entity.SysRolePermission;
 import com.mtfm.deadman.system.entity.SysUserRole;
 import com.mtfm.deadman.system.mapper.SysRolePermissionMapper;
 import com.mtfm.deadman.system.mapper.SysUserRoleMapper;
-import com.mtfm.deadman.system.service.SysRoleService;
-import com.mtfm.deadman.system.service.UserBaseService;
 import com.mtfm.deadman.system.vo.role.RoleDetailVO;
 import com.mtfm.deadman.system.vo.role.RoleSummaryVO;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +44,8 @@ public class RoleAdminService implements UserRoleAssignment {
 
     /**
      * 是否已有用户绑定 SUPER_ADMIN 角色。
+     *
+     * @return 是否存在超级管理员用户
      */
     public boolean existsSuperAdminUser() {
         return sysUserRoleMapper.countUsersByRoleCode(SysRoleCodes.SUPER_ADMIN) > 0;
@@ -53,6 +53,8 @@ public class RoleAdminService implements UserRoleAssignment {
 
     /**
      * 将用户设为唯一超级管理员（覆盖式，仅保留 SUPER_ADMIN 角色）。
+     *
+     * @param userId 用户 ID
      */
     @Transactional(rollbackFor = Exception.class)
     public void assignSuperAdminRole(Long userId) {
@@ -191,6 +193,7 @@ public class RoleAdminService implements UserRoleAssignment {
     @Transactional(rollbackFor = Exception.class)
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         userBaseService.requireById(userId);
+        assertSuperAdminRolePreserved(userId, roleIds);
         List<SysRole> roles = DedupUtils.dedupeLongs(roleIds).stream()
                 .map(sysRoleService::requireById)
                 .toList();
@@ -200,6 +203,29 @@ public class RoleAdminService implements UserRoleAssignment {
             sysUserRoleMapper.insert(link);
         }
         userAuthorityCache.evictUserAuthorities(userId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeAllUserRoles(Long userId) {
+        sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+        userAuthorityCache.evictUserAuthorities(userId);
+    }
+
+    /**
+     * 校验超级管理员角色不可被移除。
+     *
+     * @param userId  用户 ID
+     * @param roleIds 待绑定角色 ID 列表
+     */
+    private void assertSuperAdminRolePreserved(Long userId, List<Long> roleIds) {
+        if (!sysUserRoleMapper.selectRoleCodesByUserId(userId).contains(SysRoleCodes.SUPER_ADMIN)) {
+            return;
+        }
+        SysRole superAdmin = sysRoleService.findByCode(SysRoleCodes.SUPER_ADMIN);
+        if (superAdmin == null || roleIds == null || !roleIds.contains(superAdmin.getId())) {
+            throw new BusinessException(ResultCode.USER_SUPER_ADMIN_PROTECTED);
+        }
     }
 
     @Override

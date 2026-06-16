@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.system.domain.department.DepartmentOperations;
 import com.mtfm.deadman.system.dto.org.CreateDepartmentRequest;
 import com.mtfm.deadman.system.dto.org.UpdateDepartmentRequest;
 import com.mtfm.deadman.system.entity.SysDepartment;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 public class DepartmentAdminService {
 
     private final SysDepartmentService sysDepartmentService;
-    private final UserOrgService userOrgService;
+    private final DepartmentOperations departmentOperations;
 
     /**
      * 查询全部部门（扁平列表）。
@@ -121,7 +122,6 @@ public class DepartmentAdminService {
             department.setSortOrder(request.sortOrder());
         }
         if (request.status() != null) {
-            validateStatus(request.status());
             department.setStatus(request.status());
         }
 
@@ -142,7 +142,7 @@ public class DepartmentAdminService {
         if (childCount > 0) {
             throw new BusinessException(ResultCode.DEPARTMENT_HAS_CHILDREN);
         }
-        if (userOrgService.hasUsersInDepartment(departmentId)) {
+        if (departmentOperations.hasUsersInDepartment(departmentId)) {
             throw new BusinessException(ResultCode.DEPARTMENT_HAS_USERS);
         }
         sysDepartmentService.removeById(departmentId);
@@ -176,12 +176,6 @@ public class DepartmentAdminService {
             visited.add(cursor);
             SysDepartment parent = sysDepartmentService.getById(cursor);
             cursor = parent == null ? null : parent.getParentId();
-        }
-    }
-
-    private void validateStatus(Integer status) {
-        if (status != UserStatus.ACTIVE.getValue() && status != UserStatus.DISABLED.getValue()) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "状态仅支持 0-禁用 或 1-正常");
         }
     }
 

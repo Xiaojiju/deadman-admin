@@ -3,7 +3,7 @@ package com.mtfm.deadman.security.service;
 import com.mtfm.deadman.common.constants.CacheNames;
 import com.mtfm.deadman.common.constants.SysRoleCodes;
 import com.mtfm.deadman.common.enums.UserStatus;
-import com.mtfm.deadman.security.permission.PermissionCatalog;
+import com.mtfm.deadman.common.spi.PermissionCatalog;
 import com.mtfm.deadman.system.entity.UserBase;
 import com.mtfm.deadman.system.mapper.SysRolePermissionMapper;
 import com.mtfm.deadman.system.mapper.SysUserRoleMapper;

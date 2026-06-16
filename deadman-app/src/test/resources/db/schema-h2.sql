@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS user_base (
     user_code       VARCHAR(32)  NOT NULL,
     nickname        VARCHAR(64),
     avatar          VARCHAR(512),
-    department_id   BIGINT,
     status          SMALLINT     NOT NULL DEFAULT 1,
     is_deleted      SMALLINT     NOT NULL DEFAULT 0,
     create_time     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -125,13 +124,24 @@ CREATE TABLE IF NOT EXISTS sys_position (
     CONSTRAINT uk_sys_position_code UNIQUE (position_code)
 );
 
+CREATE TABLE IF NOT EXISTS sys_user_department (
+    id              BIGINT    NOT NULL,
+    user_id         BIGINT    NOT NULL,
+    dept_id         BIGINT    NOT NULL,
+    is_primary      SMALLINT  NOT NULL DEFAULT 0,
+    create_time     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_sys_user_department UNIQUE (user_id, dept_id)
+);
+
 CREATE TABLE IF NOT EXISTS sys_user_position (
     id              BIGINT    NOT NULL,
     user_id         BIGINT    NOT NULL,
+    department_id   BIGINT    NOT NULL,
     position_id     BIGINT    NOT NULL,
     create_time     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    CONSTRAINT uk_sys_user_position UNIQUE (user_id, position_id)
+    CONSTRAINT uk_sys_user_position UNIQUE (user_id, department_id, position_id)
 );
 
 CREATE TABLE IF NOT EXISTS plugin_ws_message (

@@ -54,7 +54,7 @@ public class ClientWechatLoginProviderRegistrar
         String beanName = "wechatMiniprogramLoginProvider_" + ClientAuthConstants.LOGIN_GROUP_ID;
         if (registry.containsBeanDefinition(beanName)) {
             registry.removeBeanDefinition(beanName);
-            log.info("已移除插件默认微信登录 Provider，替换为用户端桥接实现：{}", beanName);
+            log.info("已覆盖插件默认微信登录 Provider，改用用户端桥接实现：{}", beanName);
         }
 
         AbstractBeanDefinition definition = BeanDefinitionBuilder.genericBeanDefinition(

@@ -2,12 +2,14 @@ package com.mtfm.deadman.system.controller;
 
 import com.mtfm.deadman.common.page.PageVO;
 import com.mtfm.deadman.common.result.Result;
+import com.mtfm.deadman.system.domain.user.UserOperations;
 import com.mtfm.deadman.system.dto.role.AssignUserRolesRequest;
 import com.mtfm.deadman.system.dto.user.CreateUserRequest;
 import com.mtfm.deadman.system.dto.user.ResetUserPasswordRequest;
 import com.mtfm.deadman.system.dto.user.UpdateUserRequest;
 import com.mtfm.deadman.system.dto.user.UserAdminPageQuery;
-import com.mtfm.deadman.system.service.UserAdminService;
+import com.mtfm.deadman.system.service.UserAdminReadService;
+import com.mtfm.deadman.system.service.UserAdminViewAssembler;
 import com.mtfm.deadman.system.vo.user.UserAdminDetailVO;
 import com.mtfm.deadman.system.vo.user.UserAdminSummaryVO;
 import jakarta.validation.Valid;
@@ -30,7 +32,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserAdminController {
 
-    private final UserAdminService userAdminService;
+    private final UserAdminReadService userAdminReadService;
+    private final UserAdminViewAssembler viewAssembler;
+    private final UserOperations userOperations;
 
     /**
      * 用户分页列表
@@ -39,9 +43,13 @@ public class UserAdminController {
      * @return 用户分页列表
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('user:list:read')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.User).LIST_READ)")
     public Result<PageVO<UserAdminSummaryVO>> page(@Valid UserAdminPageQuery query) {
-        return Result.ok(userAdminService.pageUsers(query));
+        var page = userAdminReadService.pageUserRecords(query);
+        if (page.getRecords().isEmpty()) {
+            return Result.ok(PageVO.of(java.util.List.of(), page.getTotal(), query));
+        }
+        return Result.ok(PageVO.of(viewAssembler.assembleSummaries(page.getRecords()), page.getTotal(), query));
     }
 
     /**
@@ -51,9 +59,9 @@ public class UserAdminController {
      * @return 用户详情
      */
     @GetMapping("/{userId}")
-    @PreAuthorize("hasAuthority('user:list:read')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.User).LIST_READ)")
     public Result<UserAdminDetailVO> detail(@PathVariable Long userId) {
-        return Result.ok(userAdminService.getUserDetail(userId));
+        return Result.ok(userAdminReadService.getUserDetail(userId));
     }
 
     /**
@@ -63,9 +71,10 @@ public class UserAdminController {
      * @return 新增用户
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('user:create')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.User).CREATE)")
     public Result<UserAdminDetailVO> create(@Valid @RequestBody CreateUserRequest request) {
-        return Result.ok(userAdminService.createUser(request));
+        Long userId = userOperations.createUser(request);
+        return Result.ok(userAdminReadService.getUserDetail(userId));
     }
 
     /**
@@ -76,9 +85,10 @@ public class UserAdminController {
      * @return 更新用户
      */
     @PutMapping("/{userId}")
-    @PreAuthorize("hasAuthority('user:update')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.User).UPDATE)")
     public Result<UserAdminDetailVO> update(@PathVariable Long userId, @Valid @RequestBody UpdateUserRequest request) {
-        return Result.ok(userAdminService.updateUser(userId, request));
+        userOperations.updateUser(userId, request);
+        return Result.ok(userAdminReadService.getUserDetail(userId));
     }
 
     /**
@@ -88,9 +98,9 @@ public class UserAdminController {
      * @return 删除用户
      */
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasAuthority('user:delete')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.User).DELETE)")
     public Result<Void> delete(@PathVariable Long userId) {
-        userAdminService.deleteUser(userId);
+        userOperations.deleteUser(userId);
         return Result.ok();
     }
 
@@ -101,10 +111,10 @@ public class UserAdminController {
      * @param request 新密码
      */
     @PutMapping("/{userId}/password")
-    @PreAuthorize("hasAuthority('user:password:reset')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.User).PASSWORD_RESET)")
     public Result<Void> resetPassword(
             @PathVariable Long userId, @Valid @RequestBody ResetUserPasswordRequest request) {
-        userAdminService.resetUserPassword(userId, request);
+        userOperations.resetUserPassword(userId, request.newPassword());
         return Result.ok();
     }
 
@@ -116,9 +126,10 @@ public class UserAdminController {
      * @return 分配用户角色
      */
     @PutMapping("/{userId}/roles")
-    @PreAuthorize("hasAuthority('role:user:assign')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Role).USER_ASSIGN)")
     public Result<UserAdminDetailVO> assignRoles(
             @PathVariable Long userId, @Valid @RequestBody AssignUserRolesRequest request) {
-        return Result.ok(userAdminService.assignUserRoles(userId, request));
+        userOperations.assignUserRoles(userId, request.roleIds());
+        return Result.ok(userAdminReadService.getUserDetail(userId));
     }
 }

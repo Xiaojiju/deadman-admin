@@ -159,6 +159,25 @@ public class UserAccountService extends ServiceImpl<UserAccountMapper, UserAccou
     }
 
     /**
+     * 查询用户绑定的全部账号。
+     *
+     * @param userId 用户 ID
+     * @return 账号列表
+     */
+    public List<UserAccount> listByUserId(Long userId) {
+        return list(new LambdaQueryWrapper<UserAccount>().eq(UserAccount::getUserId, userId));
+    }
+
+    /**
+     * 删除用户全部账号记录。
+     *
+     * @param userId 用户 ID
+     */
+    public void removeByUserId(Long userId) {
+        remove(new LambdaQueryWrapper<UserAccount>().eq(UserAccount::getUserId, userId));
+    }
+
+    /**
      * 批量加载用户手机号。
      *
      * @param userIds 用户 ID 列表

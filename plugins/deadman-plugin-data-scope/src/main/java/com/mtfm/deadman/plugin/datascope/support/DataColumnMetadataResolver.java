@@ -154,14 +154,18 @@ public class DataColumnMetadataResolver {
         if (!StringUtils.hasText(mapping.getDeptColumn()) && !StringUtils.hasText(mapping.getUserColumn())) {
             return null;
         }
-        return new DataColumnSpec(tableName, mapping.getDeptColumn(), mapping.getUserColumn());
+        return new DataColumnSpec(tableName, mapping.getDeptColumn(), mapping.getUserColumn(), null, null, null, false);
     }
 
     private static DataColumnSpec toSpec(String tableName, DataColumn dataColumn) {
         return new DataColumnSpec(
                 tableName,
                 blankToNull(dataColumn.dept()),
-                blankToNull(dataColumn.user()));
+                blankToNull(dataColumn.user()),
+                blankToNull(dataColumn.deptJoinTable()),
+                blankToNull(dataColumn.deptJoinUserColumn()),
+                blankToNull(dataColumn.deptJoinDeptColumn()),
+                dataColumn.deptJoinPrimaryOnly());
     }
 
     private static String resolveTableName(Class<?> mapperClass, DataColumn dataColumn) {

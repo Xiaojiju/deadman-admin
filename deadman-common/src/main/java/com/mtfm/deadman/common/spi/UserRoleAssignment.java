@@ -3,7 +3,7 @@ package com.mtfm.deadman.common.spi;
 import java.util.List;
 
 /**
- * 用户角色分配 SPI，由 security 模块实现，供 system 在用户管理流程中调用。
+ * 用户角色分配 SPI，由 system 模块的 {@code RoleAdminService} 实现，供用户管理流程调用。
  */
 public interface UserRoleAssignment {
 
@@ -21,4 +21,11 @@ public interface UserRoleAssignment {
      * @param roleIds 角色 ID 列表
      */
     void assignUserRoles(Long userId, List<Long> roleIds);
+
+    /**
+     * 移除用户全部角色绑定（删除用户时使用）。
+     *
+     * @param userId 用户 ID
+     */
+    void removeAllUserRoles(Long userId);
 }

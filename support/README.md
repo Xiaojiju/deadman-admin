@@ -80,3 +80,5 @@ deadman-common ← deadman-core ← deadman-system ← deadman-security
 ```
 
 Support 模块**可以**依赖 `deadman-system`（与 components 不同），因其职责就是连接管理端用户表与微信插件。
+
+微信 LoginProvider 在启动时的两阶段注册与覆盖机制见：[doc/deadman-plugin-wechat/WechatLoginProviderRegistration.md](../doc/deadman-plugin-wechat/WechatLoginProviderRegistration.md)。

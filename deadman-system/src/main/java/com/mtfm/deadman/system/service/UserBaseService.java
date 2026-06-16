@@ -26,4 +26,17 @@ public class UserBaseService extends ServiceImpl<UserBaseMapper, UserBase> {
         }
         return user;
     }
+
+    /**
+     * 统计指定 ID 列表中存在的用户数。
+     *
+     * @param userIds 用户 ID 列表
+     * @return 存在的用户数
+     */
+    public long countByIds(java.util.List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return 0;
+        }
+        return lambdaQuery().in(UserBase::getId, userIds).count();
+    }
 }

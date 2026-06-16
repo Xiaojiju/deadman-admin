@@ -1,5 +1,9 @@
 package com.mtfm.deadman.security.permission;
 
+import com.mtfm.deadman.common.permission.PermissionGroupDescriptor;
+import com.mtfm.deadman.common.permission.PermissionItemDescriptor;
+import com.mtfm.deadman.common.spi.PermissionCatalog;
+import com.mtfm.deadman.common.spi.PermissionContributor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;

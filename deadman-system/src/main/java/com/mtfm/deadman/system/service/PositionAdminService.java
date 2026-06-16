@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.system.domain.position.UserPositionOperations;
 import com.mtfm.deadman.system.dto.org.CreatePositionRequest;
 import com.mtfm.deadman.system.dto.org.UpdatePositionRequest;
 import com.mtfm.deadman.system.entity.SysPosition;
@@ -23,7 +24,7 @@ public class PositionAdminService {
 
     private final SysPositionService sysPositionService;
     private final SysDepartmentService sysDepartmentService;
-    private final UserPositionService userPositionService;
+    private final UserPositionOperations userPositionOperations;
 
     /**
      * 查询职位列表。
@@ -101,7 +102,6 @@ public class PositionAdminService {
             position.setSortOrder(request.sortOrder());
         }
         if (request.status() != null) {
-            validateStatus(request.status());
             position.setStatus(request.status());
         }
 
@@ -117,16 +117,10 @@ public class PositionAdminService {
     @Transactional(rollbackFor = Exception.class)
     public void deletePosition(Long positionId) {
         sysPositionService.requireById(positionId);
-        if (userPositionService.hasUsersInPosition(positionId)) {
+        if (userPositionOperations.hasUsersInPosition(positionId)) {
             throw new BusinessException(ResultCode.POSITION_HAS_USERS);
         }
         sysPositionService.removeById(positionId);
-    }
-
-    private void validateStatus(Integer status) {
-        if (status != UserStatus.ACTIVE.getValue() && status != UserStatus.DISABLED.getValue()) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "状态仅支持 0-禁用 或 1-正常");
-        }
     }
 
     private PositionVO toVO(SysPosition position) {

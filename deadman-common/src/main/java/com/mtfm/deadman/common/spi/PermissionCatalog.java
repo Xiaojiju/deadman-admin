@@ -1,10 +1,13 @@
-package com.mtfm.deadman.security.permission;
+package com.mtfm.deadman.common.spi;
+
+import com.mtfm.deadman.common.permission.PermissionGroupDescriptor;
+import com.mtfm.deadman.common.permission.PermissionItemDescriptor;
 
 import java.util.List;
 import java.util.Set;
 
 /**
- * 已注册权限目录只读接口，由 {@link PermissionRegistry} 实现。
+ * 已注册权限目录只读 SPI，由 security 模块的 {@code PermissionRegistry} 聚合实现。
  */
 public interface PermissionCatalog {
 

@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS user_base (
     user_code       VARCHAR(32)  NOT NULL COMMENT '对外用户编码，非主键，用于对外身份标识',
     nickname        VARCHAR(64)           COMMENT '用户昵称',
     avatar          VARCHAR(512)          COMMENT '头像 URL',
-    department_id   BIGINT                COMMENT '所属部门 ID，关联 sys_department.id',
     status          SMALLINT     NOT NULL DEFAULT 1 COMMENT '用户状态：0-禁用，1-正常',
     is_deleted      SMALLINT     NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
     create_time     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -15,8 +14,7 @@ CREATE TABLE IF NOT EXISTS user_base (
     version         INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     PRIMARY KEY (id),
     UNIQUE KEY uk_user_base_user_code (user_code),
-    KEY idx_user_base_status (status, is_deleted),
-    KEY idx_user_base_department (department_id)
+    KEY idx_user_base_status (status, is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户基础信息，一用户一条';
 
 -- 用户账号（支持多种登录方式，一用户可多条）
@@ -142,17 +140,33 @@ CREATE TABLE IF NOT EXISTS sys_position (
     KEY idx_sys_position_department (department_id, is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='职位';
 
--- 用户职位关联（一用户可绑定多个职位）
+-- 用户部门关联（一用户可绑定多个部门，is_primary 标识主部门）
+CREATE TABLE IF NOT EXISTS sys_user_department (
+    id              BIGINT    NOT NULL COMMENT '关联主键',
+    user_id         BIGINT    NOT NULL COMMENT '用户主键，关联 user_base.id',
+    dept_id         BIGINT    NOT NULL COMMENT '部门主键，关联 sys_department.id',
+    is_primary      SMALLINT  NOT NULL DEFAULT 0 COMMENT '是否主部门：0-否，1-是',
+    create_time     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_user_department (user_id, dept_id),
+    KEY idx_sys_user_department_user (user_id),
+    KEY idx_sys_user_department_dept (dept_id),
+    KEY idx_sys_user_department_primary (user_id, is_primary)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户与部门多对多关联';
+
+-- 用户职位关联（用户在指定部门下担任的职位）
 CREATE TABLE IF NOT EXISTS sys_user_position (
     id              BIGINT    NOT NULL COMMENT '关联主键',
     user_id         BIGINT    NOT NULL COMMENT '用户主键，关联 user_base.id',
+    department_id   BIGINT    NOT NULL COMMENT '部门主键，关联 sys_department.id',
     position_id     BIGINT    NOT NULL COMMENT '职位主键，关联 sys_position.id',
     create_time     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_user_position (user_id, position_id),
+    UNIQUE KEY uk_sys_user_position (user_id, department_id, position_id),
     KEY idx_sys_user_position_user (user_id),
-    KEY idx_sys_user_position_position (position_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户与职位多对多关联';
+    KEY idx_sys_user_position_position (position_id),
+    KEY idx_sys_user_position_dept (department_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户在部门下的职位绑定';
 
 -- 用户端组件表结构见 deadman-component-client：
 -- components/deadman-component-client/src/main/resources/db/client/schema.sql

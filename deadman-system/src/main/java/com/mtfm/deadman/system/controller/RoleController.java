@@ -1,11 +1,10 @@
-package com.mtfm.deadman.security.controller;
+package com.mtfm.deadman.system.controller;
 
 import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.security.service.RoleAdminService;
 import com.mtfm.deadman.system.dto.role.AssignRolePermissionsRequest;
-import com.mtfm.deadman.system.dto.role.AssignUserRolesRequest;
 import com.mtfm.deadman.system.dto.role.CreateRoleRequest;
 import com.mtfm.deadman.system.dto.role.UpdateRoleRequest;
+import com.mtfm.deadman.system.service.RoleAdminService;
 import com.mtfm.deadman.system.vo.role.RoleDetailVO;
 import com.mtfm.deadman.system.vo.role.RoleSummaryVO;
 import jakarta.validation.Valid;
@@ -105,19 +104,5 @@ public class RoleController {
     public Result<RoleDetailVO> assignPermissions(
             @PathVariable Long roleId, @Valid @RequestBody AssignRolePermissionsRequest request) {
         return Result.ok(roleAdminService.assignRolePermissions(roleId, request));
-    }
-
-    /**
-     * 分配用户角色
-     *
-     * @param userId  用户ID
-     * @param request 分配用户角色请求
-     * @return 分配用户角色
-     */
-    @PutMapping("/users/{userId}")
-    @PreAuthorize("hasAuthority('role:user:assign')")
-    public Result<Void> assignUserRoles(@PathVariable Long userId, @Valid @RequestBody AssignUserRolesRequest request) {
-        roleAdminService.assignUserRoles(userId, request);
-        return Result.ok();
     }
 }

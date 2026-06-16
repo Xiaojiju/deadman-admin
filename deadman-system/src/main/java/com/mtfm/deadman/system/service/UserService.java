@@ -7,6 +7,8 @@ import com.mtfm.deadman.common.enums.AccountType;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.system.domain.department.DepartmentOperations;
+import com.mtfm.deadman.system.domain.position.UserPositionOperations;
 import com.mtfm.deadman.system.dto.user.UpdateUserRequest;
 import com.mtfm.deadman.system.entity.UserAccount;
 import com.mtfm.deadman.system.entity.UserBase;
@@ -29,8 +31,8 @@ import java.util.List;
 public class UserService extends ServiceImpl<UserBaseMapper, UserBase> {
 
     private final UserAccountService userAccountService;
-    private final UserOrgService userOrgService;
-    private final UserPositionService userPositionService;
+    private final DepartmentOperations departmentOperations;
+    private final UserPositionOperations userPositionOperations;
 
     /**
      * 按用户编码查询资料（带缓存）。
@@ -124,8 +126,9 @@ public class UserService extends ServiceImpl<UserBaseMapper, UserBase> {
                 .nickname(userBase.getNickname())
                 .avatar(userBase.getAvatar())
                 .phone(phone)
-                .department(userOrgService.toDepartmentRef(userBase.getDepartmentId()))
-                .positions(userPositionService.getPositionRefsByUserId(userBase.getId()))
+                .primaryDepartment(departmentOperations.loadPrimaryDepartmentRef(userBase.getId()))
+                .departments(departmentOperations.loadDepartmentRefsByUserId(userBase.getId()))
+                .positionBindings(userPositionOperations.loadPositionBindingsByUserId(userBase.getId()))
                 .status(userBase.getStatus())
                 .accounts(accounts)
                 .createTime(userBase.getCreateTime())

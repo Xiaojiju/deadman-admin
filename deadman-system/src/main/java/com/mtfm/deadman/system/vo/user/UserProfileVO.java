@@ -29,10 +29,12 @@ public class UserProfileVO {
     private String avatar;
     /** 绑定手机号 */
     private String phone;
-    /** 所属部门 */
-    private OrgRefVO department;
-    /** 职位列表 */
-    private List<OrgRefVO> positions;
+    /** 主部门 */
+    private OrgRefVO primaryDepartment;
+    /** 所属部门列表 */
+    private List<OrgRefVO> departments;
+    /** 用户在各部门下的职位绑定 */
+    private List<com.mtfm.deadman.system.vo.org.UserPositionBindingVO> positionBindings;
     /** 用户状态：0-禁用 1-正常 */
     private Integer status;
     /** 已绑定的登录账号列表（含第三方 OAuth） */

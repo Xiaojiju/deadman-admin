@@ -114,7 +114,7 @@ deadman-support-client-wechat/
 
 | 类 | 职责 |
 |----|------|
-| `ClientWechatLoginProviderRegistrar` | 启动时移除 `wechatMiniprogramLoginProvider_client` 插件默认 Bean，替换为桥接实现 |
+| `ClientWechatLoginProviderRegistrar` | 启动时覆盖 `wechatMiniprogramLoginProvider_client` 插件默认 Bean，改为桥接实现 |
 | `ClientWechatAuthService.loginByWechatCode` | `code2session` → 已绑定则认证，未绑定则写 Redis 返回 `bindToken` |
 | `ClientWechatAuthService.bindAndAuthenticate` | 消费 `bindToken` + 校验密码 + `bindOAuth` |
 | `ClientWechatAuthService.registerAndBind` | 消费 `bindToken` + 注册 + `bindOAuth` + 返回已认证用户 |

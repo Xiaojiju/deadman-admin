@@ -1,5 +1,6 @@
 package com.mtfm.deadman.system.dto.org;
 
+import com.mtfm.deadman.common.validation.UserStatusValue;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -11,5 +12,8 @@ import jakarta.validation.constraints.Size;
  * @param status       状态：0-禁用，1-启用
  */
 public record UpdatePositionRequest(
-        Long departmentId, @Size(max = 128) String positionName, Integer sortOrder, Integer status) {
+        Long departmentId,
+        @Size(max = 128) String positionName,
+        Integer sortOrder,
+        @UserStatusValue Integer status) {
 }

@@ -3,7 +3,7 @@ openapi: 3.0.3
 info:
   title: RoleController
   version: 0.0.1-SNAPSHOT
-  description: RBAC 角色与权限、用户角色分配
+  description: RBAC 角色与权限管理
 
 servers:
   - url: http://localhost:8080
@@ -146,34 +146,6 @@ paths:
         '403':
           $ref: '../_shared/components.yaml#/components/responses/Forbidden'
 
-  /api/roles/users/{userId}:
-    parameters:
-      - $ref: '../_shared/components.yaml#/components/parameters/UserId'
-    put:
-      summary: 分配用户角色
-      description: 需要权限码 `role:user:assign`。覆盖式绑定角色 ID 列表。
-      operationId: assignUserRoles
-      tags: [角色]
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AssignUserRolesRequest'
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultVoid'
-        '401':
-          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
-        '403':
-          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
-
 components:
   securitySchemes:
     BearerAuth:
@@ -246,16 +218,6 @@ components:
           type: array
           items:
             type: string
-
-    AssignUserRolesRequest:
-      type: object
-      required: [roleIds]
-      properties:
-        roleIds:
-          type: array
-          items:
-            type: integer
-            format: int64
 
     ResultRoleDetailVO:
       allOf:

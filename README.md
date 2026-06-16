@@ -104,6 +104,9 @@ common ← core ← system ← security ← app
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS deadman_admin DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 mysql -u root -p deadman_admin < deadman-app/src/main/resources/db/schema.sql
 
+# 若从旧版（user_base.department_id 单部门模型）升级，额外执行迁移脚本：
+mysql -u root -p deadman_admin < deadman-app/src/main/resources/db/migration/20260616_user_department_refactor.sql
+
 # 2. 按需初始化组件/插件表
 mysql -u root -p deadman_admin < components/deadman-component-client/src/main/resources/db/client/schema.sql
 mysql -u root -p deadman_admin < plugins/deadman-plugin-file/src/main/resources/db/file/schema.sql
@@ -219,7 +222,7 @@ DeadExcelExporter.of(deadExcelService, UserRow.class)
 ## 数据模型（管理端）
 
 - `user_base` / `user_account` / `user_password`：用户与多登录方式
-- `sys_department` / `sys_position` / `sys_user_position`：组织与职位
+- `sys_department` / `sys_position` / `sys_user_department` / `sys_user_position`：组织与职位（多部门 + 主部门）
 - `sys_role` / `sys_user_role` / `sys_role_permission`：RBAC
 - `sys_notification` / `sys_notification_recipient`：站内信
 - `plugin_ws_message`：WebSocket 消息持久化

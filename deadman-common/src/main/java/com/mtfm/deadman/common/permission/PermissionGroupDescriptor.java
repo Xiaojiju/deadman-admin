@@ -1,4 +1,4 @@
-package com.mtfm.deadman.security.permission;
+package com.mtfm.deadman.common.permission;
 
 import java.util.List;
 

@@ -1,7 +1,9 @@
 package com.mtfm.deadman.system.controller;
 
 import com.mtfm.deadman.common.result.Result;
+import com.mtfm.deadman.system.dto.org.AssignDepartmentUsersRequest;
 import com.mtfm.deadman.system.dto.org.CreateDepartmentRequest;
+import com.mtfm.deadman.system.domain.department.DepartmentOperations;
 import com.mtfm.deadman.system.dto.org.UpdateDepartmentRequest;
 import com.mtfm.deadman.system.service.DepartmentAdminService;
 import com.mtfm.deadman.system.vo.org.DepartmentTreeVO;
@@ -29,6 +31,7 @@ import java.util.List;
 public class DepartmentController {
 
     private final DepartmentAdminService departmentAdminService;
+    private final DepartmentOperations departmentOperations;
 
     /**
      * 部门扁平列表
@@ -36,7 +39,7 @@ public class DepartmentController {
      * @return 按排序号、编码升序的部门列表
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('dept:list:read')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).DEPT_LIST_READ)")
     public Result<List<DepartmentVO>> list() {
         return Result.ok(departmentAdminService.listDepartments());
     }
@@ -47,7 +50,7 @@ public class DepartmentController {
      * @return 根部门及其下级嵌套树
      */
     @GetMapping("/tree")
-    @PreAuthorize("hasAuthority('dept:list:read')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).DEPT_LIST_READ)")
     public Result<List<DepartmentTreeVO>> tree() {
         return Result.ok(departmentAdminService.listDepartmentTree());
     }
@@ -59,7 +62,7 @@ public class DepartmentController {
      * @return 部门详情
      */
     @GetMapping("/{departmentId}")
-    @PreAuthorize("hasAuthority('dept:list:read')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).DEPT_LIST_READ)")
     public Result<DepartmentVO> detail(@PathVariable Long departmentId) {
         return Result.ok(departmentAdminService.getDepartment(departmentId));
     }
@@ -71,7 +74,7 @@ public class DepartmentController {
      * @return 新建部门详情
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('dept:create')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).DEPT_CREATE)")
     public Result<DepartmentVO> create(@Valid @RequestBody CreateDepartmentRequest request) {
         return Result.ok(departmentAdminService.createDepartment(request));
     }
@@ -84,7 +87,7 @@ public class DepartmentController {
      * @return 更新后的部门详情
      */
     @PutMapping("/{departmentId}")
-    @PreAuthorize("hasAuthority('dept:update')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).DEPT_UPDATE)")
     public Result<DepartmentVO> update(
             @PathVariable Long departmentId, @Valid @RequestBody UpdateDepartmentRequest request) {
         return Result.ok(departmentAdminService.updateDepartment(departmentId, request));
@@ -97,9 +100,24 @@ public class DepartmentController {
      * @return 空响应
      */
     @DeleteMapping("/{departmentId}")
-    @PreAuthorize("hasAuthority('dept:delete')")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).DEPT_DELETE)")
     public Result<Void> delete(@PathVariable Long departmentId) {
         departmentAdminService.deleteDepartment(departmentId);
+        return Result.ok();
+    }
+
+    /**
+     * 覆盖式绑定部门成员。
+     *
+     * @param departmentId 部门 ID
+     * @param request      用户 ID 列表
+     * @return 空响应
+     */
+    @PutMapping("/{departmentId}/users")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.system.permission.SystemPermissions.Org).DEPT_UPDATE)")
+    public Result<Void> assignUsers(
+            @PathVariable Long departmentId, @Valid @RequestBody AssignDepartmentUsersRequest request) {
+        departmentOperations.replaceDepartmentUsers(departmentId, request.userIds());
         return Result.ok();
     }
 }

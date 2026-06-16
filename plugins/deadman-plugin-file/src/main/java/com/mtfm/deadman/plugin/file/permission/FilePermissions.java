@@ -1,7 +1,7 @@
 package com.mtfm.deadman.plugin.file.permission;
 
-import com.mtfm.deadman.security.permission.PermissionGroupDescriptor;
-import com.mtfm.deadman.security.permission.PermissionItemDescriptor;
+import com.mtfm.deadman.common.permission.PermissionGroupDescriptor;
+import com.mtfm.deadman.common.permission.PermissionItemDescriptor;
 import java.util.List;
 
 /**

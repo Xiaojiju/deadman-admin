@@ -109,4 +109,13 @@ public class UserPasswordService extends ServiceImpl<UserPasswordMapper, UserPas
     public UserPassword getByUserId(Long userId) {
         return getOne(new LambdaQueryWrapper<UserPassword>().eq(UserPassword::getUserId, userId));
     }
+
+    /**
+     * 删除用户密码记录。
+     *
+     * @param userId 用户 ID
+     */
+    public void removeByUserId(Long userId) {
+        remove(new LambdaQueryWrapper<UserPassword>().eq(UserPassword::getUserId, userId));
+    }
 }

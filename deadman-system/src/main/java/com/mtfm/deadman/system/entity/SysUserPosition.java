@@ -29,6 +29,9 @@ public class SysUserPosition {
     /** 用户主键 {@link UserBase#id} */
     private Long userId;
 
+    /** 部门主键 {@link SysDepartment#id} */
+    private Long departmentId;
+
     /** 职位主键 {@link SysPosition#id} */
     private Long positionId;
 

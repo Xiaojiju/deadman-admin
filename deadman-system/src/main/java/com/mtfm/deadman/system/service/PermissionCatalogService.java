@@ -1,6 +1,6 @@
-package com.mtfm.deadman.security.service;
+package com.mtfm.deadman.system.service;
 
-import com.mtfm.deadman.security.permission.PermissionCatalog;
+import com.mtfm.deadman.common.spi.PermissionCatalog;
 import com.mtfm.deadman.system.vo.permission.PermissionGroupVO;
 import com.mtfm.deadman.system.vo.permission.PermissionItemVO;
 import lombok.RequiredArgsConstructor;
