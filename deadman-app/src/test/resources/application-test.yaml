@@ -19,6 +19,8 @@ spring:
 deadman:
   jwt:
     secret: deadman-admin-test-secret-key-at-least-32-bytes-long
+    access-expiration-ms: 3600000
+    refresh-expiration-ms: 604800000
     expiration-ms: 3600000
   user:
     user-code-prefix: DM
@@ -40,6 +42,8 @@ deadman:
       enabled: true
       jwt:
         secret: deadman-client-test-secret-key-at-least-32-bytes-long
+        access-expiration-ms: 3600000
+        refresh-expiration-ms: 604800000
         expiration-ms: 3600000
       user:
         user-code-prefix: CL

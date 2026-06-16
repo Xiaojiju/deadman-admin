@@ -134,6 +134,35 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
         updateById(existing);
     }
 
+    /**
+     * 将 OAuth 账号绑定到指定用户；若 openid 已被其他用户占用则抛出业务异常。
+     *
+     * @param userId   用户 ID
+     * @param provider OAuth 提供商标识
+     * @param subject  OAuth 用户唯一标识（如 openid）
+     */
+    public void bindOAuth(Long userId, String provider, String subject) {
+        if (!StringUtils.hasText(provider) || !StringUtils.hasText(subject)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "OAuth 绑定参数不完整");
+        }
+        ClientUserAccount existing = findByOAuth(provider, subject);
+        if (existing != null) {
+            if (!existing.getUserId().equals(userId)) {
+                throw new BusinessException(ResultCode.OAUTH_ALREADY_BOUND);
+            }
+            return;
+        }
+        save(ClientUserAccount.builder()
+                .userId(userId)
+                .accountType(AccountType.OAUTH.getCode())
+                .accountIdentifier(subject)
+                .oauthProvider(provider)
+                .oauthSubject(subject)
+                .verified(1)
+                .status(UserStatus.ACTIVE.getValue())
+                .build());
+    }
+
     private ClientUserAccount findByTypeAndIdentifier(String accountType, String identifier, String oauthProvider) {
         LambdaQueryWrapper<ClientUserAccount> wrapper = new LambdaQueryWrapper<ClientUserAccount>()
                 .eq(ClientUserAccount::getAccountType, accountType)

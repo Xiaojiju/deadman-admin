@@ -121,4 +121,24 @@ public class LoginProviderGroupManager {
         }
         return manager;
     }
+
+    /**
+     * 根据登录请求 URI 解析 Provider ID。
+     *
+     * @param groupId  组标识
+     * @param loginUri 登录请求 URI
+     * @return Provider ID，未匹配时返回 unknown
+     */
+    public String resolveProviderIdByLoginUri(String groupId, String loginUri) {
+        if (loginUri == null || loginUri.isBlank()) {
+            return "unknown";
+        }
+        LoginProviderGroup group = requireGroup(groupId);
+        for (LoginProvider provider : listProviders(groupId)) {
+            if (loginUri.equals(provider.resolveLoginEndpoint(group))) {
+                return provider.providerId();
+            }
+        }
+        return "unknown";
+    }
 }

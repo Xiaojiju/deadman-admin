@@ -1,7 +1,6 @@
 package com.mtfm.deadman.security;
 
-import com.mtfm.deadman.common.result.ResultCode;
-import com.mtfm.deadman.common.exception.BusinessException;
+import com.mtfm.deadman.common.util.AuthPrincipalSupport;
 
 /**
  * 控制器层鉴权辅助方法。
@@ -18,9 +17,6 @@ public final class SecurityAuthSupport {
      * @return 非空的 LoginUser
      */
     public static LoginUser requireLogin(LoginUser loginUser) {
-        if (loginUser == null) {
-            throw new BusinessException(ResultCode.UNAUTHORIZED);
-        }
-        return loginUser;
+        return AuthPrincipalSupport.requireAuthenticated(loginUser);
     }
 }

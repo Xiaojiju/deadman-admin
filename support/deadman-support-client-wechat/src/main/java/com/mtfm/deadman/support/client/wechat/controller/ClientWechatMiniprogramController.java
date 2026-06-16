@@ -1,4 +1,4 @@
-package com.mtfm.deadman.component.client.wechat;
+package com.mtfm.deadman.support.client.wechat.controller;
 
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.Result;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 用户端微信小程序扩展接口（手机号绑定等），仅在同时引入 client 与 wechat 插件时装配。
+ * 用户端微信小程序扩展接口（手机号绑定等），由 support 桥接模块提供。
  */
 @RestController
 @RequestMapping("/client/api/wechat-miniprogram")

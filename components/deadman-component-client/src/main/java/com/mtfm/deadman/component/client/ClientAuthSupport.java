@@ -1,7 +1,6 @@
 package com.mtfm.deadman.component.client;
 
-import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.common.util.AuthPrincipalSupport;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 
 /**
@@ -19,9 +18,6 @@ public final class ClientAuthSupport {
      * @return 非空用户
      */
     public static ClientLoginUser requireLogin(ClientLoginUser user) {
-        if (user == null) {
-            throw new BusinessException(ResultCode.UNAUTHORIZED);
-        }
-        return user;
+        return AuthPrincipalSupport.requireAuthenticated(user);
     }
 }

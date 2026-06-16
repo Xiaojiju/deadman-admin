@@ -1,4 +1,4 @@
-package com.mtfm.deadman.component.client.wechat;
+package com.mtfm.deadman.support.client.wechat.handler;
 
 import com.mtfm.deadman.component.client.constants.ClientAuthConstants;
 import com.mtfm.deadman.component.client.service.ClientUserAccountService;

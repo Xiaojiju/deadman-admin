@@ -22,7 +22,16 @@ public class DeadmanProperties {
     public static class Jwt {
         /** HMAC 密钥，至少 32 字符，通过 DEADMAN_JWT_SECRET 配置 */
         private String secret;
-        private long expirationMs = 86_400_000L;
+        /** Access Token 有效期（毫秒），默认 30 分钟 */
+        private long accessExpirationMs = 1_800_000L;
+        /** Refresh Token 有效期（毫秒），默认 7 天 */
+        private long refreshExpirationMs = 604_800_000L;
+        /**
+         * 兼容旧配置：未显式设置 access-expiration-ms 时，可继续通过 expiration-ms 覆盖 Access Token 时效。
+         */
+        private long expirationMs = 1_800_000L;
+        /** Refresh Token HttpOnly Cookie 是否启用 Secure（生产 HTTPS 建议 true） */
+        private boolean refreshCookieSecure = false;
     }
 
     @Data

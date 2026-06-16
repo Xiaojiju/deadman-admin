@@ -1,25 +1,17 @@
 package com.mtfm.deadman.component.client.auth.handler;
 
-import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.component.client.constants.ClientAuthConstants;
-import com.mtfm.deadman.security.authentication.provider.LoginProvider;
-import com.mtfm.deadman.security.authentication.provider.LoginProviderGroup;
 import com.mtfm.deadman.security.authentication.provider.LoginProviderGroupManager;
+import com.mtfm.deadman.security.authentication.support.LoginFailureResponseSupport;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 /**
  * 用户端登录失败处理器，统一 JSON 响应并触发失败回调 SPI。
@@ -36,36 +28,9 @@ public class ClientLoginFailureHandler implements AuthenticationFailureHandler {
     public void onAuthenticationFailure(
             HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
             throws IOException {
-        String providerId = resolveProviderId(request);
+        String providerId = loginProviderGroupManager.resolveProviderIdByLoginUri(
+                ClientAuthConstants.LOGIN_GROUP_ID, request.getRequestURI());
         failureCallback.onLoginFailure(request, response, providerId, exception);
-
-        Result<Void> body = resolveBody(exception);
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        jsonMapper.writeValue(response.getOutputStream(), body);
-    }
-
-    private String resolveProviderId(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        LoginProviderGroup clientGroup = loginProviderGroupManager.requireGroup(ClientAuthConstants.LOGIN_GROUP_ID);
-        List<LoginProvider> providers = loginProviderGroupManager.listProviders(ClientAuthConstants.LOGIN_GROUP_ID);
-        for (LoginProvider provider : providers) {
-            String endpoint = provider.resolveLoginEndpoint(clientGroup);
-            if (uri != null && uri.equals(endpoint)) {
-                return provider.providerId();
-            }
-        }
-        return "unknown";
-    }
-
-    private Result<Void> resolveBody(AuthenticationException exception) {
-        if (exception instanceof BadCredentialsException) {
-            return Result.of(ResultCode.PASSWORD_MISMATCH);
-        }
-        if (exception instanceof DisabledException disabledException) {
-            return Result.of(ResultCode.FORBIDDEN.getCode(), disabledException.getMessage());
-        }
-        return Result.of(ResultCode.UNAUTHORIZED);
+        LoginFailureResponseSupport.writeLoginFailure(response, jsonMapper, exception);
     }
 }

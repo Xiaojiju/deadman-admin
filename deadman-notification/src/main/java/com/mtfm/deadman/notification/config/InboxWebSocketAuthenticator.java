@@ -4,7 +4,9 @@ import com.mtfm.deadman.notification.service.NotificationPushService;
 import com.mtfm.deadman.plugin.websocket.channel.MessageChannel;
 import com.mtfm.deadman.plugin.websocket.spi.WebSocketAuthenticator;
 import com.mtfm.deadman.plugin.websocket.spi.WebSocketPrincipal;
-import com.mtfm.deadman.security.jwt.JwtTokenProvider;
+import com.mtfm.deadman.security.constants.AdminAuthConstants;
+import com.mtfm.deadman.security.jwt.RealmJwtTokenProvider;
+import com.mtfm.deadman.security.token.AuthTokenIssueProviderRegistry;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +28,13 @@ public class InboxWebSocketAuthenticator implements WebSocketAuthenticator {
 
     private static final String TOKEN_PARAM = "token";
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthTokenIssueProviderRegistry providerRegistry;
     private final MessageChannel inboxMessageChannel;
 
     public InboxWebSocketAuthenticator(
-            JwtTokenProvider jwtTokenProvider,
+            AuthTokenIssueProviderRegistry providerRegistry,
             @Qualifier(NotificationPushService.INBOX_MESSAGE_CHANNEL) MessageChannel inboxMessageChannel) {
-        this.jwtTokenProvider = jwtTokenProvider;
+        this.providerRegistry = providerRegistry;
         this.inboxMessageChannel = inboxMessageChannel;
     }
 
@@ -48,6 +50,10 @@ public class InboxWebSocketAuthenticator implements WebSocketAuthenticator {
             return Optional.empty();
         }
         try {
+            RealmJwtTokenProvider jwtTokenProvider = providerRegistry
+                    .require(AdminAuthConstants.JWT_REALM)
+                    .jwtSupport()
+                    .tokenProvider();
             Claims claims = jwtTokenProvider.parseClaims(token);
             Long userId = jwtTokenProvider.getUserId(claims);
             String userCode = jwtTokenProvider.getUserCode(claims);

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mtfm.deadman.common.enums.AccountType;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.page.PageVO;
-import com.mtfm.deadman.component.client.auth.jwt.ClientJwtSessionStore;
+import com.mtfm.deadman.component.client.constants.ClientAuthConstants;
 import com.mtfm.deadman.component.client.dto.ClientUserAdminPageQuery;
 import com.mtfm.deadman.component.client.entity.ClientUserAccount;
 import com.mtfm.deadman.component.client.entity.ClientUserBase;
@@ -13,6 +13,7 @@ import com.mtfm.deadman.component.client.entity.ClientUserPassword;
 import com.mtfm.deadman.component.client.vo.ClientUserAccountBindingVO;
 import com.mtfm.deadman.component.client.vo.ClientUserAdminDetailVO;
 import com.mtfm.deadman.component.client.vo.ClientUserAdminSummaryVO;
+import com.mtfm.deadman.security.token.AuthTokenIssueProviderRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,7 @@ public class ClientUserAdminService {
     private final ClientUserService clientUserService;
     private final ClientUserAccountService clientUserAccountService;
     private final ClientUserPasswordService clientUserPasswordService;
-    private final ClientJwtSessionStore clientJwtSessionStore;
+    private final AuthTokenIssueProviderRegistry providerRegistry;
 
     /**
      * 分页查询用户端用户。
@@ -176,7 +177,7 @@ public class ClientUserAdminService {
     }
 
     private void invalidateSessions(Long userId) {
-        clientJwtSessionStore.invalidateUserSessions(userId);
+        providerRegistry.require(ClientAuthConstants.JWT_REALM).invalidateUserSessions(userId);
     }
 
     private Map<Long, String> loadPrimaryUsernames(List<Long> userIds) {

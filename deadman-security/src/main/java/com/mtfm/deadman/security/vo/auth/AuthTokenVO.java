@@ -16,10 +16,14 @@ public class AuthTokenVO {
 
     /** 访问令牌 */
     private String accessToken;
+    /** 刷新令牌（同时写入 HttpOnly Cookie，供无感刷新） */
+    private String refreshToken;
     /** 令牌类型 */
     private String tokenType;
-    /** 过期时间 */
+    /** Access Token 过期时间（秒） */
     private Long expiresIn;
+    /** Refresh Token 过期时间（秒） */
+    private Long refreshExpiresIn;
     /** 用户编码 */
     private String userCode;
     /** 用户昵称 */

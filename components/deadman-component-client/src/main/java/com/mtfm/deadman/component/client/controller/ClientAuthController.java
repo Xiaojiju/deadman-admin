@@ -3,7 +3,7 @@ package com.mtfm.deadman.component.client.controller;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.component.client.dto.ClientRegisterRequest;
 import com.mtfm.deadman.component.client.service.ClientAuthCredentialsService;
-import com.mtfm.deadman.component.client.vo.ClientAuthTokenVO;
+import com.mtfm.deadman.security.vo.auth.RegisterResultVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,10 +26,10 @@ public class ClientAuthController {
      * 用户端注册。
      *
      * @param request 注册请求
-     * @return 访问令牌
+     * @return 注册结果（不含令牌）
      */
     @PostMapping("/register")
-    public Result<ClientAuthTokenVO> register(@Valid @RequestBody ClientRegisterRequest request) {
+    public Result<RegisterResultVO> register(@Valid @RequestBody ClientRegisterRequest request) {
         return Result.ok(clientAuthCredentialsService.register(request));
     }
 }

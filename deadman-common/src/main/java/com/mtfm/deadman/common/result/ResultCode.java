@@ -25,6 +25,8 @@ public enum ResultCode {
     PASSWORD_MISMATCH(10005, "用户名或密码错误"),
     PASSWORD_NOT_SET(10006, "未设置密码"),
     USER_SUPER_ADMIN_PROTECTED(10007, "超级管理员用户不允许删除或停用"),
+    TOKEN_INVALID(10008, "令牌无效或已过期"),
+    TOKEN_REUSE_DETECTED(10009, "检测到令牌异常重用，请重新登录"),
 
     ROLE_NOT_FOUND(11001, "角色不存在"),
     ROLE_CODE_EXISTS(11002, "角色编码已存在"),

@@ -7,7 +7,7 @@ import com.mtfm.deadman.security.dto.auth.ChangePasswordRequest;
 import com.mtfm.deadman.security.dto.auth.RegisterRequest;
 import com.mtfm.deadman.security.service.AuthCredentialsService;
 import com.mtfm.deadman.security.service.AuthPermissionService;
-import com.mtfm.deadman.security.vo.auth.AuthTokenVO;
+import com.mtfm.deadman.security.vo.auth.RegisterResultVO;
 import com.mtfm.deadman.security.vo.auth.UserAuthorityVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 认证接口：注册、修改密码、获取当前用户权限。
- * <p>登录由 {@link com.mtfm.deadman.security.authentication.provider.AdminPasswordLoginProvider} 的 Filter 处理。
+ * <p>
+ * 登录由
+ * {@link com.mtfm.deadman.security.authentication.provider.AdminPasswordLoginProvider}
+ * 的 Filter 处理。
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -34,12 +37,12 @@ public class AuthController {
 
     /**
      * 注册
-     * 
+     *
      * @param request 注册请求
-     * @return 授权令牌
+     * @return 注册结果（不含令牌）
      */
     @PostMapping("/register")
-    public Result<AuthTokenVO> register(@Valid @RequestBody RegisterRequest request) {
+    public Result<RegisterResultVO> register(@Valid @RequestBody RegisterRequest request) {
         return Result.ok(authCredentialsService.register(request));
     }
 

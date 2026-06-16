@@ -7,7 +7,7 @@ import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.core.config.properties.DeadmanProperties;
 import com.mtfm.deadman.security.dto.auth.ChangePasswordRequest;
 import com.mtfm.deadman.security.dto.auth.RegisterRequest;
-import com.mtfm.deadman.security.vo.auth.AuthTokenVO;
+import com.mtfm.deadman.security.vo.auth.RegisterResultVO;
 import com.mtfm.deadman.system.entity.UserAccount;
 import com.mtfm.deadman.system.entity.UserBase;
 import com.mtfm.deadman.common.event.user.UserCreatedEvent;
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
- * 认证凭证：注册、登录、改密（签发 JWT）。
+ * 认证凭证：注册、改密（令牌仅在登录成功后签发）。
  */
 @Service
 @RequiredArgsConstructor
@@ -33,18 +33,17 @@ public class AuthCredentialsService {
     private final UserAccountService userAccountService;
     private final UserPasswordService userPasswordService;
     private final RoleAdminService roleAdminService;
-    private final AuthTokenService authTokenService;
     private final DeadmanProperties deadmanProperties;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * 用户注册并签发 JWT。
+     * 用户注册（不签发令牌，需登录后获取 Access/Refresh Token）。
      *
      * @param request 注册请求
-     * @return 访问令牌及用户摘要
+     * @return 注册结果
      */
     @Transactional(rollbackFor = Exception.class)
-    public AuthTokenVO register(RegisterRequest request) {
+    public RegisterResultVO register(RegisterRequest request) {
         if (userAccountService.existsUsername(request.username())) {
             throw new BusinessException(ResultCode.ACCOUNT_EXISTS);
         }
@@ -71,7 +70,7 @@ public class AuthCredentialsService {
         roleAdminService.assignDefaultUserRole(userBase.getId());
         eventPublisher.publishEvent(new UserCreatedEvent(userBase.getId(), UserCreationSource.REGISTER));
 
-        return authTokenService.issueToken(userBase);
+        return new RegisterResultVO(userBase.getUserCode(), userBase.getNickname());
     }
 
     /**

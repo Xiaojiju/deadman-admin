@@ -31,6 +31,7 @@
         <module>plugins/deadman-plugin-storage-local</module>
         <module>components/deadman-component-client</module>
         <module>support/deadman-support-wechat</module>
+        <module>support/deadman-support-client-wechat</module>
         <module>deadman-app</module>
     </modules>
 
@@ -86,6 +87,11 @@
             <dependency>
                 <groupId>com.mtfm</groupId>
                 <artifactId>deadman-support-wechat</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
+                <artifactId>deadman-support-client-wechat</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
