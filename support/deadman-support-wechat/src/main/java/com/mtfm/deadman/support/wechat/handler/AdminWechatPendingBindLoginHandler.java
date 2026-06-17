@@ -34,9 +34,10 @@ public class AdminWechatPendingBindLoginHandler implements PendingOAuthBindLogin
     public void onAuthenticationSuccess(
             HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws IOException {
-        AdminWechatPendingBindPrincipal principal =
-                ((AdminWechatPendingBindAuthenticationToken) authentication).getPrincipal();
-        AdminWechatPendingBindVO body = new AdminWechatPendingBindVO(principal.bindToken(), principal.expiresIn(), true);
+        AdminWechatPendingBindPrincipal principal = ((AdminWechatPendingBindAuthenticationToken) authentication)
+                .getPrincipal();
+        AdminWechatPendingBindVO body = new AdminWechatPendingBindVO(principal.bindToken(), principal.expiresIn(),
+                true);
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

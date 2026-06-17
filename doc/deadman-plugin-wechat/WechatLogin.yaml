@@ -1,0 +1,162 @@
+# 微信登录统一公开 API
+openapi: 3.0.3
+info:
+  title: WechatLoginController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    微信登录统一公开接口，通过 `loginKind` 区分小程序与网页扫码等方式。
+    响应使用标准模板对象 `WechatLoginSession` / `WechatLoginInitiateResult`，各方式扩展特有字段。
+    业务 JWT 签发仍走各用户体系 `POST .../login/{loginKind}`。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/wechat/login/kinds:
+    get:
+      summary: 列出已注册的微信登录方式
+      operationId: wechatLoginKinds
+      tags: [微信登录]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultStringList'
+
+  /api/wechat/login/{loginKind}/initiate:
+    get:
+      summary: 发起微信登录预流程
+      description: |
+        网页扫码（`wechat-web`）返回 `WechatWebLoginInitiateResult`（authorizeUrl、state）。
+        小程序无需发起步骤，调用将返回 404。
+      operationId: wechatLoginInitiate
+      tags: [微信登录]
+      parameters:
+        - name: loginKind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [wechat-web]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWechatLoginInitiateResult'
+
+  /api/wechat/login/sessions:
+    post:
+      summary: 解析微信登录凭证为统一会话
+      description: |
+        将 code（及网页扫码的 state）换取 `WechatLoginSession` 标准模板。
+        小程序返回 `WechatMiniprogramLoginSession`（含 sessionKey）；
+        网页返回 `WechatWebLoginSession`（含 nickname、avatarUrl、accessToken）。
+      operationId: wechatLoginResolveSession
+      tags: [微信登录]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WechatLoginResolveRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWechatLoginSession'
+
+components:
+  schemas:
+    WechatLoginResolveRequest:
+      type: object
+      required: [loginKind, code]
+      properties:
+        loginKind:
+          type: string
+          description: wechat-miniprogram 或 wechat-web
+        code:
+          type: string
+          description: 微信临时凭证
+        state:
+          type: string
+          description: 网页扫码必填
+
+    WechatLoginSessionBase:
+      type: object
+      properties:
+        loginKind:
+          type: string
+        oauthProvider:
+          type: string
+        openid:
+          type: string
+        unionid:
+          type: string
+        nickname:
+          type: string
+        avatarUrl:
+          type: string
+
+    WechatMiniprogramLoginSession:
+      allOf:
+        - $ref: '#/components/schemas/WechatLoginSessionBase'
+        - type: object
+          properties:
+            sessionKey:
+              type: string
+
+    WechatWebLoginSession:
+      allOf:
+        - $ref: '#/components/schemas/WechatLoginSessionBase'
+        - type: object
+          properties:
+            accessToken:
+              type: string
+
+    WechatWebLoginInitiateResult:
+      type: object
+      properties:
+        loginKind:
+          type: string
+        authorizeUrl:
+          type: string
+        state:
+          type: string
+        stateExpiresInSeconds:
+          type: integer
+          format: int64
+
+    ResultStringList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: string
+
+    ResultWechatLoginInitiateResult:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/WechatWebLoginInitiateResult'
+
+    ResultWechatLoginSession:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              oneOf:
+                - $ref: '#/components/schemas/WechatMiniprogramLoginSession'
+                - $ref: '#/components/schemas/WechatWebLoginSession'

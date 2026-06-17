@@ -11,9 +11,11 @@ import com.mtfm.deadman.component.client.service.ClientAuthCredentialsService;
 import com.mtfm.deadman.component.client.service.ClientUserAccountService;
 import com.mtfm.deadman.component.client.service.ClientUserPasswordService;
 import com.mtfm.deadman.component.client.service.ClientUserService;
+import com.mtfm.deadman.plugin.wechat.login.WechatLoginService;
+import com.mtfm.deadman.plugin.wechat.login.credential.WechatMiniprogramLoginCredential;
+import com.mtfm.deadman.plugin.wechat.login.session.WechatLoginSession;
+import com.mtfm.deadman.plugin.wechat.login.session.WechatMiniprogramLoginSession;
 import com.mtfm.deadman.plugin.wechat.miniprogram.WechatMiniprogramConstants;
-import com.mtfm.deadman.plugin.wechat.miniprogram.client.WechatApiClient;
-import com.mtfm.deadman.plugin.wechat.miniprogram.client.WechatCode2SessionResult;
 import com.mtfm.deadman.support.client.wechat.auth.ClientWechatPendingBindAuthenticationToken;
 import com.mtfm.deadman.support.client.wechat.auth.ClientWechatPendingBindPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +34,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class ClientWechatAuthService {
 
-    private final WechatApiClient wechatApiClient;
+    private final WechatLoginService wechatLoginService;
     private final ClientUserAccountService clientUserAccountService;
     private final ClientUserService clientUserService;
     private final ClientUserPasswordService clientUserPasswordService;
@@ -49,16 +51,20 @@ public class ClientWechatAuthService {
         if (!StringUtils.hasText(code)) {
             throw new BadCredentialsException("微信登录 code 不能为空");
         }
-        WechatCode2SessionResult session = wechatApiClient.code2Session(code.trim());
+        WechatLoginSession session = wechatLoginService.resolve(new WechatMiniprogramLoginCredential(code.trim()));
+        if (!(session instanceof WechatMiniprogramLoginSession miniprogramSession)) {
+            throw new BadCredentialsException("微信登录会话类型不匹配");
+        }
         ClientUserAccount oauthAccount = clientUserAccountService.findByOAuth(
-                WechatMiniprogramConstants.OAUTH_PROVIDER, session.openid());
+                session.oauthProvider(), session.openid());
         if (oauthAccount != null) {
             return authenticateBoundUser(oauthAccount);
         }
         String bindToken = bindTokenStore.store(new ClientWechatPendingSession(
-                session.openid(), session.sessionKey(), session.unionid()));
+                miniprogramSession.openid(), miniprogramSession.sessionKey(), miniprogramSession.unionid()));
         long expiresIn = bindTokenStore.bindTokenExpiresInSeconds();
-        return new ClientWechatPendingBindAuthenticationToken(new ClientWechatPendingBindPrincipal(bindToken, expiresIn));
+        return new ClientWechatPendingBindAuthenticationToken(
+                new ClientWechatPendingBindPrincipal(bindToken, expiresIn));
     }
 
     /**

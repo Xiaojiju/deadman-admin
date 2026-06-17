@@ -2,30 +2,26 @@ package com.mtfm.deadman.plugin.wechat.miniprogram.client;
 
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.wechat.common.WechatRestClientSupport;
 import com.mtfm.deadman.plugin.wechat.miniprogram.config.WechatMiniprogramPluginProperties;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Map;
 
 /**
  * 默认微信 API 客户端实现（RestClient 调用官方接口）。
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DefaultWechatApiClient implements WechatApiClient {
 
     private final WechatMiniprogramPluginProperties properties;
     private final WechatAccessTokenHolder accessTokenHolder;
-    private final JsonMapper jsonMapper;
-    private final RestClient restClient = RestClient.create();
+    private final WechatRestClientSupport restClientSupport;
 
     /**
      * 使用 wx.login code 换取 openid。
@@ -42,13 +38,18 @@ public class DefaultWechatApiClient implements WechatApiClient {
                 .queryParam("js_code", jsCode)
                 .queryParam("grant_type", "authorization_code")
                 .toUriString();
-        JsonNode body = getForJson(url);
-        assertWechatSuccess(body, "微信登录失败");
-        String openid = textValue(body, "openid");
+        JsonNode body = restClientSupport.getForJson(url);
+        restClientSupport.assertWechatSuccess(body, "微信登录失败");
+        String openid = restClientSupport.textValue(body, "openid");
         if (!StringUtils.hasText(openid)) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "微信登录未返回 openid");
         }
-        return new WechatCode2SessionResult(openid, textValue(body, "session_key"), textValue(body, "unionid"));
+        return new WechatCode2SessionResult(
+                openid,
+                restClientSupport.textValue(body, "session_key"),
+                // 用户在开放平台的唯一标识符，若当前小程序已绑定到微信开放平台帐号下会返回
+                // 「https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/union-id.html」
+                restClientSupport.textValue(body, "unionid"));
     }
 
     /**
@@ -71,18 +72,23 @@ public class DefaultWechatApiClient implements WechatApiClient {
     public WechatPhoneInfo getPhoneNumber(String phoneCode) {
         String accessToken = getAccessToken();
         String url = properties.getApiBaseUrl() + "/wxa/business/getuserphonenumber?access_token=" + accessToken;
-        JsonNode body = postForJson(url, Map.of("code", phoneCode));
-        assertWechatSuccess(body, "获取微信手机号失败");
+        JsonNode body = restClientSupport.postForJson(url, Map.of("code", phoneCode));
+        restClientSupport.assertWechatSuccess(body, "获取微信手机号失败");
         JsonNode phoneInfo = body.get("phone_info");
         if (phoneInfo == null || phoneInfo.isNull()) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "微信未返回手机号信息");
         }
         return new WechatPhoneInfo(
-                textValue(phoneInfo, "phoneNumber"),
-                textValue(phoneInfo, "purePhoneNumber"),
-                textValue(phoneInfo, "countryCode"));
+                restClientSupport.textValue(phoneInfo, "phoneNumber"),
+                restClientSupport.textValue(phoneInfo, "purePhoneNumber"),
+                restClientSupport.textValue(phoneInfo, "countryCode"));
     }
 
+    /**
+     * 获取微信 access_token。
+     *
+     * @return access_token
+     */
     private String fetchAccessToken() {
         requireConfigured();
         String url = UriComponentsBuilder.fromUriString(properties.getApiBaseUrl() + "/cgi-bin/token")
@@ -90,9 +96,9 @@ public class DefaultWechatApiClient implements WechatApiClient {
                 .queryParam("appid", properties.getAppId())
                 .queryParam("secret", properties.getAppSecret())
                 .toUriString();
-        JsonNode body = getForJson(url);
-        assertWechatSuccess(body, "获取微信 access_token 失败");
-        String token = textValue(body, "access_token");
+        JsonNode body = restClientSupport.getForJson(url);
+        restClientSupport.assertWechatSuccess(body, "获取微信 access_token 失败");
+        String token = restClientSupport.textValue(body, "access_token");
         if (!StringUtils.hasText(token)) {
             throw new BusinessException(ResultCode.INTERNAL_ERROR, "微信 access_token 为空");
         }
@@ -101,53 +107,12 @@ public class DefaultWechatApiClient implements WechatApiClient {
         return token;
     }
 
-    private JsonNode getForJson(String url) {
-        String rawBody = restClient.get().uri(url).retrieve().body(String.class);
-        return parseJsonBody(rawBody);
-    }
-
-    private JsonNode postForJson(String url, Object requestBody) {
-        String rawBody = restClient.post().uri(url).body(requestBody).retrieve().body(String.class);
-        return parseJsonBody(rawBody);
-    }
-
     /**
-     * 解析微信 API 响应体。微信部分接口以 text/plain 返回 JSON，不能直接反序列化为 JsonNode。
-     *
-     * @param rawBody 原始响应字符串
-     * @return 解析后的 JSON 节点
+     * 检查微信小程序 AppId/AppSecret 是否配置。
      */
-    private JsonNode parseJsonBody(String rawBody) {
-        if (!StringUtils.hasText(rawBody)) {
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "微信 API 响应为空");
-        }
-        try {
-            return jsonMapper.readTree(rawBody);
-        } catch (Exception ex) {
-            log.warn("微信 API 响应解析失败: {}", rawBody, ex);
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "微信 API 响应格式错误");
-        }
-    }
-
     private void requireConfigured() {
         if (!StringUtils.hasText(properties.getAppId()) || !StringUtils.hasText(properties.getAppSecret())) {
             throw new BusinessException(ResultCode.INTERNAL_ERROR, "未配置微信小程序 AppId/AppSecret");
         }
-    }
-
-    private void assertWechatSuccess(JsonNode body, String defaultMessage) {
-        if (body == null) {
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, defaultMessage);
-        }
-        if (body.has("errcode") && body.get("errcode").asInt() != 0) {
-            String message = body.has("errmsg") ? body.get("errmsg").asString() : defaultMessage;
-            log.warn("微信 API 失败: {}", message);
-            throw new BusinessException(ResultCode.BAD_REQUEST, message);
-        }
-    }
-
-    private String textValue(JsonNode node, String field) {
-        JsonNode value = node.get(field);
-        return value == null || value.isNull() ? null : value.asString();
     }
 }

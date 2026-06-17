@@ -1,0 +1,71 @@
+# com.mtfm.deadman.plugin.wechat.web.controller.WechatWebLoginController
+openapi: 3.0.3
+info:
+  title: WechatWebLoginController
+  version: 0.0.1-SNAPSHOT
+  description: |
+    微信网页扫码登录（开放平台网站应用）。
+    介绍文档：[WechatWebLogin.md](./WechatWebLogin.md)
+    统一 initiate 接口：`GET /api/wechat/login/wechat-web/initiate`（见 [WechatLogin.yaml](./WechatLogin.yaml)）
+    用户端登录：`POST /client/api/auth/login/wechat-web`
+    管理端登录：`POST /api/auth/login/wechat-web`
+    需启用 `deadman.plugin.wechat-web.enabled=true`
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/wechat-web/authorize-url:
+    get:
+      summary: 获取微信扫码授权页地址
+      description: |
+        公开接口。返回微信开放平台 `qrconnect` 授权页 URL 与 OAuth `state`。
+        前端展示二维码或跳转后，用户扫码授权将重定向到配置的 `redirect-uri`，并携带 `code` 与 `state`。
+        随后调用各用户体系的 `POST .../login/wechat-web` 完成登录。
+      operationId: wechatWebAuthorizeUrl
+      tags: [微信网页扫码]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultWechatWebAuthorizeUrlVO'
+        '500':
+          description: 未配置 AppId/AppSecret/redirect-uri
+
+components:
+  schemas:
+    WechatWebAuthorizeUrlVO:
+      type: object
+      properties:
+        authorizeUrl:
+          type: string
+          description: 微信扫码授权页 URL（含 #wechat_redirect）
+        state:
+          type: string
+          description: OAuth state，登录时需原样回传
+        stateExpiresInSeconds:
+          type: integer
+          format: int64
+          description: state 有效秒数
+
+    WechatWebLoginRequest:
+      type: object
+      required: [code, state]
+      properties:
+        code:
+          type: string
+          description: 微信授权回调临时凭证
+        state:
+          type: string
+          description: 与 authorize-url 返回的 state 一致
+
+    ResultWechatWebAuthorizeUrlVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/WechatWebAuthorizeUrlVO'

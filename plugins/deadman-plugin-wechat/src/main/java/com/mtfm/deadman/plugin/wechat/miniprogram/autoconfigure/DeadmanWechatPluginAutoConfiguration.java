@@ -12,6 +12,9 @@ import org.springframework.context.annotation.ComponentScan;
 @AutoConfiguration
 @EnableConfigurationProperties(WechatMiniprogramPluginProperties.class)
 @ConditionalOnProperty(prefix = "deadman.plugin.wechat-miniprogram", name = "enabled", havingValue = "true", matchIfMissing = true)
-@ComponentScan(basePackages = "com.mtfm.deadman.plugin.wechat.miniprogram")
+@ComponentScan(basePackages = {
+        "com.mtfm.deadman.plugin.wechat.miniprogram",
+        "com.mtfm.deadman.plugin.wechat.common"
+})
 public class DeadmanWechatPluginAutoConfiguration {
 }

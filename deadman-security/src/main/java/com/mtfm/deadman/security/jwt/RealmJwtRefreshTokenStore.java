@@ -7,7 +7,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -111,7 +110,6 @@ public class RealmJwtRefreshTokenStore {
         if (userId == null || expectedJti == null || expectedJti.isBlank() || newJti == null || newJti.isBlank()) {
             return false;
         }
-        Duration ttl = Duration.ofMillis(settings.refreshExpirationMs());
         StringRedisTemplate redisTemplate = redisTemplateProvider.getIfAvailable();
         if (redisTemplate != null) {
             Long rotated = redisTemplate.execute(

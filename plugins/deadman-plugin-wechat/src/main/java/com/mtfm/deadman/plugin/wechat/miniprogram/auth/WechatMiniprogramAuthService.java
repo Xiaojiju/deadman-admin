@@ -1,8 +1,8 @@
 package com.mtfm.deadman.plugin.wechat.miniprogram.auth;
 
-import com.mtfm.deadman.plugin.wechat.miniprogram.WechatMiniprogramConstants;
-import com.mtfm.deadman.plugin.wechat.miniprogram.client.WechatApiClient;
-import com.mtfm.deadman.plugin.wechat.miniprogram.client.WechatCode2SessionResult;
+import com.mtfm.deadman.plugin.wechat.login.WechatLoginService;
+import com.mtfm.deadman.plugin.wechat.login.credential.WechatMiniprogramLoginCredential;
+import com.mtfm.deadman.plugin.wechat.login.session.WechatLoginSession;
 import com.mtfm.deadman.security.spi.OAuthLoginUserService;
 import com.mtfm.deadman.security.spi.OAuthLoginUserServiceManager;
 import lombok.RequiredArgsConstructor;
@@ -13,13 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 /**
- * 微信小程序认证核心服务：code2session 与 OAuth 用户体系注入。
+ * 微信小程序认证核心服务：通过 {@link WechatLoginService} 解析凭证并注入 OAuth 用户体系。
  */
 @Service
 @RequiredArgsConstructor
 public class WechatMiniprogramAuthService {
 
-    private final WechatApiClient wechatApiClient;
+    private final WechatLoginService wechatLoginService;
     private final OAuthLoginUserServiceManager oauthLoginUserServiceManager;
 
     /**
@@ -33,14 +33,14 @@ public class WechatMiniprogramAuthService {
         if (!StringUtils.hasText(code)) {
             throw new AuthenticationServiceException("微信登录 code 不能为空");
         }
-        WechatCode2SessionResult session = wechatApiClient.code2Session(code.trim());
+        WechatLoginSession session = wechatLoginService.resolve(new WechatMiniprogramLoginCredential(code.trim()));
         OAuthLoginUserService oauthLoginUserService = oauthLoginUserServiceManager.require(loginGroupId);
         Authentication resolved = oauthLoginUserService.resolveOAuthLogin(new OAuthLoginUserService.OAuthLoginRequest(
-                WechatMiniprogramConstants.OAUTH_PROVIDER,
+                session.oauthProvider(),
+                session.oauthSubject(),
                 session.openid(),
-                session.openid(),
-                "微信用户",
-                null));
+                session.displayNickname(),
+                session.avatarUrl()));
         return new WechatMiniprogramAuthenticationToken(resolved.getPrincipal(), resolved.getAuthorities());
     }
 }

@@ -21,9 +21,15 @@
 | deadman-component-client | [ClientAuthController.yaml](deadman-component-client/ClientAuthController.yaml) | 用户端注册与登录 |
 | deadman-support-client-wechat | [ClientWechatAuth.md](deadman-support-client-wechat/ClientWechatAuth.md) | 用户端微信小程序 OAuth（后端） |
 | deadman-support-client-wechat | [ClientWechatAuth-Frontend.md](deadman-support-client-wechat/ClientWechatAuth-Frontend.md) | 用户端微信小程序 OAuth（前端对接） |
+| deadman-support-client-wechat | [ClientWechatWebAuth.md](deadman-support-client-wechat/ClientWechatWebAuth.md) | 用户端微信网页扫码 OAuth（后端） |
+| deadman-support-client-wechat | [ClientWechatWebAuth-Frontend.md](deadman-support-client-wechat/ClientWechatWebAuth-Frontend.md) | 用户端微信网页扫码 OAuth（前端对接） |
+| deadman-support-wechat | [AdminWechatWebAuth.md](deadman-support-wechat/AdminWechatWebAuth.md) | 管理端微信网页扫码 OAuth（后端） |
+| deadman-support-wechat | [AdminWechatWebAuth-Frontend.md](deadman-support-wechat/AdminWechatWebAuth-Frontend.md) | 管理端微信网页扫码 OAuth（前端对接） |
 | deadman-component-client | [ClientUserController.yaml](deadman-component-client/ClientUserController.yaml) | 用户端当前用户资料 |
 | deadman-component-client | [ClientUserAdminController.yaml](deadman-component-client/ClientUserAdminController.yaml) | 管理端操作用户端用户 |
 | deadman-plugin-wechat | [WechatMiniprogramController.yaml](deadman-plugin-wechat/WechatMiniprogramController.yaml) | 微信小程序手机号绑定 |
+| deadman-plugin-wechat | [WechatWebLogin.md](deadman-plugin-wechat/WechatWebLogin.md) | 微信网页扫码登录（后端） |
+| deadman-plugin-wechat | [WechatLogin.yaml](deadman-plugin-wechat/WechatLogin.yaml) | 微信登录统一公开 API |
 | deadman-plugin-wechat | [WechatLoginProviderRegistration.md](deadman-plugin-wechat/WechatLoginProviderRegistration.md) | 微信 LoginProvider 注册与覆盖机制 |
 | deadman-plugin-file | [FileController.yaml](deadman-plugin-file/FileController.yaml) | 文件上传、下载与元数据 |
 | deadman-plugin-data-scope | [UserDataScopeAdminController.yaml](deadman-plugin-data-scope/UserDataScopeAdminController.yaml) | 用户数据范围查询与分配 |

@@ -1,1 +1,3 @@
 com.mtfm.deadman.plugin.wechat.miniprogram.autoconfigure.DeadmanWechatPluginAutoConfiguration
+com.mtfm.deadman.plugin.wechat.web.autoconfigure.DeadmanWechatWebAutoConfiguration
+com.mtfm.deadman.plugin.wechat.login.autoconfigure.DeadmanWechatLoginAutoConfiguration

@@ -12,7 +12,7 @@
 
     <artifactId>deadman-plugin-wechat</artifactId>
     <name>deadman-plugin-wechat</name>
-    <description>微信生态插件（含小程序登录与手机号等能力）</description>
+    <description>微信生态插件（含小程序登录、网页扫码登录与手机号等能力）</description>
 
     <dependencies>
         <dependency>

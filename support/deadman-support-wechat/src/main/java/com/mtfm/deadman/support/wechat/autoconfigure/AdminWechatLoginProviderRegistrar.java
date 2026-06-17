@@ -58,7 +58,7 @@ public class AdminWechatLoginProviderRegistrar
         }
 
         AbstractBeanDefinition definition = BeanDefinitionBuilder.genericBeanDefinition(
-                        AdminWechatMiniprogramLoginProvider.class)
+                AdminWechatMiniprogramLoginProvider.class)
                 .addConstructorArgValue(adminBinding)
                 .setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR)
                 .getBeanDefinition();

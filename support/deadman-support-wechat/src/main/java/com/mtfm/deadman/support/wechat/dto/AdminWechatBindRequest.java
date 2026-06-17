@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotBlank;
  * @param password  管理端密码
  */
 public record AdminWechatBindRequest(
-        @NotBlank(message = "绑定令牌不能为空") String bindToken,
-        @NotBlank(message = "用户名不能为空") String username,
-        @NotBlank(message = "密码不能为空") String password) {
+		@NotBlank(message = "绑定令牌不能为空") String bindToken,
+		@NotBlank(message = "用户名不能为空") String username,
+		@NotBlank(message = "密码不能为空") String password) {
 }

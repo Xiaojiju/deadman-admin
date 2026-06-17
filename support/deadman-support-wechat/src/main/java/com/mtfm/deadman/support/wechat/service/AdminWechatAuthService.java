@@ -3,9 +3,11 @@ package com.mtfm.deadman.support.wechat.service;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.wechat.login.WechatLoginService;
+import com.mtfm.deadman.plugin.wechat.login.credential.WechatMiniprogramLoginCredential;
+import com.mtfm.deadman.plugin.wechat.login.session.WechatLoginSession;
+import com.mtfm.deadman.plugin.wechat.login.session.WechatMiniprogramLoginSession;
 import com.mtfm.deadman.plugin.wechat.miniprogram.WechatMiniprogramConstants;
-import com.mtfm.deadman.plugin.wechat.miniprogram.client.WechatApiClient;
-import com.mtfm.deadman.plugin.wechat.miniprogram.client.WechatCode2SessionResult;
 import com.mtfm.deadman.security.LoginUser;
 import com.mtfm.deadman.security.service.AuthPermissionService;
 import com.mtfm.deadman.support.wechat.auth.AdminWechatPendingBindAuthenticationToken;
@@ -31,7 +33,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class AdminWechatAuthService {
 
-    private final WechatApiClient wechatApiClient;
+    private final WechatLoginService wechatLoginService;
     private final UserAccountService userAccountService;
     private final UserService userService;
     private final UserPasswordService userPasswordService;
@@ -48,14 +50,17 @@ public class AdminWechatAuthService {
         if (!StringUtils.hasText(code)) {
             throw new BadCredentialsException("微信登录 code 不能为空");
         }
-        WechatCode2SessionResult session = wechatApiClient.code2Session(code.trim());
+        WechatLoginSession session = wechatLoginService.resolve(new WechatMiniprogramLoginCredential(code.trim()));
+        if (!(session instanceof WechatMiniprogramLoginSession miniprogramSession)) {
+            throw new BadCredentialsException("微信登录会话类型不匹配");
+        }
         UserAccount oauthAccount = userAccountService.findByOAuth(
-                WechatMiniprogramConstants.OAUTH_PROVIDER, session.openid());
+                session.oauthProvider(), session.openid());
         if (oauthAccount != null) {
             return authenticateBoundUser(oauthAccount);
         }
         String bindToken = bindTokenStore.store(new AdminWechatPendingSession(
-                session.openid(), session.sessionKey(), session.unionid()));
+                miniprogramSession.openid(), miniprogramSession.sessionKey(), miniprogramSession.unionid()));
         long expiresIn = bindTokenStore.bindTokenExpiresInSeconds();
         return new AdminWechatPendingBindAuthenticationToken(new AdminWechatPendingBindPrincipal(bindToken, expiresIn));
     }
