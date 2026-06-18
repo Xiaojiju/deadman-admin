@@ -51,7 +51,7 @@ common ← core ← system ← security ← app
 | **notification** | 站内信发送、收件箱、与 WebSocket 通道联动 |
 | **plugins** | 工具或基础设施扩展，通过 SPI 接入，默认不依赖 system/security |
 | **components** | 独立 API 前缀与用户体系的业务域（如用户端） |
-| **app** | `application.yaml`、DB 主脚本、集成测试、按需引入模块 |
+| **app** | `application-example.yaml`（示例）、DB 主脚本、集成测试、按需引入模块 |
 
 ### 自由组装
 
@@ -111,7 +111,10 @@ mysql -u root -p deadman_admin < deadman-app/src/main/resources/db/migration/202
 mysql -u root -p deadman_admin < components/deadman-component-client/src/main/resources/db/client/schema.sql
 mysql -u root -p deadman_admin < plugins/deadman-plugin-file/src/main/resources/db/file/schema.sql
 
-# 3. 配置环境变量后启动
+# 3. 复制示例配置为本地 application.yaml 并按需修改（该文件不纳入 Git）
+cp deadman-app/src/main/resources/application-example.yaml deadman-app/src/main/resources/application.yaml
+
+# 4. 配置环境变量后启动
 export DEADMAN_JWT_SECRET="your-secret-at-least-32-characters-long"
 export DB_PASSWORD="your_db_password"
 ./mvnw -pl deadman-app spring-boot:run

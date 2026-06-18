@@ -1,0 +1,122 @@
+# 复制为本目录 application.yaml 后本地使用；application.yaml 已加入 .gitignore，勿提交到 Git。
+server:
+  tomcat:
+    # 与 spring.servlet.multipart 保持一致，避免 Tomcat 先于 Spring 以 1MB 默认限制拦截上传
+    max-http-form-post-size: ${DEADMAN_PLUGIN_FILE_MAX_REQUEST_SIZE:15MB}
+    max-swallow-size: ${DEADMAN_PLUGIN_FILE_MAX_REQUEST_SIZE:15MB}
+
+spring:
+  application:
+    name: deadman-admin
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${DEADMAN_PLUGIN_FILE_MAX_SIZE:10MB}
+      max-request-size: ${DEADMAN_PLUGIN_FILE_MAX_REQUEST_SIZE:15MB}
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:mysql://${DB_HOST:your-host}:${DB_PORT:3306}/${DB_NAME:your-database}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:your-username}
+    password: ${DB_PASSWORD:your-password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:your-host}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:your-password}
+  cache:
+    type: redis
+    redis:
+      time-to-live: 30m
+      key-prefix: "deadman:cache:"
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: assign_id
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+deadman:
+  jwt:
+    secret: ${DEADMAN_JWT_SECRET:36796c58bf17e410ea17ea4460d3a26071cb1940991a12741d790ce83368d44e}
+    access-expiration-ms: ${DEADMAN_JWT_ACCESS_EXPIRATION_MS:1800000}
+    refresh-expiration-ms: ${DEADMAN_JWT_REFRESH_EXPIRATION_MS:604800000}
+    expiration-ms: ${DEADMAN_JWT_EXPIRATION_MS:1800000}
+    refresh-cookie-secure: ${DEADMAN_JWT_REFRESH_COOKIE_SECURE:false}
+  security:
+    multi-session-enabled: ${DEADMAN_MULTI_SESSION_ENABLED:true}
+  user:
+    user-code-prefix: ${DEADMAN_USER_CODE_PREFIX:DM}
+  bootstrap:
+    admin-enabled: ${DEADMAN_BOOTSTRAP_ADMIN_ENABLED:true}
+    super-admin-username: ${DEADMAN_SUPER_ADMIN_USERNAME:admin}
+    super-admin-password: ${DEADMAN_SUPER_ADMIN_PASSWORD:admin123456}
+    super-admin-nickname: ${DEADMAN_SUPER_ADMIN_NICKNAME:系统管理员}
+  cache:
+    user-profile-ttl: ${DEADMAN_CACHE_USER_PROFILE_TTL:30m}
+  component:
+    client:
+      enabled: ${DEADMAN_COMPONENT_CLIENT_ENABLED:true}
+      jwt:
+        secret: ${DEADMAN_CLIENT_JWT_SECRET:8f3c2a91d7e54b60c1a9f8e2d6b4c0a7e5f1d9b3c8a6e2f0d4b7c1a9e5f3d8b2c6}
+        access-expiration-ms: ${DEADMAN_CLIENT_JWT_ACCESS_EXPIRATION_MS:1800000}
+        refresh-expiration-ms: ${DEADMAN_CLIENT_JWT_REFRESH_EXPIRATION_MS:604800000}
+        expiration-ms: ${DEADMAN_CLIENT_JWT_EXPIRATION_MS:1800000}
+        refresh-cookie-secure: ${DEADMAN_CLIENT_JWT_REFRESH_COOKIE_SECURE:false}
+      security:
+        multi-session-enabled: ${DEADMAN_CLIENT_MULTI_SESSION_ENABLED:true}
+      user:
+        user-code-prefix: ${DEADMAN_CLIENT_USER_CODE_PREFIX:CL}
+      cache:
+        user-profile-ttl: ${DEADMAN_CLIENT_CACHE_USER_PROFILE_TTL:30m}
+  plugin:
+    websocket:
+      enabled: ${DEADMAN_PLUGIN_WEBSOCKET_ENABLED:true}
+      endpoint-path: /ws
+      dispatch:
+        max-retry: 3
+        retry-interval: 30s
+        batch-size: 50
+    wechat-miniprogram:
+      enabled: ${DEADMAN_PLUGIN_WECHAT_MINIPROGRAM_ENABLED:true}
+      app-id: ${DEADMAN_WECHAT_MINIPROGRAM_APP_ID:your-app-id}
+      app-secret: ${DEADMAN_WECHAT_MINIPROGRAM_APP_SECRET:your-app-secret}
+      login-bindings:
+        - group-id: admin
+        - group-id: client
+    wechat-web:
+      enabled: ${DEADMAN_PLUGIN_WECHAT_WEB_ENABLED:true}
+      app-id: ${DEADMAN_WECHAT_WEB_APP_ID:}
+      app-secret: ${DEADMAN_WECHAT_WEB_APP_SECRET:}
+      redirect-uri: ${DEADMAN_WECHAT_WEB_REDIRECT_URI:}
+      state-ttl: ${DEADMAN_WECHAT_WEB_STATE_TTL:5m}
+      login-bindings:
+        - group-id: admin
+        - group-id: client
+    excel:
+      enabled: ${DEADMAN_PLUGIN_EXCEL_ENABLED:true}
+    file:
+      enabled: ${DEADMAN_PLUGIN_FILE_ENABLED:true}
+      default-provider: local
+      max-file-size: ${DEADMAN_PLUGIN_FILE_MAX_SIZE:10MB}
+    storage-local:
+      enabled: ${DEADMAN_PLUGIN_STORAGE_LOCAL_ENABLED:true}
+      base-path: ${FILE_STORAGE_PATH:./data/files}
+      public-url-prefix: /files
+    data-scope:
+      enabled: ${DEADMAN_PLUGIN_DATA_SCOPE_ENABLED:true}
+  support:
+    wechat:
+      enabled: ${DEADMAN_SUPPORT_WECHAT_ENABLED:true}
+      bind-token-ttl: ${DEADMAN_SUPPORT_WECHAT_BIND_TOKEN_TTL:10m}
+    client-wechat:
+      enabled: ${DEADMAN_SUPPORT_CLIENT_WECHAT_ENABLED:true}
+      bind-token-ttl: ${DEADMAN_SUPPORT_CLIENT_WECHAT_BIND_TOKEN_TTL:10m}

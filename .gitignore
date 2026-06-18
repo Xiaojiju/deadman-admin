@@ -4,6 +4,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 data/
+# 本地运行时配置（仓库仅保留 application-example.yaml）
+deadman-app/src/main/resources/application.yaml
 
 ### STS ###
 .apt_generated
