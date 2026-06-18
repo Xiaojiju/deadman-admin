@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: UserController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 当前登录用户资料（`GET /api/users/me`，与管理端 `/api/users` 列表不冲突）
 
 servers:

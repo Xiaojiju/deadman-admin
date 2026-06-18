@@ -4,7 +4,7 @@
 openapi: 3.0.3
 info:
   title: AdminWechatAuth
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     管理端微信小程序 OAuth 登录与绑定（API 前缀 `/api/auth`）。
 

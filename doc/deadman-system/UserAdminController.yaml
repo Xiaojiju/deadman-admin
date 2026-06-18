@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: UserAdminController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 管理端用户 CRUD、停用、角色关联（与 security UserController 的 /me 路径不冲突）
 
 servers:

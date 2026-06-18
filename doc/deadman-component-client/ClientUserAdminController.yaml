@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: ClientUserAdminController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     管理端对用户端用户的查询、禁用与注销。
     走管理端 JWT（`BearerAuth`）与用户端独立数据表，与 `/api/users` 管理端用户不冲突。

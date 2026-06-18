@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: NotificationSendController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     站内信发送与管理端查询。
     发送成功后会持久化到 `sys_notification` / `sys_notification_recipient`，

@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: WechatLoginController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     微信登录统一公开接口，通过 `loginKind` 区分小程序与网页扫码等方式。
     响应使用标准模板对象 `WechatLoginSession` / `WechatLoginInitiateResult`，各方式扩展特有字段。

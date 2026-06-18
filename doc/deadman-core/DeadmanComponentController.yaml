@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: DeadmanComponentController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 组件目录 — 查询当前服务端已装配的 components 模块（无需认证）
 
 servers:

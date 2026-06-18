@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: WechatWebLoginController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     微信网页扫码登录（开放平台网站应用）。
     介绍文档：[WechatWebLogin.md](./WechatWebLogin.md)

@@ -3,7 +3,7 @@
 openapi: 3.0.3
 info:
   title: ClientAuthController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     用户端认证 — 注册与登录（API 前缀 `/client/api/auth`）。
     登录成功均返回 `ClientAuthTokenVO`（用户端 JWT，`realm=CLIENT`）。

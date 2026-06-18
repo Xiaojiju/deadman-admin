@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: NotificationInboxController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     站内信收件箱 — 当前登录用户查看、未读统计与已读标记。
     数据来源于 `sys_notification_recipient` 持久化表。

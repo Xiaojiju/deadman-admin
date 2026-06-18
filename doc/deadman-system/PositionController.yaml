@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: PositionController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 职位管理（可归属部门或为全局职位）
 
 servers:

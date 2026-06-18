@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: WechatMiniprogramController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     微信小程序扩展接口（手机号绑定等）。
     登录见 [ClientAuthController.yaml](../deadman-component-client/ClientAuthController.yaml) 的 `POST /client/api/auth/login/wechat-miniprogram`。

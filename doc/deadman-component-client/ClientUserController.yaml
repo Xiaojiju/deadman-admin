@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: ClientUserController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 用户端当前用户资料（`GET /client/api/users/me`）
 
 servers:

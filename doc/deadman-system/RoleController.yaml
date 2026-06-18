@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: RoleController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: RBAC 角色与权限管理
 
 servers:

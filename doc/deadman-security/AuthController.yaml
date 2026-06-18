@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: AuthController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 认证 — 注册、登录、改密、当前用户权限
 
 servers:

@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: DepartmentController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 组织部门管理（树形结构）
 
 servers:

@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: FileController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: |
     文件上传、下载与元数据管理。
     存储后端通过 `FileStorageProvider` SPI 插件化扩展，默认启用本地磁盘 Provider（`local`）。

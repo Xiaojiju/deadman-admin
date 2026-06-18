@@ -121,7 +121,7 @@ export DB_PASSWORD="your_db_password"
 
 ```bash
 ./mvnw -pl deadman-app package
-java -jar deadman-app/target/deadman-app-0.0.1-SNAPSHOT.jar
+java -jar deadman-app/target/deadman-app-1.0.0.jar
 ```
 
 测试（H2，无需 MySQL/Redis）：

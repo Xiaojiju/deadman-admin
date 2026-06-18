@@ -2,7 +2,7 @@
 openapi: 3.0.3
 info:
   title: PermissionController
-  version: 0.0.1-SNAPSHOT
+  version: 1.0.0
   description: 权限码目录（枚举只读）
 
 servers:
