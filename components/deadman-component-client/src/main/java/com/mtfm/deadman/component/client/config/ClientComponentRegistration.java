@@ -1,12 +1,12 @@
 package com.mtfm.deadman.component.client.config;
 
 import com.mtfm.deadman.core.component.DeadmanComponentDescriptor;
+import com.mtfm.deadman.core.component.vo.DeadmanComponentUiHints;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 用户端组件向核心注册表贡献描述信息。
@@ -29,10 +29,6 @@ public class ClientComponentRegistration {
                 "独立用户体系：注册、登录与个人中心",
                 "/client/api",
                 100,
-                Map.of(
-                        "authBasePath",
-                        properties.getAuth().getBasePath(),
-                        "features",
-                        List.of("auth", "profile")));
+                new DeadmanComponentUiHints(properties.getAuth().getBasePath(), List.of("auth", "profile")));
     }
 }

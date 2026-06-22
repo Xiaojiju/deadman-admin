@@ -16,7 +16,8 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.Map;
+import com.mtfm.deadman.plugin.websocket.spi.WebSocketPrincipalAttributes;
+
 import java.util.Optional;
 
 /**
@@ -60,7 +61,7 @@ public class AdminJwtWebSocketAuthenticator implements WebSocketAuthenticator {
             return Optional.of(new WebSocketPrincipal(
                     channelCode,
                     String.valueOf(userId),
-                    Map.of("userCode", userCode != null ? userCode : "")));
+                    new WebSocketPrincipalAttributes(userCode != null ? userCode : "")));
         } catch (JwtException | IllegalArgumentException ex) {
             log.debug("WebSocket admin 鉴权失败: {}", ex.getMessage());
             return Optional.empty();

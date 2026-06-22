@@ -26,4 +26,5 @@ public record FileMetadataVO(
         String accessUrl,
         String bizType,
         Long uploaderUserId,
-        LocalDateTime createTime) {}
+        LocalDateTime createTime) {
+}

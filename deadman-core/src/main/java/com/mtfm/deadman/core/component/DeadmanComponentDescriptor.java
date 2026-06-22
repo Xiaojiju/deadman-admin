@@ -1,7 +1,6 @@
 package com.mtfm.deadman.core.component;
 
-import java.util.Collections;
-import java.util.Map;
+import com.mtfm.deadman.core.component.vo.DeadmanComponentUiHints;
 
 /**
  * 已装配组件描述符。
@@ -14,7 +13,7 @@ import java.util.Map;
  * @param description 组件说明
  * @param apiPrefix   API 路径前缀，如 /client/api
  * @param order       前端展示排序，升序
- * @param uiHints     前端扩展提示（键值对，可选）
+ * @param uiHints     前端扩展提示（可选）
  */
 public record DeadmanComponentDescriptor(
         String code,
@@ -22,10 +21,10 @@ public record DeadmanComponentDescriptor(
         String description,
         String apiPrefix,
         int order,
-        Map<String, Object> uiHints) {
+        DeadmanComponentUiHints uiHints) {
 
     /**
-     * 构造组件描述符，uiHints 为空时使用空 Map。
+     * 构造组件描述符，uiHints 为空时使用 null。
      *
      * @param code        组件编码
      * @param name        展示名称
@@ -34,16 +33,6 @@ public record DeadmanComponentDescriptor(
      * @param order       排序
      */
     public DeadmanComponentDescriptor(String code, String name, String description, String apiPrefix, int order) {
-        this(code, name, description, apiPrefix, order, Collections.emptyMap());
-    }
-
-    /**
-     * 返回不可变的 uiHints 视图。
-     *
-     * @return UI 提示
-     */
-    @Override
-    public Map<String, Object> uiHints() {
-        return uiHints == null ? Map.of() : Collections.unmodifiableMap(uiHints);
+        this(code, name, description, apiPrefix, order, null);
     }
 }

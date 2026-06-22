@@ -1,8 +1,9 @@
 package com.mtfm.deadman.plugin.file.permission;
 
+import java.util.List;
+
 import com.mtfm.deadman.common.permission.PermissionGroupDescriptor;
 import com.mtfm.deadman.common.permission.PermissionItemDescriptor;
-import java.util.List;
 
 /**
  * 文件管理权限码常量与注册定义。
@@ -17,7 +18,8 @@ public final class FilePermissions {
     public static final String READ = "file:read";
     public static final String DELETE = "file:delete";
 
-    private FilePermissions() {}
+    private FilePermissions() {
+    }
 
     /**
      * 文件管理权限组定义。

@@ -50,7 +50,18 @@ public enum ResultCode {
     FILE_NOT_FOUND(13001, "文件不存在"),
     FILE_TOO_LARGE(13002, "文件大小超出限制"),
     FILE_STORAGE_ERROR(13003, "文件存储失败"),
-    FILE_PROVIDER_NOT_FOUND(13004, "文件存储 Provider 不存在");
+    FILE_PROVIDER_NOT_FOUND(13004, "文件存储 Provider 不存在"),
+    FILE_BIZ_TYPE_UNREGISTERED(13005, "文件业务分类未注册"),
+
+    WECHAT_PAY_ORDER_NOT_FOUND(14001, "支付单不存在"),
+    WECHAT_PAY_OPENID_REQUIRED(14002, "缺少付款人 openid"),
+    WECHAT_PAY_PREPAY_FAILED(14003, "微信预下单失败"),
+    WECHAT_PAY_CONFIG_INVALID(14004, "微信支付配置无效"),
+
+    PAY_PROVIDER_NOT_FOUND(14101, "支付 Provider 不存在"),
+    PAY_ORDER_NOT_FOUND(14102, "支付单不存在"),
+    PAY_NOTIFY_PARSE_FAILED(14103, "支付回调解析失败"),
+    PAY_QUERY_FAILED(14104, "支付查单失败");
 
     private final int code;
     private final String message;

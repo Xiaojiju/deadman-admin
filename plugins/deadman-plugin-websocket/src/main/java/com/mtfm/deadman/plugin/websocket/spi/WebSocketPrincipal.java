@@ -1,13 +1,11 @@
 package com.mtfm.deadman.plugin.websocket.spi;
 
-import java.util.Map;
-
 /**
- * WebSocket 握手后绑定的用户身份。
+ * WebSocket 握手成功后写入 Session 的主体信息。
  *
- * @param channelCode 消息通道编码
- * @param userKey     通道内用户唯一标识
- * @param attributes  扩展属性
+ * @param channelCode  通道编码
+ * @param userKey      通道内用户标识
+ * @param attributes   扩展属性
  */
-public record WebSocketPrincipal(String channelCode, String userKey, Map<String, Object> attributes) {
+public record WebSocketPrincipal(String channelCode, String userKey, WebSocketPrincipalAttributes attributes) {
 }

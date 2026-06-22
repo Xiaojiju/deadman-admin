@@ -55,7 +55,7 @@ public class LocalFileStorageProvider implements FileStorageProvider {
             throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "本地文件写入失败");
         }
         String accessUrl = buildAccessUrl(storageKey);
-        return new StoredFileRef(PROVIDER_ID, storageKey, accessUrl);
+        return new StoredFileRef(PROVIDER_ID, storageKey, accessUrl, null);
     }
 
     /**

@@ -1,12 +1,14 @@
 package com.mtfm.deadman.plugin.file.entity;
 
+import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,6 +45,9 @@ public class FileMetadata {
 
     /** 存储键（相对路径或对象 Key） */
     private String storageKey;
+
+    /** 物理存储桶名（OSS 等多 Bucket 场景使用，本地磁盘为 null） */
+    private String storageBucket;
 
     /** 可直接访问的 URL */
     private String accessUrl;

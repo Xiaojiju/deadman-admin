@@ -107,12 +107,56 @@ deadman:
       enabled: ${DEADMAN_PLUGIN_FILE_ENABLED:true}
       default-provider: local
       max-file-size: ${DEADMAN_PLUGIN_FILE_MAX_SIZE:10MB}
+      biz-type-strict: ${DEADMAN_PLUGIN_FILE_BIZ_TYPE_STRICT:true}
     storage-local:
       enabled: ${DEADMAN_PLUGIN_STORAGE_LOCAL_ENABLED:true}
       base-path: ${FILE_STORAGE_PATH:./data/files}
       public-url-prefix: /files
+    storage-oss:
+      enabled: ${DEADMAN_PLUGIN_STORAGE_OSS_ENABLED:false}
+      endpoint: ${OSS_ENDPOINT:oss-cn-hangzhou.aliyuncs.com}
+      access-key-id: ${OSS_ACCESS_KEY_ID:}
+      access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+      default-bucket: ${OSS_BUCKET_DEFAULT:engineering-public}
+      bucket-routing:
+        rent: engineering-user-upload
+        spare-part: engineering-merchant
+        merchant-license: engineering-private
+      cdn-domains: {}
+      bucket-access-modes:
+        engineering-private: signed
+      public-url-mode: cdn
+      signed-url-expire-seconds: 3600
+      path-prefix: ""
     data-scope:
       enabled: ${DEADMAN_PLUGIN_DATA_SCOPE_ENABLED:true}
+    pay:
+      enabled: ${DEADMAN_PLUGIN_PAY_ENABLED:true}
+      default-provider: wechat-jsapi
+      sync:
+        scheduler-enabled: ${DEADMAN_PLUGIN_PAY_SYNC_SCHEDULER_ENABLED:true}
+        cron: ${DEADMAN_PLUGIN_PAY_SYNC_CRON:0 * * * * ?}
+        min-age: ${DEADMAN_PLUGIN_PAY_SYNC_MIN_AGE:2m}
+        max-age: ${DEADMAN_PLUGIN_PAY_SYNC_MAX_AGE:30m}
+        batch-size: ${DEADMAN_PLUGIN_PAY_SYNC_BATCH_SIZE:50}
+    pay-wechat:
+      enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_ENABLED:false}
+      mock-enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_MOCK_ENABLED:true}
+      mch-id: ${WECHAT_PAY_MCH_ID:}
+      api-v3-key: ${WECHAT_PAY_API_V3_KEY:}
+      merchant-serial-no: ${WECHAT_PAY_SERIAL_NO:}
+      private-key-path: ${WECHAT_PAY_PRIVATE_KEY_PATH:}
+      providers:
+        wechat-jsapi:
+          enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_JSAPI_ENABLED:false}
+          app-id: ${WECHAT_PAY_JSAPI_APP_ID:${DEADMAN_WECHAT_MINIPROGRAM_APP_ID:}}
+          notify-endpoint: ${WECHAT_PAY_JSAPI_NOTIFY_ENDPOINT:/client/api/pay/wechat/jsapi/notify}
+          notify-url: ${WECHAT_PAY_JSAPI_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/jsapi/notify}
+        wechat-native:
+          enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_NATIVE_ENABLED:false}
+          app-id: ${WECHAT_PAY_NATIVE_APP_ID:}
+          notify-endpoint: ${WECHAT_PAY_NATIVE_NOTIFY_ENDPOINT:/client/api/pay/wechat/native/notify}
+          notify-url: ${WECHAT_PAY_NATIVE_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/native/notify}
   support:
     wechat:
       enabled: ${DEADMAN_SUPPORT_WECHAT_ENABLED:true}
@@ -120,3 +164,5 @@ deadman:
     client-wechat:
       enabled: ${DEADMAN_SUPPORT_CLIENT_WECHAT_ENABLED:true}
       bind-token-ttl: ${DEADMAN_SUPPORT_CLIENT_WECHAT_BIND_TOKEN_TTL:10m}
+    client-file:
+      enabled: ${DEADMAN_SUPPORT_CLIENT_FILE_ENABLED:true}

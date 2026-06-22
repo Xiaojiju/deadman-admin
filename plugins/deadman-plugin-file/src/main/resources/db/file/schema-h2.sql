@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS plugin_file_metadata (
     size_bytes          BIGINT        NOT NULL,
     provider_id         VARCHAR(32)   NOT NULL,
     storage_key         VARCHAR(1024) NOT NULL,
+    storage_bucket      VARCHAR(128),
     access_url          VARCHAR(1024),
     biz_type            VARCHAR(64),
     uploader_user_id    BIGINT,

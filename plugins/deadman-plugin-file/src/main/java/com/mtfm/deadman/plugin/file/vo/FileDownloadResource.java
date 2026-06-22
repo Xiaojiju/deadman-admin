@@ -1,6 +1,7 @@
 package com.mtfm.deadman.plugin.file.vo;
 
 import java.io.InputStream;
+
 import lombok.Builder;
 import lombok.Getter;
 
