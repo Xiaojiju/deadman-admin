@@ -1,4 +1,4 @@
--- deadman-plugin-pay 统一支付单表（MySQL 8+）
+-- deadman-extension-pay 统一支付单表（MySQL 8+）
 
 CREATE TABLE IF NOT EXISTS plugin_pay_order (
     id                      BIGINT        NOT NULL COMMENT '主键',

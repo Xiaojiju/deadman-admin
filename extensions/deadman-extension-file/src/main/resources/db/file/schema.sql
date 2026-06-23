@@ -1,4 +1,4 @@
--- deadman-plugin-file 文件元数据表（MySQL 8+）
+-- deadman-extension-file 文件元数据表（MySQL 8+）
 
 CREATE TABLE IF NOT EXISTS plugin_file_metadata (
     id                  BIGINT        NOT NULL COMMENT '主键',

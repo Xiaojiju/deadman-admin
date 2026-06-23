@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-pay</artifactId>
+            <artifactId>deadman-extension-pay</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

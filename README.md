@@ -23,12 +23,15 @@ deadman-admin/                          # 父 POM（依赖版本管理）
 ├── deadman-system/                     # 管理端用户与 RBAC 领域
 ├── deadman-notification/               # 站内信与 WebSocket 收件箱推送
 ├── deadman-security/                   # 认证授权、JWT、权限注册 SPI
+├── extensions/                         # 能力延伸（见 extensions/README.md）
+│   ├── deadman-extension-pay/            # 支付 SPI 与 PayService
+│   └── deadman-extension-file/          # 文件 SPI 与 FileService
 ├── plugins/                            # 可插拔插件（见 plugins/README.md）
 │   ├── deadman-plugin-websocket/       # WebSocket 消息通道
 │   ├── deadman-plugin-wechat/          # 微信小程序登录与手机号
 │   ├── deadman-plugin-excel/           # EasyExcel 导入导出工具包
-│   ├── deadman-plugin-file/            # 文件上传下载与存储 SPI
-│   └── deadman-plugin-storage-local/   # 本地磁盘存储 Provider
+│   ├── deadman-plugin-storage-local/   # 本地磁盘存储 Provider
+│   └── deadman-plugin-storage-oss/     # 阿里云 OSS 存储 Provider
 ├── components/                         # 可插拔业务组件（见 components/README.md）
 │   └── deadman-component-client/       # 用户端（独立 JWT，/client/api）
 └── deadman-app/                        # 默认组装与启动入口
@@ -109,7 +112,7 @@ mysql -u root -p deadman_admin < deadman-app/src/main/resources/db/migration/202
 
 # 2. 按需初始化组件/插件表
 mysql -u root -p deadman_admin < components/deadman-component-client/src/main/resources/db/client/schema.sql
-mysql -u root -p deadman_admin < plugins/deadman-plugin-file/src/main/resources/db/file/schema.sql
+mysql -u root -p deadman_admin < extensions/deadman-extension-file/src/main/resources/db/file/schema.sql
 
 # 3. 复制示例配置为本地 application.yaml 并按需修改（该文件不纳入 Git）
 cp deadman-app/src/main/resources/application-example.yaml deadman-app/src/main/resources/application.yaml

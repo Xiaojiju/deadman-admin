@@ -10,9 +10,9 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>deadman-plugin-file</artifactId>
-    <name>deadman-plugin-file</name>
-    <description>文件管理插件：上传下载与可插拔对象存储 Provider</description>
+    <artifactId>deadman-extension-file</artifactId>
+    <name>deadman-extension-file</name>
+    <description>文件能力延伸：FileStorageProvider SPI、FileService 与元数据持久化</description>
 
     <dependencies>
         <dependency>

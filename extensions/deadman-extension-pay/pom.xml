@@ -10,9 +10,9 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>deadman-plugin-pay</artifactId>
-    <name>deadman-plugin-pay</name>
-    <description>支付插件：PaymentProvider SPI 与统一 PayService 门面</description>
+    <artifactId>deadman-extension-pay</artifactId>
+    <name>deadman-extension-pay</name>
+    <description>支付能力延伸：PaymentProvider SPI、PayService 编排与统一订单持久化</description>
 
     <dependencies>
         <dependency>

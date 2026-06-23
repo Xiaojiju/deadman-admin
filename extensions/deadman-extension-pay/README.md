@@ -1,8 +1,8 @@
-# deadman-plugin-pay
+# deadman-extension-pay
 
-支付能力**主体模块**。通过 `PaymentProvider` SPI 插件化接入各支付渠道（微信、支付宝等），统一负责订单持久化、流程编排与状态通知。
+支付**能力延伸**模块（位于 `extensions/`）。通过 `PaymentProvider` SPI 定义支付契约，由 `PayService` 统一负责订单持久化、流程编排与状态通知。
 
-> 渠道插件（如 [deadman-plugin-pay-wechat](../deadman-plugin-pay-wechat/)）只实现渠道 API 与回调解析，**不得**自行持久化支付单。
+> 渠道具体实现放在 `plugins/`（如 [deadman-plugin-pay-wechat](../../plugins/deadman-plugin-pay-wechat/)），只实现渠道 API 与回调解析，**不得**自行持久化支付单。
 
 ---
 
@@ -23,12 +23,12 @@
 
 ### 1. 引入依赖
 
-在 `deadman-app/pom.xml` 中引入本模块及渠道插件：
+在 `deadman-app/pom.xml` 中引入能力延伸模块及渠道插件：
 
 ```xml
 <dependency>
     <groupId>com.mtfm</groupId>
-    <artifactId>deadman-plugin-pay</artifactId>
+    <artifactId>deadman-extension-pay</artifactId>
 </dependency>
 <dependency>
     <groupId>com.mtfm</groupId>
@@ -90,7 +90,7 @@ flowchart TB
         D["@EventListener 更新业务订单"]
     end
 
-    subgraph deadman-plugin-pay
+    subgraph deadman-extension-pay
         PS[PayService]
         POM[PaymentProviderManager]
         POS[PaymentOrderService]
@@ -196,10 +196,10 @@ sequenceDiagram
 | 层级 | 组件 | 职责 |
 |------|------|------|
 | 业务层 | 业务 Service | 创建业务订单、发起支付、监听结果、更新业务状态 |
-| 本模块 | `PayService` | 统一门面：预下单、回调、查单 |
-| 本模块 | `PaymentOrderService` | 订单 CRUD、状态流转 |
-| 本模块 | `PaymentOrderSyncService` | 主动查单业务（与定时触发解耦） |
-| 本模块 | `PaymentOrderSyncScheduler` | 内置 Spring 定时触发（可关闭） |
+| 本模块（extension-pay） | `PayService` | 统一门面：预下单、回调、查单 |
+| 本模块（extension-pay） | `PaymentOrderService` | 订单 CRUD、状态流转 |
+| 本模块（extension-pay） | `PaymentOrderSyncService` | 主动查单业务（与定时触发解耦） |
+| 本模块（extension-pay） | `PaymentOrderSyncScheduler` | 内置 Spring 定时触发（可关闭） |
 | 渠道插件 | `PaymentProvider` | 渠道 API、回调解析、查单 |
 
 **核心约束**
@@ -421,7 +421,7 @@ DDL：`src/main/resources/db/pay/schema.sql`
 
 ## 扩展新渠道
 
-1. 新建 Maven 模块（如 `deadman-plugin-pay-alipay`），依赖 `deadman-plugin-pay`
+1. 新建 Maven 模块（如 `plugins/deadman-plugin-pay-alipay`），依赖 `deadman-extension-pay`
 2. 实现 `PaymentProvider` 并注册为 Spring Bean
 3. `createPrepay` 只调渠道 API，不持久化订单
 4. `parseNotify` 完成验签与标准化解析
@@ -434,5 +434,6 @@ DDL：`src/main/resources/db/pay/schema.sql`
 
 | 模块 | 说明 |
 |------|------|
-| [deadman-plugin-pay-wechat](../deadman-plugin-pay-wechat/) | 微信 JSAPI 支付 |
-| [plugins/README.md](../README.md) | 插件总览 |
+| [deadman-plugin-pay-wechat](../../plugins/deadman-plugin-pay-wechat/) | 微信 JSAPI 支付实现 |
+| [extensions/README.md](../README.md) | 能力延伸目录说明 |
+| [plugins/README.md](../../plugins/README.md) | 插件目录说明 |

@@ -1,6 +1,6 @@
 # deadman-plugin-pay-wechat
 
-微信支付渠道插件，实现 [deadman-plugin-pay](../deadman-plugin-pay/) 的 `PaymentProvider` SPI。
+微信支付**渠道插件**，实现 [deadman-extension-pay](../../extensions/deadman-extension-pay/) 的 `PaymentProvider` SPI。
 
 当前已实现：
 
@@ -9,7 +9,7 @@
 | `wechat-jsapi` | 小程序 / 公众号 JSAPI | 已实现 |
 | `wechat-native` | 扫码支付 | 配置预留，Provider 待实现 |
 
-> 订单持久化、状态流转、事件发布均由 `deadman-plugin-pay` 统一处理，本模块**不包含**独立订单表。
+> 订单持久化、状态流转、事件发布均由 `deadman-extension-pay` 统一处理，本模块**不包含**独立订单表。
 
 ---
 
@@ -32,7 +32,7 @@
 ```xml
 <dependency>
     <groupId>com.mtfm</groupId>
-    <artifactId>deadman-plugin-pay</artifactId>
+    <artifactId>deadman-extension-pay</artifactId>
 </dependency>
 <dependency>
     <groupId>com.mtfm</groupId>
@@ -96,7 +96,7 @@ flowchart TB
         N[WechatJsapiPayNotifyController]
     end
 
-    subgraph deadman-plugin-pay
+    subgraph deadman-extension-pay
         PS[PayService]
         DB[(plugin_pay_order)]
     end
@@ -394,5 +394,5 @@ Mock 行为：
 
 | 模块 | 说明 |
 |------|------|
-| [deadman-plugin-pay](../deadman-plugin-pay/) | 支付主体：订单、编排、事件 |
-| [plugins/README.md](../README.md) | 插件总览 |
+| [deadman-extension-pay](../../extensions/deadman-extension-pay/) | 支付能力延伸：订单、编排、事件 |
+| [extensions/README.md](../../extensions/README.md) | 能力延伸目录说明 |

@@ -1,4 +1,4 @@
--- deadman-plugin-file 集成测试用 H2（MySQL 兼容模式）
+-- deadman-extension-file 集成测试用 H2（MySQL 兼容模式）
 
 CREATE TABLE IF NOT EXISTS plugin_file_metadata (
     id                  BIGINT        NOT NULL,

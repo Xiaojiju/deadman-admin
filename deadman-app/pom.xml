@@ -64,7 +64,7 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-file</artifactId>
+            <artifactId>deadman-extension-file</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
@@ -76,7 +76,7 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-pay</artifactId>
+            <artifactId>deadman-extension-pay</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>

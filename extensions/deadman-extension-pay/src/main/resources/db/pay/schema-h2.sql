@@ -1,4 +1,4 @@
--- deadman-plugin-pay 集成测试用 H2（MySQL 兼容模式）
+-- deadman-extension-pay 集成测试用 H2（MySQL 兼容模式）
 
 CREATE TABLE IF NOT EXISTS plugin_pay_order (
     id                      BIGINT        NOT NULL,

@@ -31,7 +31,7 @@
 | deadman-plugin-wechat | [WechatWebLogin.md](deadman-plugin-wechat/WechatWebLogin.md) | 微信网页扫码登录（后端） |
 | deadman-plugin-wechat | [WechatLogin.yaml](deadman-plugin-wechat/WechatLogin.yaml) | 微信登录统一公开 API |
 | deadman-plugin-wechat | [WechatLoginProviderRegistration.md](deadman-plugin-wechat/WechatLoginProviderRegistration.md) | 微信 LoginProvider 注册与覆盖机制 |
-| deadman-plugin-file | [FileController.yaml](deadman-plugin-file/FileController.yaml) | 文件上传、下载与元数据 |
+| deadman-extension-file | [FileController.yaml](deadman-plugin-file/FileController.yaml) | 文件上传、下载与元数据 |
 | deadman-plugin-data-scope | [UserDataScopeAdminController.yaml](deadman-plugin-data-scope/UserDataScopeAdminController.yaml) | 用户数据范围查询与分配 |
 
 公共片段：[\_shared/components.yaml](_shared/components.yaml)（管理端/用户端 JWT、`Result`、`PageParam` / `PageVO`、通用 401/403）。

@@ -9,12 +9,12 @@
 | [deadman-plugin-websocket](#deadman-plugin-websocket) | `deadman.plugin.websocket` | WebSocket 多通道消息、持久化与重试 | — |
 | [deadman-plugin-wechat](#deadman-plugin-wechat) | `deadman.plugin.wechat-miniprogram` | 微信小程序登录（多端 login-bindings）、OAuth/手机号 SPI | [WechatMiniprogramController.yaml](../doc/deadman-plugin-wechat/WechatMiniprogramController.yaml) |
 | [deadman-plugin-excel](#deadman-plugin-excel) | `deadman.plugin.excel` | EasyExcel 导入导出工具包 | — |
-| [deadman-plugin-file](#deadman-plugin-file) | `deadman.plugin.file` | 文件上传下载、`FileStorageProvider` SPI | [FileController.yaml](../doc/deadman-plugin-file/FileController.yaml) |
-| [deadman-plugin-storage-local](#deadman-plugin-storage-local) | `deadman.plugin.storage-local` | 本地磁盘存储 Provider（依赖 file 插件） | 见 file 文档 `/files/**` |
-| [deadman-plugin-storage-oss](#deadman-plugin-storage-oss) | `deadman.plugin.storage-oss` | 阿里云 OSS 存储 Provider（依赖 file 插件） | 见 file 文档 |
-| [deadman-plugin-pay](#deadman-plugin-pay) | `deadman.plugin.pay` | 支付 `PaymentProvider` SPI 与 `PayService` 门面 | — |
-| [deadman-plugin-pay-wechat](#deadman-plugin-pay-wechat) | `deadman.plugin.pay-wechat` | 微信 JSAPI 支付 Provider（W3 回调/退款） | — |
+| [deadman-plugin-storage-local](#deadman-plugin-storage-local) | `deadman.plugin.storage-local` | 本地磁盘存储 Provider（依赖 extension-file） | 见 extension-file 文档 `/files/**` |
+| [deadman-plugin-storage-oss](#deadman-plugin-storage-oss) | `deadman.plugin.storage-oss` | 阿里云 OSS 存储 Provider（依赖 extension-file） | 见 extension-file 文档 |
+| [deadman-plugin-pay-wechat](#deadman-plugin-pay-wechat) | `deadman.plugin.pay-wechat` | 微信 JSAPI 支付 Provider 实现（依赖 extension-pay） | — |
 | [deadman-plugin-data-scope](#deadman-plugin-data-scope) | `deadman.plugin.data-scope` | 数据权限：`@DataScope` + `@DataColumn` + MyBatis-Plus SQL 拼接 | [UserDataScopeAdminController.yaml](../doc/deadman-plugin-data-scope/UserDataScopeAdminController.yaml) |
+
+能力延伸模块见 [extensions/](../extensions/README.md)（支付 `deadman-extension-pay`、文件 `deadman-extension-file`）。
 
 ## 插拔方式
 
@@ -207,74 +207,7 @@ DeadExcelExporter.of(deadExcelService, UserRow.class)
 
 ---
 
-## deadman-plugin-file
-
-文件上传、下载与元数据管理；存储后端通过 **`FileStorageProvider` SPI** 插件化扩展。
-
-| 能力 | 说明 |
-|------|------|
-| 上传 | `POST /api/files/upload`（multipart，`bizType` 必填且须已注册） |
-| 下载 | `GET /api/files/{id}/download` |
-| 元数据 | 表 `plugin_file_metadata`（`storage_bucket` 仅内部使用，不暴露 API） |
-| 业务分类 | `FileBizTypeContributor` / `FileBizTypeRegistrar` 注册；`GET /api/files/biz-types` 查询 |
-| Provider 管理 | `FileStorageProviderManager` 聚合所有 Provider Bean |
-
-**配置示例：**
-
-```yaml
-deadman:
-  plugin:
-    file:
-      enabled: true
-      default-provider: local
-      max-file-size: 10MB
-      biz-type-strict: true   # 默认开启，上传时校验 bizType 已注册
-```
-
-**业务模块注册 bizType（二选一）：**
-
-```java
-// 方式一：声明式贡献者（推荐）
-@Component
-public class EngineeringFileBizTypeContributor implements FileBizTypeContributor {
-    @Override
-    public Collection<String> contribute() {
-        return List.of("rent", "spare-part", "merchant-license");
-    }
-}
-
-// 方式二：启动时编程式注册
-@Component
-@RequiredArgsConstructor
-public class EngineeringFileBizTypeInitializer {
-    private final FileBizTypeRegistrar fileBizTypeRegistrar;
-
-    @PostConstruct
-    void registerBizTypes() {
-        fileBizTypeRegistrar.registerAll(List.of("rent", "spare-part"));
-    }
-}
-```
-
-**DDL：** `src/main/resources/db/file/schema.sql`（生产需单独执行）
-
-**权限码：** `file:upload`、`file:download`、`file:read`、`file:delete`
-
-**SPI：**
-
-```java
-public interface FileStorageProvider {
-    String providerId();
-    StoredFileRef store(FileStorageUploadContext context);
-    InputStream open(StoredFileRef ref);
-    void delete(StoredFileRef ref);
-    Optional<String> publicAccessUrl(StoredFileRef ref);
-}
-```
-
-`StoredFileRef` 含 `providerId`、`storageKey`、`accessUrl`、可选 `storageBucket`（OSS 多 Bucket，仅元数据表持久化，不暴露 API）。
-
----
+文件主能力见 [extensions/deadman-extension-file](../extensions/deadman-extension-file/README.md)（`deadman.plugin.file`）。
 
 ## deadman-plugin-storage-local
 
@@ -298,7 +231,7 @@ deadman:
       public-url-prefix: /files
 ```
 
-**依赖：** `deadman-plugin-file`（须同时引入 file 插件）
+**依赖：** `deadman-extension-file`（须同时引入 extension 模块）
 
 ---
 
@@ -347,101 +280,27 @@ deadman:
 
 **业务接入（插拔无关）：**
 
-1. 业务组件 `pom.xml` 依赖 `deadman-plugin-file`（及 `deadman-plugin-storage-oss`）
+1. 业务组件 `pom.xml` 依赖 `deadman-extension-file`（及 `deadman-plugin-storage-oss`）
 2. 调用 `FileService.upload(...)` 或 `POST /api/files/upload`，传入**已注册**的 `bizType`
 3. 使用返回的 `accessUrl` / `fileCode` 写入业务表，**无需引用 common SPI**
 
-**依赖：** `deadman-plugin-file`（须同时引入 file 插件）；默认 `enabled: false`，不影响现有 local 启动
-
----
-
-## deadman-plugin-pay
-
-支付能力主体，通过 **`PaymentProvider` SPI** 插件化扩展各支付渠道（类比 `deadman-plugin-file` + `FileStorageProvider`）。
-
-| 能力 | 说明 |
-|------|------|
-| 门面 | `PayService.createPrepay(...)` / `queryOrder(...)` |
-| Provider 管理 | `PaymentProviderManager` 聚合所有 Provider Bean |
-| 默认渠道 | `deadman.plugin.pay.default-provider`（如 `wechat-jsapi`） |
-
-**配置示例：**
-
-```yaml
-deadman:
-  plugin:
-    pay:
-      enabled: true
-      default-provider: wechat-jsapi
-```
-
-**业务接入流程（无 REST，由业务 Service 编排）：**
-
-```text
-用户发起支付 → 业务创建订单 → PayService.createPrepay(context) → 返回 clientPayload
-→ 小程序 wx.requestPayment → 支付回调（W3）→ 业务更新订单状态
-```
-
-**SPI：**
-
-```java
-public interface PaymentProvider {
-    String providerId();
-    PaymentPrepayResult createPrepay(PaymentPrepayContext context);
-    PaymentOrderSnapshot queryOrder(String outTradeNo);
-}
-```
-
-**依赖：** `deadman-common`、`deadman-core`
+**依赖：** `deadman-extension-file`（须同时引入 extension 模块）；默认 `enabled: false`，不影响现有 local 启动
 
 ---
 
 ## deadman-plugin-pay-wechat
 
-微信小程序 JSAPI 支付 Provider（`providerId = wechat-jsapi`），实现 `PaymentProvider` SPI。
+微信 JSAPI 支付 **Provider 实现**（`providerId = wechat-jsapi`），依赖 [deadman-extension-pay](../extensions/deadman-extension-pay/README.md)。
 
 | 能力 | 说明 |
 |------|------|
 | Provider | `WechatJsapiPaymentProvider` |
+| 回调 | `WechatJsapiPayNotifyController` |
 | Mock | `mock-enabled: true` 时无需真实商户号 |
-| DDL | `plugin_pay_wechat_order` |
 
-**配置示例：**
+**完整文档：** [deadman-plugin-pay-wechat/README.md](deadman-plugin-pay-wechat/README.md)
 
-```yaml
-deadman:
-  plugin:
-    pay:
-      enabled: true
-      default-provider: wechat-jsapi
-    pay-wechat:
-      enabled: true
-      mock-enabled: true
-      mch-id: ${WECHAT_PAY_MCH_ID}
-      app-id: ${WECHAT_PAY_APP_ID}
-      api-v3-key: ${WECHAT_PAY_API_V3_KEY}
-      merchant-serial-no: ${WECHAT_PAY_SERIAL_NO}
-      private-key-path: ${WECHAT_PAY_PRIVATE_KEY_PATH}
-      notify-url: ${WECHAT_PAY_NOTIFY_URL}
-```
-
-**业务调用示例：**
-
-```java
-@Autowired
-private PayService payService;
-
-PaymentPrepayResult result = payService.createPrepay(PaymentPrepayContext.builder()
-        .bizOrderNo(order.getOrderNo())
-        .description("会员月卡")
-        .amountTotal(9900)
-        .payerUserId(userId)
-        .channelParams(Map.of(WechatPayChannelParams.OPENID, openid))  // openid 由业务层解析
-        .build());
-// result.clientPayload() → 小程序 wx.requestPayment 参数
-```
-
-**依赖：** `deadman-plugin-pay`（须同时引入 pay 插件）；`pay-wechat` 默认 `enabled: false`
+**依赖：** `deadman-extension-pay` + 本模块；默认 `enabled: false`
 
 **C 端文件上传（OSS 联调，独立能力）：**
 
