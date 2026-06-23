@@ -1,16 +1,15 @@
 package com.mtfm.deadman.plugin.pay.service;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
-import com.mtfm.deadman.plugin.pay.event.PaymentOrderStatusChangedEvent;
 import com.mtfm.deadman.plugin.pay.manager.PaymentProviderManager;
 import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
 import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyResult;
 import com.mtfm.deadman.plugin.pay.spi.PaymentOrderSnapshot;
+import com.mtfm.deadman.plugin.pay.spi.PaymentOrderStatusChangedPublisher;
 import com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier;
 import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayContext;
 import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayResult;
@@ -29,7 +28,7 @@ public class PayService {
     private final PaymentProviderManager paymentProviderManager;
     private final PaymentOrderService paymentOrderService;
     private final PaymentOutTradeNoSupplier paymentOutTradeNoSupplier;
-    private final ApplicationEventPublisher eventPublisher;
+    private final PaymentOrderStatusChangedPublisher paymentOrderStatusChangedPublisher;
 
     /**
      * 使用默认 Provider 创建预下单。
@@ -70,7 +69,7 @@ public class PayService {
     }
 
     /**
-     * 处理支付回调：解析 → 更新状态 → 发布事件。
+     * 处理支付回调：解析 → 比较状态 → 更新状态 → 发布事件。
      *
      * @param providerId 支付 Provider 标识
      * @param context    回调上下文
@@ -79,12 +78,16 @@ public class PayService {
     public void handleNotify(String providerId, PaymentNotifyContext context) {
         PaymentProvider provider = paymentProviderManager.require(providerId);
         PaymentNotifyResult notifyResult = provider.parseNotify(context);
-        applyChannelStatusChange(notifyResult.outTradeNo(), notifyResult.channelTransactionId(),
-                notifyResult.targetStatus(), notifyResult.rawPayload());
+        handleChannelPaymentResult(
+                notifyResult.outTradeNo(),
+                notifyResult.channelTransactionId(),
+                notifyResult.targetStatus(),
+                notifyResult.rawPayload());
     }
 
     /**
      * 主动向渠道查单并同步本地支付单状态，用于回调延迟或丢失时的补偿。
+     * 仅当渠道状态与本地不一致时（如渠道已支付）才走与 {@link #handleNotify} 相同的状态更新与事件发布逻辑。
      *
      * @param outTradeNo 平台支付单号
      * @return 同步后的支付单快照
@@ -97,7 +100,10 @@ public class PayService {
         }
         PaymentProvider provider = paymentProviderManager.require(order.getProviderId());
         PaymentQueryResult queryResult = provider.queryOrder(outTradeNo);
-        return applyChannelStatusChange(
+        if (queryResult.targetStatus().equals(order.getStatus())) {
+            return toSnapshot(order);
+        }
+        return handleChannelPaymentResult(
                 queryResult.outTradeNo(),
                 queryResult.channelTransactionId(),
                 queryResult.targetStatus(),
@@ -113,13 +119,22 @@ public class PayService {
         return paymentProviderManager.listProviderIds();
     }
 
-    private PaymentOrderSnapshot applyChannelStatusChange(
+    /**
+     * 统一处理渠道支付结果：更新状态 → 发布事件（回调与主动查单共用）。
+     *
+     * @param outTradeNo           平台支付单号
+     * @param channelTransactionId 渠道支付单号
+     * @param targetStatus         目标状态
+     * @param rawPayload           渠道原文
+     * @return 更新后的支付单快照
+     */
+    private PaymentOrderSnapshot handleChannelPaymentResult(
             String outTradeNo, String channelTransactionId, String targetStatus, String rawPayload) {
         String previousStatus = paymentOrderService.transitionStatus(
                 outTradeNo, channelTransactionId, targetStatus, rawPayload);
         PaymentOrder current = paymentOrderService.reload(outTradeNo);
         if (!previousStatus.equals(current.getStatus())) {
-            eventPublisher.publishEvent(new PaymentOrderStatusChangedEvent(current, previousStatus, current.getStatus()));
+            paymentOrderStatusChangedPublisher.publish(current, previousStatus, current.getStatus());
         }
         return toSnapshot(current);
     }

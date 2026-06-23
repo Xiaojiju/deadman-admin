@@ -88,10 +88,10 @@ public class PaymentOrderService {
     /**
      * 处理支付回调，更新支付单状态。
      *
-     * @param outTradeNo            平台支付单号
-     * @param channelTransactionId  渠道支付单号
-     * @param targetStatus          目标状态
-     * @param notifyRaw             回调原文
+     * @param outTradeNo           平台支付单号
+     * @param channelTransactionId 渠道支付单号
+     * @param targetStatus         目标状态
+     * @param notifyRaw            回调原文
      * @return 变更前状态
      */
     @Transactional(rollbackFor = Exception.class)

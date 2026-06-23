@@ -8,13 +8,15 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationContext;
 
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
@@ -36,13 +38,20 @@ class PaymentOrderSyncServiceTest {
     @Mock
     private PayPluginProperties payPluginProperties;
 
-    @InjectMocks
+    @Mock
+    private ApplicationContext applicationContext;
+
+    @Mock
+    private ObjectProvider<Executor> payOrderSyncExecutorProvider;
+
     private PaymentOrderSyncService paymentOrderSyncService;
 
     private PayPluginProperties.Sync sync;
 
     @BeforeEach
     void setUp() {
+        paymentOrderSyncService = new PaymentOrderSyncService(
+                payService, paymentOrderService, payPluginProperties, applicationContext, payOrderSyncExecutorProvider);
         sync = new PayPluginProperties.Sync();
         sync.setMinAge(Duration.ofMinutes(2));
         sync.setMaxAge(Duration.ofMinutes(30));
@@ -51,16 +60,72 @@ class PaymentOrderSyncServiceTest {
     }
 
     @Test
-    void shouldSyncEachPendingOrder() {
-        PaymentOrder order = PaymentOrder.builder()
-                .outTradeNo("PO202606221200PAID001")
-                .status(PaymentOrderStatus.NOT_PAY)
-                .build();
+    void shouldSyncEachPendingOrderSequentiallyWhenParallelDisabled() {
+        sync.setParallelEnabled(false);
+        PaymentOrder order = pendingOrder("PO202606221200PAID001");
         when(paymentOrderService.listPendingForSync(Duration.ofMinutes(2), Duration.ofMinutes(30), 50))
                 .thenReturn(List.of(order));
-        when(payService.syncOrderFromChannel("PO202606221200PAID001"))
+        stubPaidSnapshot("PO202606221200PAID001");
+
+        paymentOrderSyncService.syncPendingOrders();
+
+        verify(payService).syncOrderFromChannel("PO202606221200PAID001");
+        verify(applicationContext, never()).containsBean(any());
+    }
+
+    @Test
+    void shouldUseConfiguredExecutorBeanNameWhenPresent() {
+        sync.setParallelEnabled(true);
+        sync.setExecutorBeanName("applicationTaskExecutor");
+        PaymentOrder order = pendingOrder("PO202606221200PAID001");
+        when(paymentOrderService.listPendingForSync(Duration.ofMinutes(2), Duration.ofMinutes(30), 50))
+                .thenReturn(List.of(order));
+        when(applicationContext.containsBean("applicationTaskExecutor")).thenReturn(true);
+        when(applicationContext.getBean("applicationTaskExecutor", Executor.class)).thenReturn(Runnable::run);
+        stubPaidSnapshot("PO202606221200PAID001");
+
+        paymentOrderSyncService.syncPendingOrders();
+
+        verify(applicationContext).getBean("applicationTaskExecutor", Executor.class);
+        verify(payOrderSyncExecutorProvider, never()).getIfAvailable();
+        verify(payService).syncOrderFromChannel("PO202606221200PAID001");
+    }
+
+    @Test
+    void shouldUseInjectedPayOrderSyncExecutorWhenNoConfiguredBeanName() {
+        sync.setParallelEnabled(true);
+        PaymentOrder order = pendingOrder("PO202606221200PAID001");
+        when(paymentOrderService.listPendingForSync(Duration.ofMinutes(2), Duration.ofMinutes(30), 50))
+                .thenReturn(List.of(order));
+        when(payOrderSyncExecutorProvider.getIfAvailable()).thenReturn(Runnable::run);
+        stubPaidSnapshot("PO202606221200PAID001");
+
+        paymentOrderSyncService.syncPendingOrders();
+
+        verify(payOrderSyncExecutorProvider).getIfAvailable();
+        verify(payService).syncOrderFromChannel("PO202606221200PAID001");
+    }
+
+    @Test
+    void shouldDoNothingWhenNoPendingOrders() {
+        when(paymentOrderService.listPendingForSync(any(), any(), eq(50))).thenReturn(List.of());
+
+        paymentOrderSyncService.syncPendingOrders();
+
+        verify(payService, never()).syncOrderFromChannel(any());
+    }
+
+    private static PaymentOrder pendingOrder(String outTradeNo) {
+        return PaymentOrder.builder()
+                .outTradeNo(outTradeNo)
+                .status(PaymentOrderStatus.NOT_PAY)
+                .build();
+    }
+
+    private void stubPaidSnapshot(String outTradeNo) {
+        when(payService.syncOrderFromChannel(outTradeNo))
                 .thenReturn(new PaymentOrderSnapshot(
-                        "PO202606221200PAID001",
+                        outTradeNo,
                         "BIZ001",
                         "wechat-jsapi",
                         "WECHAT",
@@ -72,18 +137,5 @@ class PaymentOrderSyncServiceTest {
                         "wx_tx",
                         null,
                         null));
-
-        paymentOrderSyncService.syncPendingOrders();
-
-        verify(payService).syncOrderFromChannel("PO202606221200PAID001");
-    }
-
-    @Test
-    void shouldDoNothingWhenNoPendingOrders() {
-        when(paymentOrderService.listPendingForSync(any(), any(), eq(50))).thenReturn(List.of());
-
-        paymentOrderSyncService.syncPendingOrders();
-
-        verify(payService, never()).syncOrderFromChannel(any());
     }
 }

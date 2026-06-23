@@ -139,6 +139,9 @@ deadman:
         min-age: ${DEADMAN_PLUGIN_PAY_SYNC_MIN_AGE:2m}
         max-age: ${DEADMAN_PLUGIN_PAY_SYNC_MAX_AGE:30m}
         batch-size: ${DEADMAN_PLUGIN_PAY_SYNC_BATCH_SIZE:50}
+        parallel-enabled: ${DEADMAN_PLUGIN_PAY_SYNC_PARALLEL_ENABLED:true}
+        executor-bean-name: ${DEADMAN_PLUGIN_PAY_SYNC_EXECUTOR_BEAN_NAME:}
+        parallelism: ${DEADMAN_PLUGIN_PAY_SYNC_PARALLELISM:4}
     pay-wechat:
       enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_ENABLED:false}
       mock-enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_MOCK_ENABLED:true}

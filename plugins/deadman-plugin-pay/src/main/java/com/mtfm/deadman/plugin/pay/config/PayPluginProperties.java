@@ -44,5 +44,17 @@ public class PayPluginProperties {
 
         /** 单次扫描最多处理的待支付单数量 */
         private int batchSize = 50;
+
+        /** 是否并行处理扫描到的待支付单 */
+        private boolean parallelEnabled = true;
+
+        /**
+         * 并行查单使用的线程池 Bean 名称。
+         * 配置后优先于插件默认 {@code payOrderSyncExecutor}；未配置且未注入时由插件自建线程池。
+         */
+        private String executorBeanName;
+
+        /** 默认并行线程数（仅在使用插件自建线程池时生效） */
+        private int parallelism = 4;
     }
 }

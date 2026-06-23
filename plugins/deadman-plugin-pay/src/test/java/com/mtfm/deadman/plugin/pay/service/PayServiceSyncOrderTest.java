@@ -7,9 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,15 +15,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
 import com.mtfm.deadman.plugin.pay.manager.PaymentProviderManager;
 import com.mtfm.deadman.plugin.pay.spi.PaymentOrderSnapshot;
+import com.mtfm.deadman.plugin.pay.spi.PaymentOrderStatusChangedPublisher;
 import com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier;
 import com.mtfm.deadman.plugin.pay.spi.PaymentProvider;
-import com.mtfm.deadman.plugin.pay.event.PaymentOrderStatusChangedEvent;
 import com.mtfm.deadman.plugin.pay.spi.PaymentQueryResult;
 
 /**
@@ -44,7 +41,7 @@ class PayServiceSyncOrderTest {
     private PaymentOutTradeNoSupplier paymentOutTradeNoSupplier;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private PaymentOrderStatusChangedPublisher paymentOrderStatusChangedPublisher;
 
     @Mock
     private PaymentProvider paymentProvider;
@@ -71,7 +68,7 @@ class PayServiceSyncOrderTest {
     }
 
     @Test
-    void shouldSyncOrderFromChannelWhenStillPending() {
+    void shouldApplyHandleNotifyLogicWhenChannelAlreadyPaid() {
         when(paymentOrderService.requireByOutTradeNo("PO20260622120000123456")).thenReturn(pendingOrder);
         when(paymentProviderManager.require("wechat-jsapi")).thenReturn(paymentProvider);
         when(paymentProvider.queryOrder("PO20260622120000123456"))
@@ -90,9 +87,23 @@ class PayServiceSyncOrderTest {
         PaymentOrderSnapshot snapshot = payService.syncOrderFromChannel("PO20260622120000123456");
 
         assertThat(snapshot.status()).isEqualTo(PaymentOrderStatus.SUCCESS);
-        assertThat(snapshot.channelTransactionId()).isEqualTo("wx_tx_001");
         verify(paymentProvider).queryOrder("PO20260622120000123456");
-        verify(eventPublisher).publishEvent(any(PaymentOrderStatusChangedEvent.class));
+        verify(paymentOrderStatusChangedPublisher).publish(paidOrder, PaymentOrderStatus.NOT_PAY, PaymentOrderStatus.SUCCESS);
+    }
+
+    @Test
+    void shouldSkipUpdateWhenChannelStatusUnchanged() {
+        when(paymentOrderService.requireByOutTradeNo("PO20260622120000123456")).thenReturn(pendingOrder);
+        when(paymentProviderManager.require("wechat-jsapi")).thenReturn(paymentProvider);
+        when(paymentProvider.queryOrder("PO20260622120000123456"))
+                .thenReturn(new PaymentQueryResult(
+                        "PO20260622120000123456", null, PaymentOrderStatus.NOT_PAY, null));
+
+        PaymentOrderSnapshot snapshot = payService.syncOrderFromChannel("PO20260622120000123456");
+
+        assertThat(snapshot.status()).isEqualTo(PaymentOrderStatus.NOT_PAY);
+        verify(paymentOrderService, never()).transitionStatus(any(), any(), any(), any());
+        verify(paymentOrderStatusChangedPublisher, never()).publish(any(), any(), any());
     }
 
     @Test

@@ -5,11 +5,14 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.service.DefaultPaymentOutTradeNoSupplier;
+import com.mtfm.deadman.plugin.pay.service.SpringPaymentOrderStatusChangedPublisher;
+import com.mtfm.deadman.plugin.pay.spi.PaymentOrderStatusChangedPublisher;
 import com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier;
 
 /**
@@ -31,5 +34,19 @@ public class DeadmanPayPluginAutoConfiguration {
     @ConditionalOnMissingBean
     public PaymentOutTradeNoSupplier paymentOutTradeNoSupplier() {
         return new DefaultPaymentOutTradeNoSupplier();
+    }
+
+    /**
+     * 注册默认 Spring 事件发布器，宿主可声明 {@link PaymentOrderStatusChangedPublisher} Bean 覆盖（如
+     * MQ）。
+     *
+     * @param publisher Spring 事件发布实现
+     * @return 状态变更发布 SPI
+     */
+    @Bean
+    @ConditionalOnMissingBean(PaymentOrderStatusChangedPublisher.class)
+    public PaymentOrderStatusChangedPublisher paymentOrderStatusChangedPublisher(
+            ApplicationEventPublisher applicationEventPublisher) {
+        return new SpringPaymentOrderStatusChangedPublisher(applicationEventPublisher);
     }
 }
