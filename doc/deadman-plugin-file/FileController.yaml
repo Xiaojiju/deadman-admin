@@ -30,6 +30,7 @@ paths:
         需要权限码 `file:upload`。
         使用 `multipart/form-data` 上传；`providerId` 为空时使用 `deadman.plugin.file.default-provider`（默认 `local`）。
         单文件大小受 `deadman.plugin.file.max-file-size` 限制（默认 10MB）。
+        `bizType` 必填，且须已通过 `FileBizTypeContributor` 或 `FileBizTypeRegistrar` 注册（默认开启 `biz-type-strict`）。
       operationId: uploadFile
       tags: [文件管理]
       security:
@@ -47,6 +48,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResultFileMetadataVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/files/biz-types:
+    get:
+      summary: 已注册的文件业务分类列表
+      description: |
+        需要权限码 `file:read`。
+        返回各模块通过 `FileBizTypeContributor` / `FileBizTypeRegistrar` 登记的业务分类。
+      operationId: listFileBizTypes
+      tags: [文件管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultStringList'
         '401':
           $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
         '403':
@@ -191,7 +214,7 @@ components:
   schemas:
     FileUploadForm:
       type: object
-      required: [file]
+      required: [file, bizType]
       properties:
         file:
           type: string
@@ -199,8 +222,8 @@ components:
           description: 上传文件
         bizType:
           type: string
-          description: 业务分类，用于存储子目录划分（如 `avatar`、`export`）
-          example: avatar
+          description: 业务分类，须已注册（如 `rent`、`spare-part`）
+          example: rent
         providerId:
           type: string
           description: 存储 Provider 标识，为空时使用默认 Provider

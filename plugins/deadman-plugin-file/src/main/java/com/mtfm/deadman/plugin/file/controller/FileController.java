@@ -1,14 +1,9 @@
 package com.mtfm.deadman.plugin.file.controller;
 
-import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.plugin.file.service.FileService;
-import com.mtfm.deadman.plugin.file.vo.FileDownloadResource;
-import com.mtfm.deadman.plugin.file.vo.FileMetadataVO;
-import com.mtfm.deadman.security.LoginUser;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -23,6 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.mtfm.deadman.common.result.Result;
+import com.mtfm.deadman.plugin.file.service.FileService;
+import com.mtfm.deadman.plugin.file.vo.FileDownloadResource;
+import com.mtfm.deadman.plugin.file.vo.FileMetadataVO;
+import com.mtfm.deadman.security.LoginUser;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 文件上传与下载 API。
@@ -47,7 +50,7 @@ public class FileController {
     @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.file.permission.FilePermissions).UPLOAD)")
     public Result<FileMetadataVO> upload(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "bizType", required = false) String bizType,
+            @RequestParam("bizType") String bizType,
             @RequestParam(value = "providerId", required = false) String providerId,
             @AuthenticationPrincipal LoginUser loginUser) {
         Long uploaderUserId = loginUser == null ? null : loginUser.getUserId();
@@ -99,6 +102,17 @@ public class FileController {
     public Result<Void> delete(@PathVariable Long fileId) {
         fileService.delete(fileId);
         return Result.ok();
+    }
+
+    /**
+     * 列出已注册的文件业务分类。
+     *
+     * @return 业务分类列表
+     */
+    @GetMapping("/biz-types")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.file.permission.FilePermissions).READ)")
+    public Result<List<String>> listBizTypes() {
+        return Result.ok(fileService.listBizTypes());
     }
 
     /**

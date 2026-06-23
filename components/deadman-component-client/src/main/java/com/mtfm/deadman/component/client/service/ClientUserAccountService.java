@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -132,6 +133,23 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
         existing.setAccountIdentifier(phone);
         existing.setVerified(1);
         updateById(existing);
+    }
+
+    /**
+     * 查询用户绑定的微信小程序 openid。
+     *
+     * @param userId 用户 ID
+     * @return openid，未绑定时为空
+     */
+    public Optional<String> findMiniprogramOpenid(Long userId) {
+        ClientUserAccount account = getOne(new LambdaQueryWrapper<ClientUserAccount>()
+                .eq(ClientUserAccount::getUserId, userId)
+                .eq(ClientUserAccount::getAccountType, AccountType.OAUTH.getCode())
+                .eq(ClientUserAccount::getOauthProvider, "wechat-miniprogram"));
+        if (account == null || !StringUtils.hasText(account.getOauthSubject())) {
+            return Optional.empty();
+        }
+        return Optional.of(account.getOauthSubject());
     }
 
     /**

@@ -71,6 +71,22 @@
             <artifactId>deadman-plugin-storage-local</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-storage-oss</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-pay</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-pay-wechat</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-support-client-file</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>

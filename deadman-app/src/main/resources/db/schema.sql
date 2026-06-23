@@ -220,3 +220,6 @@ CREATE TABLE IF NOT EXISTS sys_notification_recipient (
     UNIQUE KEY uk_sys_notification_recipient (notification_id, user_id),
     KEY idx_sys_notification_recipient_user (user_id, read_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='站内信收件人';
+
+-- pay-wechat 插件表结构见：
+-- plugins/deadman-plugin-pay-wechat/src/main/resources/db/pay-wechat/schema.sql

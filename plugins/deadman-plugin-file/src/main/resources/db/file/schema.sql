@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS plugin_file_metadata (
     size_bytes          BIGINT        NOT NULL COMMENT '文件大小（字节）',
     provider_id         VARCHAR(32)   NOT NULL COMMENT '存储 Provider 标识',
     storage_key         VARCHAR(1024) NOT NULL COMMENT '存储键（相对路径或对象 Key）',
+    storage_bucket      VARCHAR(128)           COMMENT '物理存储桶名（OSS 等多 Bucket 场景）',
     access_url          VARCHAR(1024)          COMMENT '可直接访问的 URL',
     biz_type            VARCHAR(64)            COMMENT '业务分类',
     uploader_user_id    BIGINT                 COMMENT '上传人用户 ID',

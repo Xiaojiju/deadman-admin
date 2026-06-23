@@ -1,0 +1,3 @@
+com.mtfm.deadman.plugin.pay.autoconfigure.DeadmanPayPluginAutoConfiguration
+com.mtfm.deadman.plugin.pay.autoconfigure.PaySyncSchedulerAutoConfiguration
+com.mtfm.deadman.plugin.pay.autoconfigure.PayOrderSyncExecutorAutoConfiguration

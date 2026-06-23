@@ -1,14 +1,17 @@
 package com.mtfm.deadman.plugin.file.manager;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Component;
+
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.file.config.FilePluginProperties;
 import com.mtfm.deadman.plugin.file.spi.FileStorageProvider;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * 文件存储 Provider 管理器，聚合所有已注册的 Provider 实现。

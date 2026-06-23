@@ -37,6 +37,12 @@ deadman:
       enabled: true
       app-id: test-wechat-app-id
       app-secret: test-wechat-app-secret
+    pay:
+      enabled: true
+      default-provider: wechat-jsapi
+    pay-wechat:
+      enabled: false
+      mock-enabled: true
   component:
     client:
       enabled: true

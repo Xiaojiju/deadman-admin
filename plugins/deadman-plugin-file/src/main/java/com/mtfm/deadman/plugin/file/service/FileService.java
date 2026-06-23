@@ -1,8 +1,19 @@
 package com.mtfm.deadman.plugin.file.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.file.biztype.FileBizTypeRegistry;
 import com.mtfm.deadman.plugin.file.config.FilePluginProperties;
 import com.mtfm.deadman.plugin.file.entity.FileMetadata;
 import com.mtfm.deadman.plugin.file.manager.FileStorageProviderManager;
@@ -12,16 +23,9 @@ import com.mtfm.deadman.plugin.file.spi.FileStorageUploadContext;
 import com.mtfm.deadman.plugin.file.spi.StoredFileRef;
 import com.mtfm.deadman.plugin.file.vo.FileDownloadResource;
 import com.mtfm.deadman.plugin.file.vo.FileMetadataVO;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 文件上传、下载与元数据管理服务。
@@ -34,13 +38,14 @@ public class FileService {
     private final FileMetadataMapper fileMetadataMapper;
     private final FileStorageProviderManager providerManager;
     private final FilePluginProperties filePluginProperties;
+    private final FileBizTypeRegistry fileBizTypeRegistry;
 
     /**
      * 上传文件。
      *
-     * @param file       上传文件
-     * @param bizType    业务分类
-     * @param providerId 存储 Provider，为空时使用默认
+     * @param file           上传文件
+     * @param bizType        业务分类
+     * @param providerId     存储 Provider，为空时使用默认
      * @param uploaderUserId 上传人用户 ID
      * @return 文件元数据
      */
@@ -53,6 +58,7 @@ public class FileService {
         if (file.getSize() > maxBytes) {
             throw new BusinessException(ResultCode.FILE_TOO_LARGE);
         }
+        fileBizTypeRegistry.requireRegistered(bizType);
         FileStorageProvider provider = providerManager.require(providerId);
         String originalFilename = StringUtils.cleanPath(
                 file.getOriginalFilename() == null ? "unknown" : file.getOriginalFilename());
@@ -76,6 +82,7 @@ public class FileService {
                 .sizeBytes(file.getSize())
                 .providerId(storedRef.providerId())
                 .storageKey(storedRef.storageKey())
+                .storageBucket(storedRef.storageBucket())
                 .accessUrl(storedRef.accessUrl())
                 .bizType(bizType)
                 .uploaderUserId(uploaderUserId)
@@ -103,7 +110,11 @@ public class FileService {
     public FileDownloadResource openDownload(Long fileId) {
         FileMetadata metadata = requireMetadata(fileId);
         FileStorageProvider provider = providerManager.require(metadata.getProviderId());
-        StoredFileRef ref = new StoredFileRef(metadata.getProviderId(), metadata.getStorageKey(), metadata.getAccessUrl());
+        StoredFileRef ref = new StoredFileRef(
+                metadata.getProviderId(),
+                metadata.getStorageKey(),
+                metadata.getAccessUrl(),
+                metadata.getStorageBucket());
         try {
             InputStream inputStream = provider.open(ref);
             return FileDownloadResource.builder()
@@ -126,13 +137,26 @@ public class FileService {
     public void delete(Long fileId) {
         FileMetadata metadata = requireMetadata(fileId);
         FileStorageProvider provider = providerManager.require(metadata.getProviderId());
-        StoredFileRef ref = new StoredFileRef(metadata.getProviderId(), metadata.getStorageKey(), metadata.getAccessUrl());
+        StoredFileRef ref = new StoredFileRef(
+                metadata.getProviderId(),
+                metadata.getStorageKey(),
+                metadata.getAccessUrl(),
+                metadata.getStorageBucket());
         try {
             provider.delete(ref);
         } catch (RuntimeException ex) {
             log.warn("删除存储对象失败，仍继续逻辑删除元数据：fileId={}", fileId, ex);
         }
         fileMetadataMapper.deleteById(fileId);
+    }
+
+    /**
+     * 列出已注册的文件业务分类。
+     *
+     * @return 业务分类列表
+     */
+    public List<String> listBizTypes() {
+        return fileBizTypeRegistry.listRegistered();
     }
 
     /**

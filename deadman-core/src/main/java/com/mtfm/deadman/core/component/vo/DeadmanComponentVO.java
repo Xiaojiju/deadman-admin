@@ -1,7 +1,5 @@
 package com.mtfm.deadman.core.component.vo;
 
-import java.util.Map;
-
 /**
  * 已装配组件对外展示信息。
  *
@@ -18,5 +16,5 @@ public record DeadmanComponentVO(
         String description,
         String apiPrefix,
         int order,
-        Map<String, Object> uiHints) {
+        DeadmanComponentUiHints uiHints) {
 }
