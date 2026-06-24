@@ -8,7 +8,7 @@ import java.util.Map;
 import org.springframework.util.StringUtils;
 
 import com.kuaidi100.sdk.api.AutoNum;
-import com.kuaidi100.sdk.api.BOrder;
+import com.kuaidi100.sdk.api.BOrderOfficial;
 import com.kuaidi100.sdk.api.COrder;
 import com.kuaidi100.sdk.api.LabelV2;
 import com.kuaidi100.sdk.api.QueryTrack;
@@ -17,6 +17,7 @@ import com.kuaidi100.sdk.contant.ApiInfoConstant;
 import com.kuaidi100.sdk.pojo.HttpResult;
 import com.kuaidi100.sdk.request.AutoNumReq;
 import com.kuaidi100.sdk.request.BOrderCancelReq;
+import com.kuaidi100.sdk.request.BOrderOfficialQueryPriceReq;
 import com.kuaidi100.sdk.request.BOrderReq;
 import com.kuaidi100.sdk.request.ManInfo;
 import com.kuaidi100.sdk.request.PrintReq;
@@ -43,17 +44,19 @@ import com.mtfm.deadman.plugin.logistics.kuaidi100.constant.Kuaidi100ProviderIds
 import com.mtfm.deadman.plugin.logistics.kuaidi100.util.Kuaidi100PrintRequestBuilder;
 import com.mtfm.deadman.plugin.logistics.kuaidi100.util.Kuaidi100TrackMapper;
 import com.mtfm.deadman.plugin.logistics.spi.carrier.LogisticsCarrierDetectResult;
+import com.mtfm.deadman.plugin.logistics.spi.common.LogisticsContactInfo;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipCancelResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceResult;
-import com.mtfm.deadman.plugin.logistics.spi.common.LogisticsContactInfo;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderResult;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceContext;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceResult;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribePushPayload;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeResult;
@@ -251,15 +254,16 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
     @Override
     public LogisticsMerchantShipOrderResult createMerchantShipOrder(LogisticsMerchantShipOrderContext context) {
         try {
-            BOrderReq orderReq = buildMerchantShipOrderReq(context);
-            PrintReq printReq = printRequestBuilder().build(ApiInfoConstant.B_ORDER_SEND_METHOD, orderReq);
-            PrintBaseResp<?> response = new BOrder().order(printReq);
+            BOrderReq orderReq = buildOfficialMerchantShipOrderReq(context);
+            PrintReq printReq = printRequestBuilder().build(ApiInfoConstant.B_ORDER_OFFICIAL_ORDER_METHOD, orderReq);
+            HttpResult httpResult = new BOrderOfficial().execute(printReq);
+            PrintBaseResp<?> response = parsePrintBaseResp(httpResult);
             return mapMerchantShipOrderResult(response);
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.error("快递100商家寄件下单失败：carrier={}, bizOrderId={}", context.carrierCode(), context.bizOrderId(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100商家寄件下单失败：" + ex.getMessage());
+            log.error("快递100商家官方寄件下单失败：carrier={}, bizOrderId={}", context.carrierCode(), context.bizOrderId(), ex);
+            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100商家官方寄件下单失败：" + ex.getMessage());
         }
     }
 
@@ -274,14 +278,39 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             cancelReq.setTaskId(context.taskId());
             cancelReq.setCancelMsg(context.cancelMsg());
 
-            PrintReq printReq = printRequestBuilder().build(ApiInfoConstant.B_ORDER_CANCEL_METHOD, cancelReq);
-            PrintBaseResp<?> response = new BOrder().cancel(printReq);
+            PrintReq printReq = printRequestBuilder().build(ApiInfoConstant.B_ORDER_OFFICIAL_CANCEL_METHOD, cancelReq);
+            HttpResult httpResult = new BOrderOfficial().execute(printReq);
+            PrintBaseResp<?> response = parsePrintBaseResp(httpResult);
             return mapMerchantShipCancelResult(response);
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.error("快递100商家寄件取消失败：orderId={}", context.orderId(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "快递100商家寄件取消失败：" + ex.getMessage());
+            log.error("快递100商家官方寄件取消失败：orderId={}", context.orderId(), ex);
+            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "快递100商家官方寄件取消失败：" + ex.getMessage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LogisticsMerchantShipPriceResult queryMerchantShipPrice(LogisticsMerchantShipPriceContext context) {
+        try {
+            BOrderOfficialQueryPriceReq priceReq = new BOrderOfficialQueryPriceReq();
+            priceReq.setKuaidiCom(context.carrierCode());
+            priceReq.setSendManPrintAddr(context.sender().printAddress());
+            priceReq.setRecManPrintAddr(context.receiver().printAddress());
+            priceReq.setWeight(context.weight());
+            priceReq.setServiceType(context.serviceType());
+
+            PrintReq printReq = printRequestBuilder().build(ApiInfoConstant.B_ORDER_OFFICIAL_PRICE_METHOD, priceReq);
+            HttpResult httpResult = new BOrderOfficial().execute(printReq);
+            return mapMerchantShipPriceResult(httpResult);
+        } catch (BusinessException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("快递100商家官方寄件询价失败：carrier={}", context.carrierCode(), ex);
+            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100商家官方寄件询价失败：" + ex.getMessage());
         }
     }
 
@@ -440,11 +469,11 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
         return orderReq;
     }
 
-    private BOrderReq buildMerchantShipOrderReq(LogisticsMerchantShipOrderContext context) {
+    private BOrderReq buildOfficialMerchantShipOrderReq(LogisticsMerchantShipOrderContext context) {
         BOrderReq orderReq = new BOrderReq();
         orderReq.setKuaidicom(context.carrierCode());
         orderReq.setThirdOrderId(context.bizOrderId());
-        fillContact(orderReq, context.sender(), context.receiver());
+        fillOfficialContact(orderReq, context.sender(), context.receiver());
         orderReq.setCargo(context.cargo());
         orderReq.setWeight(context.weight());
         orderReq.setRemark(context.remark());
@@ -455,6 +484,9 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
         orderReq.setCallBackUrl(properties.resolveMerchantShipCallbackUrl(context.callbackUrl()));
         orderReq.setPollCallBackUrl(properties.resolveSubscribeCallbackUrl(context.pollCallbackUrl()));
         orderReq.setSalt(properties.getSubscribeSalt());
+        if (StringUtils.hasText(context.payment())) {
+            orderReq.setPayment(context.payment());
+        }
         orderReq.setResultv2("4");
         return orderReq;
     }
@@ -477,7 +509,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
         return orderReq;
     }
 
-    private void fillContact(BOrderReq orderReq, LogisticsContactInfo sender, LogisticsContactInfo receiver) {
+    private void fillOfficialContact(BOrderReq orderReq, LogisticsContactInfo sender, LogisticsContactInfo receiver) {
         orderReq.setSendManName(sender.name());
         orderReq.setSendManMobile(sender.mobile());
         orderReq.setSendManPrintAddr(sender.printAddress());
@@ -528,10 +560,10 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private LogisticsMerchantShipOrderResult mapMerchantShipOrderResult(PrintBaseResp<?> response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "商家寄件返回为空");
+            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "商家官方寄件返回为空");
         }
         if (!response.isResult()) {
-            String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "商家寄件下单失败";
+            String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "商家官方寄件下单失败";
             return new LogisticsMerchantShipOrderResult(false, message, null, null, null);
         }
         Map<String, Object> data = asDataMap(response.getData());
@@ -545,13 +577,39 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private LogisticsMerchantShipCancelResult mapMerchantShipCancelResult(PrintBaseResp<?> response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "商家寄件取消返回为空");
+            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "商家官方寄件取消返回为空");
         }
         if (!response.isResult()) {
-            String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "商家寄件取消失败";
+            String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "商家官方寄件取消失败";
             return new LogisticsMerchantShipCancelResult(false, message);
         }
         return new LogisticsMerchantShipCancelResult(true, response.getMessage());
+    }
+
+    private LogisticsMerchantShipPriceResult mapMerchantShipPriceResult(HttpResult httpResult) {
+        if (httpResult == null || !StringUtils.hasText(httpResult.getBody())) {
+            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "商家官方寄件询价返回为空");
+        }
+        String rawData = httpResult.getBody();
+        try {
+            JsonNode root = JSON_MAPPER.readTree(rawData);
+            boolean success = root.path("result").asBoolean(false);
+            String message = textValue(root, "message");
+            if (!success) {
+                return new LogisticsMerchantShipPriceResult(false, message, null, rawData);
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = root.has("data") && !root.get("data").isNull()
+                    ? JSON_MAPPER.convertValue(root.get("data"), Map.class)
+                    : Map.of();
+            String price = firstNonBlank(
+                    extractString(data, "price"),
+                    extractString(data, "defPrice"),
+                    extractString(data, "totalPrice"));
+            return new LogisticsMerchantShipPriceResult(true, message, price, rawData);
+        } catch (Exception ex) {
+            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "解析商家官方寄件询价响应失败：" + ex.getMessage());
+        }
     }
 
     private LogisticsConsumerShipOrderResult mapConsumerShipOrderResult(PrintBaseResp<?> response) {
@@ -593,6 +651,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             if (!success) {
                 return new LogisticsConsumerShipPriceResult(false, message, null, rawData);
             }
+            @SuppressWarnings("unchecked")
             Map<String, Object> data = root.has("data") && !root.get("data").isNull()
                     ? JSON_MAPPER.convertValue(root.get("data"), Map.class)
                     : Map.of();

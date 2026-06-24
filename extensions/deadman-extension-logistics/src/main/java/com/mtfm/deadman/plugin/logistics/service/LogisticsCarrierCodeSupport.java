@@ -10,8 +10,8 @@ import com.mtfm.deadman.plugin.logistics.spi.carrier.LogisticsCarrierDetectResul
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceContext;
-import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderContext;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribePushPayload;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsTrackQueryContext;
@@ -183,24 +183,25 @@ public class LogisticsCarrierCodeSupport {
                 context.pickupStartTime(),
                 context.pickupEndTime(),
                 context.callbackUrl(),
-                context.pollCallbackUrl());
+                context.pollCallbackUrl(),
+                context.payment());
     }
 
     /**
-     * 将商家寄件取消上下文中的统一编码转换为厂商编码。
+     * 将商家寄件询价上下文中的统一编码转换为厂商编码。
      *
      * @param providerId Provider 标识
-     * @param context    取消上下文
+     * @param context    询价上下文
      * @return 厂商编码上下文
      */
-    public LogisticsMerchantShipCancelContext toProviderMerchantShipCancelContext(
-            String providerId, LogisticsMerchantShipCancelContext context) {
-        return new LogisticsMerchantShipCancelContext(
-                context.orderId(),
-                context.taskId(),
-                mapToProviderCodeIfPresent(providerId, context.carrierCode()),
-                context.trackingNo(),
-                context.cancelMsg());
+    public LogisticsMerchantShipPriceContext toProviderMerchantShipPriceContext(
+            String providerId, LogisticsMerchantShipPriceContext context) {
+        return new LogisticsMerchantShipPriceContext(
+                mapToProviderCode(providerId, context.carrierCode()),
+                context.sender(),
+                context.receiver(),
+                context.weight(),
+                context.serviceType());
     }
 
     /**

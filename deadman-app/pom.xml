@@ -84,14 +84,6 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-extension-logistics</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-logistics-kuaidi100</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
             <artifactId>deadman-support-client-file</artifactId>
         </dependency>
         <dependency>

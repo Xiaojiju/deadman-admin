@@ -15,12 +15,14 @@ import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelCon
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderResult;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceContext;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsShipProvider;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 快递100 寄件服务领域 Provider。
+ * 快递100 寄件服务领域 Provider（商家官方寄件 + C 端寄件）。
  */
 @Component
 @RequiredArgsConstructor
@@ -51,6 +53,14 @@ public class Kuaidi100LogisticsShipProvider implements LogisticsShipProvider {
     @Override
     public LogisticsMerchantShipCancelResult cancelMerchantShipOrder(LogisticsMerchantShipCancelContext context) {
         return kuaidi100LogisticsApiGateway.cancelMerchantShipOrder(context);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LogisticsMerchantShipPriceResult queryMerchantShipPrice(LogisticsMerchantShipPriceContext context) {
+        return kuaidi100LogisticsApiGateway.queryMerchantShipPrice(context);
     }
 
     /**

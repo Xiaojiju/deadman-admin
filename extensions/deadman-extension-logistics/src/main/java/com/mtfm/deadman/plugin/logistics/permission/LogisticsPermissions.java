@@ -20,6 +20,7 @@ public final class LogisticsPermissions {
     public static final String WAYBILL_CANCEL = "logistics:waybill:cancel";
     public static final String SHIP_MERCHANT_CREATE = "logistics:ship:merchant:create";
     public static final String SHIP_MERCHANT_CANCEL = "logistics:ship:merchant:cancel";
+    public static final String SHIP_MERCHANT_PRICE = "logistics:ship:merchant:price";
     public static final String SHIP_CONSUMER_CREATE = "logistics:ship:consumer:create";
     public static final String SHIP_CONSUMER_CANCEL = "logistics:ship:consumer:cancel";
     public static final String SHIP_CONSUMER_PRICE = "logistics:ship:consumer:price";
@@ -42,8 +43,9 @@ public final class LogisticsPermissions {
                         new PermissionItemDescriptor(TRACK_SUBSCRIBE, "订阅轨迹推送"),
                         new PermissionItemDescriptor(WAYBILL_CREATE, "电子面单下单"),
                         new PermissionItemDescriptor(WAYBILL_CANCEL, "取消电子面单"),
-                        new PermissionItemDescriptor(SHIP_MERCHANT_CREATE, "商家寄件下单"),
+                        new PermissionItemDescriptor(SHIP_MERCHANT_CREATE, "商家寄件下单（官方快递）"),
                         new PermissionItemDescriptor(SHIP_MERCHANT_CANCEL, "取消商家寄件"),
+                        new PermissionItemDescriptor(SHIP_MERCHANT_PRICE, "商家寄件询价"),
                         new PermissionItemDescriptor(SHIP_CONSUMER_CREATE, "C 端寄件下单"),
                         new PermissionItemDescriptor(SHIP_CONSUMER_CANCEL, "取消 C 端寄件"),
                         new PermissionItemDescriptor(SHIP_CONSUMER_PRICE, "C 端寄件询价"))));

@@ -8,9 +8,28 @@
 
 > **⚠️ 测试状态：尚未完成充分测试**
 >
-> 本插件已实现轨迹、识别、面单、寄件四个领域的 Provider 与 API 网关，但**尚未完成与快递100 生产环境的全面联调**。
+> 本插件已实现轨迹、识别、面单、C 端寄件等领域的 Provider 与 API 网关，但**尚未完成与快递100 生产环境的全面联调**。
 > 当前自动化测试仅包含 Mock 轨迹查单的单元测试；订阅回调、面单、寄件等接口请在启用真实账号前自行验证。
 > 生产使用前请关闭 `mock-enabled` 并完成全链路测试。
+
+> **不接入废弃 API**：快递100 SDK 中 `@Deprecated` 的「优选商家寄件」（`BOrder` / `bOrderBest`）已下线，本模块未接入。
+
+---
+
+## 已接入 SDK API 对照
+
+> **商家寄件**：使用快递100 官方寄件 API（`BOrderOfficial`），非已下线的优选寄件（`BOrder`）。
+
+| 能力 | SDK 类 | 状态 |
+|------|--------|------|
+| 实时查单 | `QueryTrack` | 已接入 |
+| 智能识别 | `AutoNum` | 已接入 |
+| 轨迹订阅 | `Subscribe` | 已接入 |
+| 电子面单 V2 | `LabelV2` | 已接入（非 V1 / PrintHtml） |
+| 商家官方寄件 | `BOrderOfficial` | 已接入 |
+| C 端寄件 | `COrder` | 已接入 |
+| 优选商家寄件 | `BOrder` (@Deprecated，已下线) | **未接入** |
+| 云打印 / 面单图片 / HTML | `PrintCloud` / `PrintImg` / `PrintHtml` (@Deprecated) | **未接入** |
 
 ---
 

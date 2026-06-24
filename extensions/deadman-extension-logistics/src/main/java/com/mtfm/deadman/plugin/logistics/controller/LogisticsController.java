@@ -19,6 +19,7 @@ import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderResu
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderResult;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceResult;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeResult;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsTrackQueryContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsTrackQueryResult;
@@ -94,7 +95,7 @@ public class LogisticsController {
     }
 
     /**
-     * 商家寄件下单。
+     * 商家寄件（官方快递）下单。
      */
     @PostMapping("/ship/merchant")
     @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.logistics.permission.LogisticsPermissions).SHIP_MERCHANT_CREATE)")
@@ -111,6 +112,16 @@ public class LogisticsController {
     public Result<LogisticsMerchantShipCancelResult> cancelMerchantShipOrder(
             @Valid @RequestBody LogisticsApiRequests.MerchantShipCancel request) {
         return Result.ok(logisticsService.cancelMerchantShipOrder(request.toContext(), request.providerId()));
+    }
+
+    /**
+     * 商家寄件询价。
+     */
+    @PostMapping("/ship/merchant/price")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.logistics.permission.LogisticsPermissions).SHIP_MERCHANT_PRICE)")
+    public Result<LogisticsMerchantShipPriceResult> queryMerchantShipPrice(
+            @Valid @RequestBody LogisticsApiRequests.MerchantShipPrice request) {
+        return Result.ok(logisticsService.queryMerchantShipPrice(request.toContext(), request.providerId()));
     }
 
     /**

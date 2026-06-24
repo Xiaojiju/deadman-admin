@@ -3,14 +3,14 @@ package com.mtfm.deadman.plugin.logistics.spi.ship;
 import com.mtfm.deadman.plugin.logistics.spi.common.LogisticsContactInfo;
 
 /**
- * 商家寄件下单入参。
+ * 商家寄件（官方快递）下单入参。
  *
- * @param carrierCode      快递公司编码
- * @param bizOrderId       业务侧订单号
+ * @param carrierCode      平台统一快递公司编码
+ * @param bizOrderId       业务侧订单号（对应快递100 thirdOrderId）
  * @param receiver         收件人
  * @param sender           寄件人
  * @param cargo            货物名称
- * @param weight           重量（kg 字符串，依渠道格式）
+ * @param weight           重量（kg 字符串）
  * @param remark           备注
  * @param serviceType      服务类型
  * @param dayType          预约日期类型
@@ -18,6 +18,7 @@ import com.mtfm.deadman.plugin.logistics.spi.common.LogisticsContactInfo;
  * @param pickupEndTime    预约取件结束时间
  * @param callbackUrl      下单回调地址
  * @param pollCallbackUrl  轨迹推送回调地址
+ * @param payment          支付方式（默认 SHIPPER 寄付）
  */
 public record LogisticsMerchantShipOrderContext(
         String carrierCode,
@@ -32,5 +33,6 @@ public record LogisticsMerchantShipOrderContext(
         String pickupStartTime,
         String pickupEndTime,
         String callbackUrl,
-        String pollCallbackUrl) {
+        String pollCallbackUrl,
+        String payment) {
 }

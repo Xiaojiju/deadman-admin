@@ -19,6 +19,8 @@ import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelCon
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderResult;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceContext;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceResult;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribePushPayload;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeResult;
@@ -92,8 +94,8 @@ public class MockKuaidi100LogisticsApiGateway implements Kuaidi100LogisticsApiGa
         if (!StringUtils.hasText(rawParam) || !StringUtils.hasText(sign)) {
             return null;
         }
-        LogisticsSubscribePushPayload payload =
-                Kuaidi100TrackMapper.parseSubscribePushPayload(Kuaidi100ProviderIds.KUAIDI100, rawParam);
+        LogisticsSubscribePushPayload payload = Kuaidi100TrackMapper
+                .parseSubscribePushPayload(Kuaidi100ProviderIds.KUAIDI100, rawParam);
         if (payload != null) {
             return payload;
         }
@@ -130,12 +132,12 @@ public class MockKuaidi100LogisticsApiGateway implements Kuaidi100LogisticsApiGa
      */
     @Override
     public LogisticsMerchantShipOrderResult createMerchantShipOrder(LogisticsMerchantShipOrderContext context) {
-        log.info("Mock 快递100商家寄件：carrier={}, bizOrderId={}", context.carrierCode(), context.bizOrderId());
+        log.info("Mock 快递100商家官方寄件：carrier={}, bizOrderId={}", context.carrierCode(), context.bizOrderId());
         return new LogisticsMerchantShipOrderResult(
                 true,
-                "Mock 商家寄件下单成功",
+                "Mock 商家官方寄件下单成功",
                 "mock-merchant-order-001",
-                "MOCK-MS-" + context.bizOrderId(),
+                "MOCK-MS-" + (context.bizOrderId() != null ? context.bizOrderId() : "001"),
                 "mock-task-merchant-001");
     }
 
@@ -144,8 +146,18 @@ public class MockKuaidi100LogisticsApiGateway implements Kuaidi100LogisticsApiGa
      */
     @Override
     public LogisticsMerchantShipCancelResult cancelMerchantShipOrder(LogisticsMerchantShipCancelContext context) {
-        log.info("Mock 快递100商家寄件取消：orderId={}", context.orderId());
-        return new LogisticsMerchantShipCancelResult(true, "Mock 商家寄件取消成功");
+        log.info("Mock 快递100商家官方寄件取消：orderId={}", context.orderId());
+        return new LogisticsMerchantShipCancelResult(true, "Mock 商家官方寄件取消成功");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LogisticsMerchantShipPriceResult queryMerchantShipPrice(LogisticsMerchantShipPriceContext context) {
+        log.info("Mock 快递100商家官方寄件询价：carrier={}", context.carrierCode());
+        return new LogisticsMerchantShipPriceResult(true, "Mock 询价成功", "12.50",
+                "{\"result\":true,\"price\":\"12.50\"}");
     }
 
     /**
@@ -154,7 +166,8 @@ public class MockKuaidi100LogisticsApiGateway implements Kuaidi100LogisticsApiGa
     @Override
     public LogisticsConsumerShipOrderResult createConsumerShipOrder(LogisticsConsumerShipOrderContext context) {
         log.info("Mock 快递100 C 端寄件：carrier={}", context.carrierCode());
-        return new LogisticsConsumerShipOrderResult(true, "Mock C 端寄件下单成功", "mock-consumer-order-001", "mock-task-consumer-001");
+        return new LogisticsConsumerShipOrderResult(true, "Mock C 端寄件下单成功", "mock-consumer-order-001",
+                "mock-task-consumer-001");
     }
 
     /**

@@ -16,11 +16,13 @@ import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderCont
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceResult;
-import com.mtfm.deadman.plugin.logistics.spi.common.LogisticsContactInfo;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderResult;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceContext;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceResult;
+import com.mtfm.deadman.plugin.logistics.spi.common.LogisticsContactInfo;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribePushPayload;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeResult;
@@ -37,7 +39,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * 物流能力编排服务，按领域 Provider 路由到对应实现。
  * <p>
- * 入参/出参中的 {@code carrierCode} 使用平台统一编码（见 {@link com.mtfm.deadman.plugin.logistics.spi.carrier.LogisticsCarriers}），
+ * 入参/出参中的 {@code carrierCode} 使用平台统一编码（见
+ * {@link com.mtfm.deadman.plugin.logistics.spi.carrier.LogisticsCarriers}），
  * 调用 Provider 前自动转换为厂商编码，返回时转换回统一编码。
  */
 @Service
@@ -68,11 +71,10 @@ public class LogisticsService {
         if (cached.isPresent()) {
             return cached.get();
         }
-        LogisticsTrackQueryContext providerContext =
-                logisticsCarrierCodeSupport.toProviderTrackQueryContext(resolvedProviderId, context);
-        LogisticsTrackQueryResult result =
-                logisticsCarrierCodeSupport.toUnifiedTrackQueryResult(
-                        resolvedProviderId, provider.queryTrack(providerContext));
+        LogisticsTrackQueryContext providerContext = logisticsCarrierCodeSupport
+                .toProviderTrackQueryContext(resolvedProviderId, context);
+        LogisticsTrackQueryResult result = logisticsCarrierCodeSupport.toUnifiedTrackQueryResult(
+                resolvedProviderId, provider.queryTrack(providerContext));
         logisticsCacheSupport.putTrackQuery(cacheKey, result);
         return result;
     }
@@ -90,8 +92,7 @@ public class LogisticsService {
         }
         var provider = logisticsProviderRegistry.requireCarrier(providerId);
         String resolvedProviderId = provider.providerId();
-        String cacheKey =
-                logisticsCacheSupport.carrierDetectCacheKey(resolvedProviderId, trackingNo.trim());
+        String cacheKey = logisticsCacheSupport.carrierDetectCacheKey(resolvedProviderId, trackingNo.trim());
         Optional<List<LogisticsCarrierDetectResult>> cached = logisticsCacheSupport.getCarrierDetect(cacheKey);
         if (cached.isPresent()) {
             return cached.get();
@@ -113,8 +114,8 @@ public class LogisticsService {
         validateSubscribeContext(context);
         LogisticsTrackProvider provider = logisticsProviderRegistry.requireTrack(providerId);
         String resolvedProviderId = provider.providerId();
-        LogisticsSubscribeContext providerContext =
-                logisticsCarrierCodeSupport.toProviderSubscribeContext(resolvedProviderId, context);
+        LogisticsSubscribeContext providerContext = logisticsCarrierCodeSupport
+                .toProviderSubscribeContext(resolvedProviderId, context);
         return provider.subscribeTrack(providerContext);
     }
 
@@ -132,8 +133,8 @@ public class LogisticsService {
         if (payload == null) {
             throw new BusinessException(ResultCode.LOGISTICS_SUBSCRIBE_PUSH_INVALID, "订阅推送验签失败");
         }
-        LogisticsSubscribePushPayload unifiedPayload =
-                logisticsCarrierCodeSupport.toUnifiedSubscribePushPayload(resolvedProviderId, payload);
+        LogisticsSubscribePushPayload unifiedPayload = logisticsCarrierCodeSupport
+                .toUnifiedSubscribePushPayload(resolvedProviderId, payload);
         logisticsSubscribePushService.dispatch(unifiedPayload);
     }
 
@@ -148,8 +149,8 @@ public class LogisticsService {
         validateWaybillContext(context);
         var provider = logisticsProviderRegistry.requireWaybill(providerId);
         String resolvedProviderId = provider.providerId();
-        LogisticsWaybillOrderContext providerContext =
-                logisticsCarrierCodeSupport.toProviderWaybillOrderContext(resolvedProviderId, context);
+        LogisticsWaybillOrderContext providerContext = logisticsCarrierCodeSupport
+                .toProviderWaybillOrderContext(resolvedProviderId, context);
         return provider.createWaybill(providerContext);
     }
 
@@ -164,13 +165,13 @@ public class LogisticsService {
         validateWaybillCancelContext(context);
         var provider = logisticsProviderRegistry.requireWaybill(providerId);
         String resolvedProviderId = provider.providerId();
-        LogisticsWaybillCancelContext providerContext =
-                logisticsCarrierCodeSupport.toProviderWaybillCancelContext(resolvedProviderId, context);
+        LogisticsWaybillCancelContext providerContext = logisticsCarrierCodeSupport
+                .toProviderWaybillCancelContext(resolvedProviderId, context);
         return provider.cancelWaybill(providerContext);
     }
 
     /**
-     * 商家寄件下单。
+     * 商家寄件（官方快递）下单。
      *
      * @param context    下单上下文（统一快递公司编码）
      * @param providerId Provider 标识
@@ -181,8 +182,8 @@ public class LogisticsService {
         validateMerchantShipContext(context);
         var provider = logisticsProviderRegistry.requireShip(providerId);
         String resolvedProviderId = provider.providerId();
-        LogisticsMerchantShipOrderContext providerContext =
-                logisticsCarrierCodeSupport.toProviderMerchantShipOrderContext(resolvedProviderId, context);
+        LogisticsMerchantShipOrderContext providerContext = logisticsCarrierCodeSupport
+                .toProviderMerchantShipOrderContext(resolvedProviderId, context);
         return provider.createMerchantShipOrder(providerContext);
     }
 
@@ -198,11 +199,24 @@ public class LogisticsService {
         if (context == null || !StringUtils.hasText(context.orderId())) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "商家寄件订单 ID 不能为空");
         }
+        return logisticsProviderRegistry.requireShip(providerId).cancelMerchantShipOrder(context);
+    }
+
+    /**
+     * 查询商家寄件预估价格。
+     *
+     * @param context    询价上下文（统一快递公司编码）
+     * @param providerId Provider 标识
+     * @return 询价结果
+     */
+    public LogisticsMerchantShipPriceResult queryMerchantShipPrice(
+            LogisticsMerchantShipPriceContext context, String providerId) {
+        validateMerchantShipPriceContext(context);
         var provider = logisticsProviderRegistry.requireShip(providerId);
         String resolvedProviderId = provider.providerId();
-        LogisticsMerchantShipCancelContext providerContext =
-                logisticsCarrierCodeSupport.toProviderMerchantShipCancelContext(resolvedProviderId, context);
-        return provider.cancelMerchantShipOrder(providerContext);
+        LogisticsMerchantShipPriceContext providerContext = logisticsCarrierCodeSupport
+                .toProviderMerchantShipPriceContext(resolvedProviderId, context);
+        return provider.queryMerchantShipPrice(providerContext);
     }
 
     /**
@@ -217,8 +231,8 @@ public class LogisticsService {
         validateConsumerShipContext(context);
         var provider = logisticsProviderRegistry.requireShip(providerId);
         String resolvedProviderId = provider.providerId();
-        LogisticsConsumerShipOrderContext providerContext =
-                logisticsCarrierCodeSupport.toProviderConsumerShipOrderContext(resolvedProviderId, context);
+        LogisticsConsumerShipOrderContext providerContext = logisticsCarrierCodeSupport
+                .toProviderConsumerShipOrderContext(resolvedProviderId, context);
         return provider.createConsumerShipOrder(providerContext);
     }
 
@@ -249,8 +263,8 @@ public class LogisticsService {
         validateConsumerShipPriceContext(context);
         var provider = logisticsProviderRegistry.requireShip(providerId);
         String resolvedProviderId = provider.providerId();
-        LogisticsConsumerShipPriceContext providerContext =
-                logisticsCarrierCodeSupport.toProviderConsumerShipPriceContext(resolvedProviderId, context);
+        LogisticsConsumerShipPriceContext providerContext = logisticsCarrierCodeSupport
+                .toProviderConsumerShipPriceContext(resolvedProviderId, context);
         return provider.queryConsumerShipPrice(providerContext);
     }
 
@@ -310,6 +324,17 @@ public class LogisticsService {
         if (!StringUtils.hasText(context.cargo())) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "货物名称不能为空");
         }
+    }
+
+    private void validateMerchantShipPriceContext(LogisticsMerchantShipPriceContext context) {
+        if (context == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "询价参数不能为空");
+        }
+        if (!StringUtils.hasText(context.carrierCode())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "快递公司编码不能为空");
+        }
+        validateContact(context.receiver(), "收件人");
+        validateContact(context.sender(), "寄件人");
     }
 
     private void validateConsumerShipContext(LogisticsConsumerShipOrderContext context) {

@@ -10,6 +10,7 @@ import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderCont
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderContext;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeContext;
 import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillOrderContext;
@@ -109,7 +110,7 @@ public final class LogisticsApiRequests {
     }
 
     /**
-     * 商家寄件下单请求。
+     * 商家寄件（官方快递）下单请求。
      */
     public record MerchantShipOrder(
             @NotBlank String carrierCode,
@@ -125,6 +126,7 @@ public final class LogisticsApiRequests {
             String pickupEndTime,
             String callbackUrl,
             String pollCallbackUrl,
+            String payment,
             String providerId) {
 
         /**
@@ -146,7 +148,8 @@ public final class LogisticsApiRequests {
                     pickupStartTime,
                     pickupEndTime,
                     callbackUrl,
-                    pollCallbackUrl);
+                    pollCallbackUrl,
+                    payment);
         }
     }
 
@@ -154,12 +157,7 @@ public final class LogisticsApiRequests {
      * 商家寄件取消请求。
      */
     public record MerchantShipCancel(
-            @NotBlank String orderId,
-            String taskId,
-            String carrierCode,
-            String trackingNo,
-            String cancelMsg,
-            String providerId) {
+            @NotBlank String orderId, String taskId, String cancelMsg, String providerId) {
 
         /**
          * 转为 SPI 取消上下文。
@@ -167,7 +165,28 @@ public final class LogisticsApiRequests {
          * @return 取消上下文
          */
         public LogisticsMerchantShipCancelContext toContext() {
-            return new LogisticsMerchantShipCancelContext(orderId, taskId, carrierCode, trackingNo, cancelMsg);
+            return new LogisticsMerchantShipCancelContext(orderId, taskId, cancelMsg);
+        }
+    }
+
+    /**
+     * 商家寄件询价请求。
+     */
+    public record MerchantShipPrice(
+            @NotBlank String carrierCode,
+            @NotNull @Valid LogisticsContactInfo sender,
+            @NotNull @Valid LogisticsContactInfo receiver,
+            String weight,
+            String serviceType,
+            String providerId) {
+
+        /**
+         * 转为 SPI 询价上下文。
+         *
+         * @return 询价上下文
+         */
+        public LogisticsMerchantShipPriceContext toContext() {
+            return new LogisticsMerchantShipPriceContext(carrierCode, sender, receiver, weight, serviceType);
         }
     }
 

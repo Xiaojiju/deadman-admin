@@ -39,7 +39,7 @@ public class Kuaidi100LogisticsPluginProperties {
     /** 轨迹订阅默认回调 URL（传给快递100，为空时使用 subscribeNotifyEndpoint 拼接公网域名需业务侧配置完整 URL） */
     private String subscribeCallbackUrl = "";
 
-    /** 商家寄件默认回调 URL */
+    /** 商家寄件（官方快递）默认回调 URL */
     private String merchantShipCallbackUrl = "";
 
     /** C 端寄件默认回调 URL */

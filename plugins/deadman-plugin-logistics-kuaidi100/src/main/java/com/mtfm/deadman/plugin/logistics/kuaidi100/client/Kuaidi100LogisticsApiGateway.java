@@ -13,6 +13,8 @@ import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelCon
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipCancelResult;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipOrderResult;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceContext;
+import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsMerchantShipPriceResult;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribePushPayload;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeResult;
@@ -24,7 +26,7 @@ import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillOrderContex
 import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillOrderResult;
 
 /**
- * 快递100 API 网关抽象，封装查单、订阅、面单与寄件等渠道调用。
+ * 快递100 API 网关抽象，封装查单、订阅、面单、商家官方寄件与 C 端寄件等渠道调用。
  */
 public interface Kuaidi100LogisticsApiGateway {
 
@@ -62,7 +64,7 @@ public interface Kuaidi100LogisticsApiGateway {
     LogisticsSubscribePushPayload parseSubscribePush(String rawParam, String sign);
 
     /**
-     * 电子面单下单。
+     * 电子面单下单（电子面单 V2）。
      *
      * @param context 下单上下文
      * @return 下单结果
@@ -70,7 +72,7 @@ public interface Kuaidi100LogisticsApiGateway {
     LogisticsWaybillOrderResult createWaybill(LogisticsWaybillOrderContext context);
 
     /**
-     * 取消电子面单。
+     * 取消电子面单（电子面单 V2）。
      *
      * @param context 取消上下文
      * @return 取消结果
@@ -78,7 +80,7 @@ public interface Kuaidi100LogisticsApiGateway {
     LogisticsWaybillCancelResult cancelWaybill(LogisticsWaybillCancelContext context);
 
     /**
-     * 商家寄件下单。
+     * 商家寄件（官方快递）下单。
      *
      * @param context 下单上下文
      * @return 下单结果
@@ -92,6 +94,14 @@ public interface Kuaidi100LogisticsApiGateway {
      * @return 取消结果
      */
     LogisticsMerchantShipCancelResult cancelMerchantShipOrder(LogisticsMerchantShipCancelContext context);
+
+    /**
+     * 查询商家寄件预估价格。
+     *
+     * @param context 询价上下文
+     * @return 询价结果
+     */
+    LogisticsMerchantShipPriceResult queryMerchantShipPrice(LogisticsMerchantShipPriceContext context);
 
     /**
      * C 端寄件下单。

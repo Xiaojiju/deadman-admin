@@ -3,12 +3,12 @@ package com.mtfm.deadman.plugin.logistics.spi.ship;
 import com.mtfm.deadman.plugin.logistics.spi.LogisticsCapabilityProvider;
 
 /**
- * 寄件服务领域 Provider：商家寄件与 C 端寄件。
+ * 寄件服务领域 Provider：商家官方寄件与 C 端寄件。
  */
 public interface LogisticsShipProvider extends LogisticsCapabilityProvider {
 
     /**
-     * 商家寄件下单。
+     * 商家寄件（官方快递）下单。
      *
      * @param context 下单上下文
      * @return 下单结果
@@ -22,6 +22,14 @@ public interface LogisticsShipProvider extends LogisticsCapabilityProvider {
      * @return 取消结果
      */
     LogisticsMerchantShipCancelResult cancelMerchantShipOrder(LogisticsMerchantShipCancelContext context);
+
+    /**
+     * 查询商家寄件预估价格。
+     *
+     * @param context 询价上下文
+     * @return 询价结果
+     */
+    LogisticsMerchantShipPriceResult queryMerchantShipPrice(LogisticsMerchantShipPriceContext context);
 
     /**
      * C 端寄件下单。

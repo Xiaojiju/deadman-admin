@@ -41,6 +41,7 @@ spi/
     ├── LogisticsShipProvider
     ├── LogisticsMerchantShipOrderContext / LogisticsMerchantShipOrderResult
     ├── LogisticsMerchantShipCancelContext / LogisticsMerchantShipCancelResult
+    ├── LogisticsMerchantShipPriceContext / LogisticsMerchantShipPriceResult
     ├── LogisticsConsumerShipOrderContext / LogisticsConsumerShipOrderResult
     ├── LogisticsConsumerShipCancelContext / LogisticsConsumerShipCancelResult
     └── LogisticsConsumerShipPriceContext / LogisticsConsumerShipPriceResult
@@ -150,8 +151,9 @@ flowchart LR
 | POST | `/api/logistics/tracks/subscribe` | `logistics:track:subscribe` | 订阅轨迹推送 |
 | POST | `/api/logistics/waybills` | `logistics:waybill:create` | 电子面单下单 |
 | POST | `/api/logistics/waybills/cancel` | `logistics:waybill:cancel` | 取消电子面单 |
-| POST | `/api/logistics/ship/merchant` | `logistics:ship:merchant:create` | 商家寄件下单 |
+| POST | `/api/logistics/ship/merchant` | `logistics:ship:merchant:create` | 商家寄件下单（官方快递） |
 | POST | `/api/logistics/ship/merchant/cancel` | `logistics:ship:merchant:cancel` | 取消商家寄件 |
+| POST | `/api/logistics/ship/merchant/price` | `logistics:ship:merchant:price` | 商家寄件询价 |
 | POST | `/api/logistics/ship/consumer` | `logistics:ship:consumer:create` | C 端寄件下单 |
 | POST | `/api/logistics/ship/consumer/cancel` | `logistics:ship:consumer:cancel` | 取消 C 端寄件 |
 | POST | `/api/logistics/ship/consumer/price` | `logistics:ship:consumer:price` | C 端寄件询价 |
@@ -211,7 +213,7 @@ POST /client/api/logistics/kuaidi100/subscribe/notify
 | 识别 | `spi.carrier` | `LogisticsCarrierProvider` | 智能识别快递公司 |
 | 编码 | `spi.carrier` | `LogisticsCarrierCodeContributor` | 统一编码 ↔ 厂商编码映射 |
 | 面单 | `spi.waybill` | `LogisticsWaybillProvider` | 电子面单下单/取消 |
-| 寄件 | `spi.ship` | `LogisticsShipProvider` | 商家寄件、C 端寄件与询价 |
+| 寄件 | `spi.ship` | `LogisticsShipProvider` | 商家官方寄件、C 端寄件与询价 |
 
 同一渠道（如 `kuaidi100`）可按需实现一个或多个领域接口。
 
@@ -285,5 +287,5 @@ public interface LogisticsTrackProvider extends LogisticsCapabilityProvider {
 | Mock 轨迹查单（单元测试） | 已覆盖 |
 | Redis 轨迹/识别缓存 | 未充分验证 |
 | 订阅推送回调 | 未充分验证 |
-| 电子面单 / 商家寄件 / C 端寄件 | 未充分验证 |
+| 电子面单 / 商家官方寄件 / C 端寄件 | 未充分验证 |
 | 真实快递100 API 联调 | 未验证 |
