@@ -18,6 +18,10 @@ public class TestCacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager(CacheNames.USER_PROFILE, CacheNames.USER_AUTHORITIES);
+        return new ConcurrentMapCacheManager(
+                CacheNames.USER_PROFILE,
+                CacheNames.USER_AUTHORITIES,
+                "logisticsTrackQuery",
+                "logisticsCarrierDetect");
     }
 }

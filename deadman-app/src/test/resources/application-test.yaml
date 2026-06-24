@@ -43,6 +43,16 @@ deadman:
     pay-wechat:
       enabled: false
       mock-enabled: true
+    logistics:
+      enabled: true
+      default-provider: kuaidi100
+      cache:
+        enabled: true
+        track-query-ttl: 5m
+        carrier-detect-ttl: 30m
+    logistics-kuaidi100:
+      enabled: true
+      mock-enabled: true
   component:
     client:
       enabled: true

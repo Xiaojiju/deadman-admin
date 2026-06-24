@@ -1,6 +1,10 @@
 package com.mtfm.deadman.core.config;
 
-import com.mtfm.deadman.core.config.properties.DeadmanProperties;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +17,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import com.mtfm.deadman.common.spi.CacheTtlContributor;
+import com.mtfm.deadman.common.spi.NamedCacheTtl;
+import com.mtfm.deadman.core.config.properties.DeadmanProperties;
+
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
@@ -52,11 +61,25 @@ public class RedisConfig {
     public CacheManager cacheManager(
             RedisConnectionFactory connectionFactory,
             DeadmanProperties properties,
-            GenericJacksonJsonRedisSerializer redisJsonSerializer) {
-        RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+            GenericJacksonJsonRedisSerializer redisJsonSerializer,
+            ObjectProvider<CacheTtlContributor> cacheTtlContributors) {
+        RedisCacheConfiguration defaultConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(properties.getCache().getUserProfileTtl())
                 .prefixCacheNameWith("deadman:cache:")
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisJsonSerializer));
-        return RedisCacheManager.builder(connectionFactory).cacheDefaults(cacheConfiguration).build();
+        Map<String, RedisCacheConfiguration> namedConfigurations = new LinkedHashMap<>();
+        for (CacheTtlContributor contributor : cacheTtlContributors) {
+            for (NamedCacheTtl namedCacheTtl : contributor.contribute()) {
+                namedConfigurations.put(
+                        namedCacheTtl.cacheName(),
+                        defaultConfiguration.entryTtl(namedCacheTtl.ttl()));
+            }
+        }
+        RedisCacheManager.RedisCacheManagerBuilder builder =
+                RedisCacheManager.builder(connectionFactory).cacheDefaults(defaultConfiguration);
+        if (!namedConfigurations.isEmpty()) {
+            builder.withInitialCacheConfigurations(namedConfigurations);
+        }
+        return builder.build();
     }
 }

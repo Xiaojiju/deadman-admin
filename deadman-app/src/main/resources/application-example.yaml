@@ -160,6 +160,24 @@ deadman:
           app-id: ${WECHAT_PAY_NATIVE_APP_ID:}
           notify-endpoint: ${WECHAT_PAY_NATIVE_NOTIFY_ENDPOINT:/client/api/pay/wechat/native/notify}
           notify-url: ${WECHAT_PAY_NATIVE_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/native/notify}
+    logistics:
+      enabled: ${DEADMAN_PLUGIN_LOGISTICS_ENABLED:true}
+      default-provider: kuaidi100
+      cache:
+        enabled: ${DEADMAN_PLUGIN_LOGISTICS_CACHE_ENABLED:true}
+        track-query-ttl: ${DEADMAN_PLUGIN_LOGISTICS_TRACK_QUERY_TTL:5m}
+        carrier-detect-ttl: ${DEADMAN_PLUGIN_LOGISTICS_CARRIER_DETECT_TTL:30m}
+    logistics-kuaidi100:
+      enabled: ${DEADMAN_PLUGIN_LOGISTICS_KUAIDI100_ENABLED:false}
+      mock-enabled: ${DEADMAN_PLUGIN_LOGISTICS_KUAIDI100_MOCK_ENABLED:true}
+      key: ${KUAIDI100_KEY:}
+      customer: ${KUAIDI100_CUSTOMER:}
+      secret: ${KUAIDI100_SECRET:}
+      subscribe-salt: ${KUAIDI100_SUBSCRIBE_SALT:}
+      subscribe-notify-endpoint: ${KUAIDI100_SUBSCRIBE_NOTIFY_ENDPOINT:/client/api/logistics/kuaidi100/subscribe/notify}
+      subscribe-callback-url: ${KUAIDI100_SUBSCRIBE_CALLBACK_URL:}
+      merchant-ship-callback-url: ${KUAIDI100_MERCHANT_SHIP_CALLBACK_URL:}
+      consumer-ship-callback-url: ${KUAIDI100_CONSUMER_SHIP_CALLBACK_URL:}
   support:
     wechat:
       enabled: ${DEADMAN_SUPPORT_WECHAT_ENABLED:true}

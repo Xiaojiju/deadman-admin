@@ -17,6 +17,7 @@
 |------|----------|------|
 | [deadman-extension-pay](deadman-extension-pay/) | `deadman.plugin.pay` | 支付 SPI、`PayService`、统一订单表 |
 | [deadman-extension-file](deadman-extension-file/) | `deadman.plugin.file` | 文件 SPI、`FileService`、元数据表与 REST API |
+| [deadman-extension-logistics](deadman-extension-logistics/) | `deadman.plugin.logistics` | 物流 SPI、`LogisticsService`、快递轨迹 REST API |
 
 ## 插拔方式
 

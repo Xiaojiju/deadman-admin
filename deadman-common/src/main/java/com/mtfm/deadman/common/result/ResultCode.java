@@ -61,7 +61,18 @@ public enum ResultCode {
     PAY_PROVIDER_NOT_FOUND(14101, "支付 Provider 不存在"),
     PAY_ORDER_NOT_FOUND(14102, "支付单不存在"),
     PAY_NOTIFY_PARSE_FAILED(14103, "支付回调解析失败"),
-    PAY_QUERY_FAILED(14104, "支付查单失败");
+    PAY_QUERY_FAILED(14104, "支付查单失败"),
+
+    LOGISTICS_PROVIDER_NOT_FOUND(14201, "物流 Provider 不存在"),
+    LOGISTICS_TRACK_QUERY_FAILED(14202, "快递轨迹查询失败"),
+    LOGISTICS_CONFIG_INVALID(14203, "物流插件配置无效"),
+    LOGISTICS_CARRIER_DETECT_FAILED(14204, "快递公司识别失败"),
+    LOGISTICS_SUBSCRIBE_FAILED(14205, "快递轨迹订阅失败"),
+    LOGISTICS_SUBSCRIBE_PUSH_INVALID(14206, "订阅推送验签失败"),
+    LOGISTICS_WAYBILL_FAILED(14207, "电子面单操作失败"),
+    LOGISTICS_SHIP_ORDER_FAILED(14208, "寄件下单失败"),
+    LOGISTICS_SHIP_CANCEL_FAILED(14209, "寄件取消失败"),
+    LOGISTICS_CARRIER_CODE_UNKNOWN(14210, "快递公司编码未注册或不支持当前渠道");
 
     private final int code;
     private final String message;
