@@ -16,7 +16,7 @@ import com.mtfm.deadman.plugin.storage.oss.config.OssStoragePluginProperties;
 import com.mtfm.deadman.plugin.storage.oss.routing.OssBucketResolver;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,7 +88,7 @@ class OssFileStorageProviderTest {
     @Test
     void shouldStorePrivateBucketWithSignedUrl() throws Exception {
         when(oss.generatePresignedUrl(eq("engineering-private"), any(String.class), any()))
-                .thenReturn(new URL("https://oss.example.com/signed-object"));
+                .thenReturn(URI.create("https://oss.example.com/signed-object").toURL());
 
         byte[] content = "license".getBytes(StandardCharsets.UTF_8);
         StoredFileRef ref = provider.store(FileStorageUploadContext.builder()

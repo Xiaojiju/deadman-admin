@@ -3,7 +3,6 @@ package com.mtfm.deadman.system.domain.position;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
-import com.mtfm.deadman.common.util.DedupUtils;
 import com.mtfm.deadman.system.domain.department.DepartmentOperations;
 import com.mtfm.deadman.system.domain.department.DepartmentValidator;
 import com.mtfm.deadman.system.dto.org.UserPositionBindingRequest;

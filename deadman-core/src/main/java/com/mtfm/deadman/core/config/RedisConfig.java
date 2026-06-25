@@ -1,7 +1,6 @@
 package com.mtfm.deadman.core.config;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -75,8 +74,8 @@ public class RedisConfig {
                         defaultConfiguration.entryTtl(namedCacheTtl.ttl()));
             }
         }
-        RedisCacheManager.RedisCacheManagerBuilder builder =
-                RedisCacheManager.builder(connectionFactory).cacheDefaults(defaultConfiguration);
+        RedisCacheManager.RedisCacheManagerBuilder builder = RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(defaultConfiguration);
         if (!namedConfigurations.isEmpty()) {
             builder.withInitialCacheConfigurations(namedConfigurations);
         }
