@@ -34,10 +34,13 @@
         <module>plugins/deadman-plugin-pay-wechat</module>
         <module>extensions/deadman-extension-logistics</module>
         <module>plugins/deadman-plugin-logistics-kuaidi100</module>
+        <module>plugins/deadman-plugin-im-tencent</module>
         <module>components/deadman-component-client</module>
         <module>support/deadman-support-wechat</module>
         <module>support/deadman-support-client-wechat</module>
         <module>support/deadman-support-client-file</module>
+        <module>support/deadman-support-client-im</module>
+        <module>support/deadman-support-admin-im</module>
         <module>deadman-app</module>
     </modules>
 
@@ -146,7 +149,22 @@
             </dependency>
             <dependency>
                 <groupId>com.mtfm</groupId>
+                <artifactId>deadman-plugin-im-tencent</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
                 <artifactId>deadman-support-client-file</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
+                <artifactId>deadman-support-client-im</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
+                <artifactId>deadman-support-admin-im</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

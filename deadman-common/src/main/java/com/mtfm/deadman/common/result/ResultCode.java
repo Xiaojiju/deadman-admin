@@ -72,7 +72,13 @@ public enum ResultCode {
     LOGISTICS_WAYBILL_FAILED(14207, "电子面单操作失败"),
     LOGISTICS_SHIP_ORDER_FAILED(14208, "寄件下单失败"),
     LOGISTICS_SHIP_CANCEL_FAILED(14209, "寄件取消失败"),
-    LOGISTICS_CARRIER_CODE_UNKNOWN(14210, "快递公司编码未注册或不支持当前渠道");
+    LOGISTICS_CARRIER_CODE_UNKNOWN(14210, "快递公司编码未注册或不支持当前渠道"),
+
+    IM_CONFIG_INVALID(14301, "IM 插件配置无效"),
+    IM_REALM_UNKNOWN(14302, "IM 用户域未注册"),
+    IM_USER_DISABLED(14303, "IM 用户已禁用"),
+    IM_ACCOUNT_SYNC_FAILED(14304, "IM 账号同步失败"),
+    IM_USER_NOT_FOUND(14305, "IM 用户映射不存在");
 
     private final int code;
     private final String message;

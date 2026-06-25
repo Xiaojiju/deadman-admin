@@ -87,6 +87,18 @@
             <artifactId>deadman-support-client-file</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-im-tencent</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-support-client-im</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-support-admin-im</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>

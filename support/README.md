@@ -11,6 +11,7 @@
 | 模块 | 配置前缀 | 说明 |
 |------|----------|------|
 | [deadman-support-wechat](#deadman-support-wechat) | `deadman.support.wechat` | 管理端微信小程序登录：未绑定时返回临时令牌，用户名密码认证后自动绑定 openid |
+| [deadman-support-admin-im](#deadman-support-admin-im) | `deadman.support.admin-im` | 管理端与腾讯云 IM 桥接：UserSig 签发与用户映射查询 |
 
 ## 插拔方式
 
@@ -82,3 +83,39 @@ deadman-common ← deadman-core ← deadman-system ← deadman-security
 Support 模块**可以**依赖 `deadman-system`（与 components 不同），因其职责就是连接管理端用户表与微信插件。
 
 微信 LoginProvider 在启动时的两阶段注册与覆盖机制见：[doc/deadman-plugin-wechat/WechatLoginProviderRegistration.md](../doc/deadman-plugin-wechat/WechatLoginProviderRegistration.md)。
+
+---
+
+## deadman-support-admin-im
+
+管理端（admin）与腾讯云 IM 插件桥接，`realmId = admin`。与 [deadman-support-client-im](../support/deadman-support-client-im/) 可**同时启用**，分别服务管理端与 C 端用户域。
+
+### 主要接口
+
+| 方法 | 路径 | 认证 |
+|------|------|------|
+| GET | `/api/im/credential` | 管理端 JWT |
+| GET | `/api/im/users/lookup?realm=&subjectId=` | 管理端 JWT |
+
+`/users/lookup` 供客服场景查询对端 IM UserID，例如 `realm=client&subjectId=CL20260001`。
+
+### 配置示例
+
+```yaml
+deadman:
+  support:
+    admin-im:
+      enabled: true
+  plugin:
+    im-tencent:
+      enabled: true
+```
+
+### 依赖方向
+
+```
+deadman-plugin-im-tencent
+         ↑
+deadman-support-admin-im ← deadman-system / deadman-security
+```
+

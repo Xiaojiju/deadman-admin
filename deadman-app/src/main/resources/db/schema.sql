@@ -223,3 +223,6 @@ CREATE TABLE IF NOT EXISTS sys_notification_recipient (
 
 -- pay-wechat 插件表结构见：
 -- plugins/deadman-plugin-pay-wechat/src/main/resources/db/pay-wechat/schema.sql
+
+-- im-tencent 插件表结构见：
+-- plugins/deadman-plugin-im-tencent/src/main/resources/db/im-tencent/schema.sql

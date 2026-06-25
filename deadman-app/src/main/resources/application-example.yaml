@@ -178,6 +178,14 @@ deadman:
       subscribe-callback-url: ${KUAIDI100_SUBSCRIBE_CALLBACK_URL:}
       merchant-ship-callback-url: ${KUAIDI100_MERCHANT_SHIP_CALLBACK_URL:}
       consumer-ship-callback-url: ${KUAIDI100_CONSUMER_SHIP_CALLBACK_URL:}
+    im-tencent:
+      enabled: ${DEADMAN_PLUGIN_IM_TENCENT_ENABLED:true}
+      mock-enabled: ${DEADMAN_PLUGIN_IM_TENCENT_MOCK_ENABLED:true}
+      sdk-app-id: ${TENCENT_IM_SDK_APP_ID:}
+      secret-key: ${TENCENT_IM_SECRET_KEY:}
+      admin-identifier: ${TENCENT_IM_ADMIN_IDENTIFIER:administrator}
+      user-sig-expire-seconds: ${TENCENT_IM_USER_SIG_EXPIRE_SECONDS:86400}
+      user-id-template: ${TENCENT_IM_USER_ID_TEMPLATE:{realm}_{subjectId}}
   support:
     wechat:
       enabled: ${DEADMAN_SUPPORT_WECHAT_ENABLED:true}
@@ -187,3 +195,7 @@ deadman:
       bind-token-ttl: ${DEADMAN_SUPPORT_CLIENT_WECHAT_BIND_TOKEN_TTL:10m}
     client-file:
       enabled: ${DEADMAN_SUPPORT_CLIENT_FILE_ENABLED:true}
+    client-im:
+      enabled: ${DEADMAN_SUPPORT_CLIENT_IM_ENABLED:true}
+    admin-im:
+      enabled: ${DEADMAN_SUPPORT_ADMIN_IM_ENABLED:true}

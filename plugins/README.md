@@ -13,6 +13,7 @@
 | [deadman-plugin-storage-oss](#deadman-plugin-storage-oss) | `deadman.plugin.storage-oss` | 阿里云 OSS 存储 Provider（依赖 extension-file） | 见 extension-file 文档 |
 | [deadman-plugin-pay-wechat](#deadman-plugin-pay-wechat) | `deadman.plugin.pay-wechat` | 微信 JSAPI 支付 Provider 实现（依赖 extension-pay） | — |
 | [deadman-plugin-logistics-kuaidi100](#deadman-plugin-logistics-kuaidi100) | `deadman.plugin.logistics-kuaidi100` | 快递100 实时查单 Provider（依赖 extension-logistics） | — |
+| [deadman-plugin-im-tencent](#deadman-plugin-im-tencent) | `deadman.plugin.im-tencent` | 腾讯云 IM：UserSig 签发、账号同步与用户域桥接 SPI | — |
 | [deadman-plugin-data-scope](#deadman-plugin-data-scope) | `deadman.plugin.data-scope` | 数据权限：`@DataScope` + `@DataColumn` + MyBatis-Plus SQL 拼接 | [UserDataScopeAdminController.yaml](../doc/deadman-plugin-data-scope/UserDataScopeAdminController.yaml) |
 
 能力延伸模块见 [extensions/](../extensions/README.md)（支付 `deadman-extension-pay`、文件 `deadman-extension-file`、物流 `deadman-extension-logistics`）。
