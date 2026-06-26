@@ -6,7 +6,7 @@ target/
 data/
 # 本地运行时配置（仓库仅保留 application-example.yaml）
 deadman-app/src/main/resources/application.yaml
-
+/mark/**
 ### STS ###
 .apt_generated
 .classpath
