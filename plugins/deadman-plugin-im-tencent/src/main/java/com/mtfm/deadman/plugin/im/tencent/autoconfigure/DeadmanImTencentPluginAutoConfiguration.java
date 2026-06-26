@@ -37,7 +37,7 @@ public class DeadmanImTencentPluginAutoConfiguration {
         if (properties.shouldUseMock()) {
             return new MockTencentImApiGateway();
         }
-        TencentImUserSigGenerator userSigGenerator = new TencentImUserSigGenerator(properties, jsonMapper);
+        TencentImUserSigGenerator userSigGenerator = new TencentImUserSigGenerator(properties);
         return new TencentImApiGatewayImpl(properties, userSigGenerator, jsonMapper);
     }
 }
