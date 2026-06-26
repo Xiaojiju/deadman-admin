@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -41,8 +40,8 @@ public class Kuaidi100LogisticsSecurityConfiguration {
     public SecurityFilterChain kuaidi100SubscribeNotifySecurityFilterChain(HttpSecurity http) throws Exception {
         String endpoint = properties.resolvedSubscribeNotifyEndpoint();
         http.securityMatcher(request -> HttpMethod.POST.matches(request.getMethod())
-                        && endpoint.equals(request.getRequestURI()))
-                .csrf(AbstractHttpConfigurer::disable)
+                && endpoint.equals(request.getRequestURI()))
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();
     }
