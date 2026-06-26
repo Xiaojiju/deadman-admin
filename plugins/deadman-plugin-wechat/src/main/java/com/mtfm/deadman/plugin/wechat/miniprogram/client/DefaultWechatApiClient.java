@@ -4,6 +4,7 @@ import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.wechat.common.WechatRestClientSupport;
 import com.mtfm.deadman.plugin.wechat.miniprogram.config.WechatMiniprogramPluginProperties;
+import com.mtfm.deadman.plugin.wechat.miniprogram.dto.WechatFaceCertInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -82,6 +83,66 @@ public class DefaultWechatApiClient implements WechatApiClient {
                 restClientSupport.textValue(phoneInfo, "phoneNumber"),
                 restClientSupport.textValue(phoneInfo, "purePhoneNumber"),
                 restClientSupport.textValue(phoneInfo, "countryCode"));
+    }
+
+    /**
+     * 获取用户人脸核身会话唯一标识 verifyId。
+     *
+     * @param outSeqNo 业务流水号
+     * @param certInfo 用户身份信息
+     * @param openid   用户 openid
+     * @return verifyId 及有效期
+     */
+    @Override
+    public WechatGetVerifyIdResult getVerifyId(String outSeqNo, WechatFaceCertInfo certInfo, String openid) {
+        String accessToken = getAccessToken();
+        String url = properties.getApiBaseUrl() + "/cityservice/face/identify/getverifyid?access_token=" + accessToken;
+        JsonNode body = restClientSupport.postForJson(
+                url,
+                Map.of(
+                        "out_seq_no",
+                        outSeqNo,
+                        "cert_info",
+                        Map.of(
+                                "cert_type", certInfo.certType(),
+                                "cert_name", certInfo.certName(),
+                                "cert_no", certInfo.certNo()),
+                        "openid",
+                        openid));
+        restClientSupport.assertWechatSuccess(body, "获取人脸核身 verifyId 失败");
+        String verifyId = restClientSupport.textValue(body, "verify_id");
+        if (!StringUtils.hasText(verifyId)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "微信未返回 verify_id");
+        }
+        int expiresIn = body.has("expires_in") ? body.get("expires_in").asInt(3600) : 3600;
+        return new WechatGetVerifyIdResult(verifyId, expiresIn);
+    }
+
+    /**
+     * 查询用户人脸核身真实验证结果。
+     *
+     * @param verifyId 人脸核身会话唯一标识
+     * @param outSeqNo 业务流水号
+     * @param certHash 证件信息摘要
+     * @param openid   用户 openid
+     * @return 核身结果码
+     */
+    @Override
+    public WechatQueryVerifyInfoResult queryVerifyInfo(
+            String verifyId, String outSeqNo, String certHash, String openid) {
+        String accessToken = getAccessToken();
+        String url =
+                properties.getApiBaseUrl() + "/cityservice/face/identify/queryverifyinfo?access_token=" + accessToken;
+        JsonNode body = restClientSupport.postForJson(
+                url,
+                Map.of(
+                        "verify_id", verifyId,
+                        "out_seq_no", outSeqNo,
+                        "cert_hash", certHash,
+                        "openid", openid));
+        restClientSupport.assertWechatSuccess(body, "查询人脸核身结果失败");
+        int verifyRet = body.has("verify_ret") ? body.get("verify_ret").asInt() : 0;
+        return new WechatQueryVerifyInfoResult(verifyRet);
     }
 
     /**
