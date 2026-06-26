@@ -131,8 +131,8 @@ public class DefaultWechatApiClient implements WechatApiClient {
     public WechatQueryVerifyInfoResult queryVerifyInfo(
             String verifyId, String outSeqNo, String certHash, String openid) {
         String accessToken = getAccessToken();
-        String url =
-                properties.getApiBaseUrl() + "/cityservice/face/identify/queryverifyinfo?access_token=" + accessToken;
+        String url = properties.getApiBaseUrl() + "/cityservice/face/identify/queryverifyinfo?access_token="
+                + accessToken;
         JsonNode body = restClientSupport.postForJson(
                 url,
                 Map.of(
