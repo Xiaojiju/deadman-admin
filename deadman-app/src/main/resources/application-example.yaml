@@ -77,6 +77,14 @@ deadman:
         user-code-prefix: ${DEADMAN_CLIENT_USER_CODE_PREFIX:CL}
       cache:
         user-profile-ttl: ${DEADMAN_CLIENT_CACHE_USER_PROFILE_TTL:30m}
+    open-auth:
+      enabled: ${DEADMAN_COMPONENT_OPEN_AUTH_ENABLED:true}
+      jwt:
+        secret: ${DEADMAN_OPEN_AUTH_JWT_SECRET:7a4e9c2f1b8d6035e91a4c7f2d8b6e0a3c5f9d1b7e4a8620f3d6b9c1e5a7d4f8b2}
+        issuer: deadman-open-auth
+  support:
+    client-open-auth:
+      enabled: ${DEADMAN_SUPPORT_CLIENT_OPEN_AUTH_ENABLED:true}
   plugin:
     websocket:
       enabled: ${DEADMAN_PLUGIN_WEBSOCKET_ENABLED:true}

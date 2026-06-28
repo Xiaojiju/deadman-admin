@@ -14,6 +14,7 @@ spring:
       schema-locations:
         - classpath:db/schema-h2.sql
         - classpath:db/client/schema-h2.sql
+        - classpath:db/open-auth/schema-h2.sql
         - classpath:db/file/schema-h2.sql
 
 deadman:
@@ -63,3 +64,7 @@ deadman:
         expiration-ms: 3600000
       user:
         user-code-prefix: CL
+    open-auth:
+      enabled: true
+      jwt:
+        secret: deadman-open-auth-test-secret-key-at-least-32b

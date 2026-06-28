@@ -1,0 +1,105 @@
+# com.mtfm.deadman.support.client.openauth.controller.ClientOpenAuthController
+openapi: 3.0.3
+info:
+  title: ClientOpenAuthController
+  version: 1.0.0
+  description: |
+    用户端开放授权 — 已登录用户申请 auth_code，供第三方应用（如 Python Agent）兑换 open_access_token。
+
+    ## 完整流程
+
+    1. 用户登录用户端（`POST /client/api/auth/login/*`）获得 client JWT
+    2. 调用本接口申请 `auth_code`（需指定目标 App 的 `appId`）
+    3. 前端将 `code` 传递给第三方应用
+    4. 第三方应用调用 [OpenAuthController.yaml](../deadman-component-open-auth/OpenAuthController.yaml) 的 `POST /open-api/oauth/token` 兑换 token
+
+    ## 前置条件
+
+    - 启用 `deadman.component.open-auth.enabled=true`
+    - 启用 `deadman.support.client-open-auth.enabled=true`
+    - 管理端已创建开放应用，且 `allowedRealms` 包含 `client`
+    - 用户已登录用户端
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /client/api/open/codes:
+    post:
+      summary: 申请开放授权码
+      description: |
+        需要用户端 JWT（`ClientBearerAuth`）。
+
+        返回的 `code` 一次性有效，默认 5 分钟过期（可在 App 配置中调整 `codeTtlSec`）。
+        `code` 与申请时的 `appId` 绑定，不可跨应用兑换。
+      operationId: issueOpenAuthCode
+      tags: [用户端开放授权]
+      security:
+        - ClientBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAuthCodeRequest'
+            example:
+              appId: a1b2c3d4e5f6789012345678abcdef01
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultOpenAuthCodeVO'
+              example:
+                code: 0
+                msg: success
+                timestamp: 1710000000000
+                data:
+                  code: "a1b2c3d4e5f6789012345678abcdef0"
+                  expiresIn: 300
+                  appId: a1b2c3d4e5f6789012345678abcdef01
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '400':
+          description: 应用不存在、已禁用或未授权 client 域
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+
+components:
+  securitySchemes:
+    ClientBearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/ClientBearerAuth'
+
+  schemas:
+    OpenAuthCodeRequest:
+      type: object
+      required: [appId]
+      properties:
+        appId:
+          type: string
+          description: 目标开放应用 AppId（管理端创建）
+
+    OpenAuthCodeVO:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 授权码，供第三方应用兑换 token
+        expiresIn:
+          type: integer
+          description: 有效期（秒）
+        appId:
+          type: string
+          description: 目标应用 AppId
+
+    ResultOpenAuthCodeVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/OpenAuthCodeVO'

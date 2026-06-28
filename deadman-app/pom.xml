@@ -56,6 +56,14 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
+            <artifactId>deadman-component-open-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-support-client-open-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-data-scope</artifactId>
         </dependency>
         <dependency>

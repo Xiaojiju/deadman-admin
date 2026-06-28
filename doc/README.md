@@ -27,6 +27,9 @@
 | deadman-support-wechat | [AdminWechatWebAuth-Frontend.md](deadman-support-wechat/AdminWechatWebAuth-Frontend.md) | 管理端微信网页扫码 OAuth（前端对接） |
 | deadman-component-client | [ClientUserController.yaml](deadman-component-client/ClientUserController.yaml) | 用户端当前用户资料 |
 | deadman-component-client | [ClientUserAdminController.yaml](deadman-component-client/ClientUserAdminController.yaml) | 管理端操作用户端用户 |
+| deadman-component-open-auth | [OpenAuthController.yaml](deadman-component-open-auth/OpenAuthController.yaml) | 开放应用管理与 OAuth Token 兑换 |
+| deadman-component-open-auth | [OpenAuth.md](deadman-component-open-auth/OpenAuth.md) | 开放授权对接指南（第三方/Python） |
+| deadman-support-client-open-auth | [ClientOpenAuthController.yaml](deadman-support-client-open-auth/ClientOpenAuthController.yaml) | 用户端申请 auth_code |
 | deadman-plugin-wechat | [WechatMiniprogramController.yaml](deadman-plugin-wechat/WechatMiniprogramController.yaml) | 微信小程序手机号绑定 |
 | deadman-plugin-wechat | [WechatWebLogin.md](deadman-plugin-wechat/WechatWebLogin.md) | 微信网页扫码登录（后端） |
 | deadman-plugin-wechat | [WechatLogin.yaml](deadman-plugin-wechat/WechatLogin.yaml) | 微信登录统一公开 API |
@@ -43,6 +46,6 @@
 1. 在 Apifox / Postman 中导入单个 Controller YAML，或合并多个文件。
 2. 管理端接口（`/api/**`，不含 `/client/api`）使用管理端 Token：`Authorization: Bearer {adminAccessToken}`（`POST /api/auth/login` 获取，`POST /api/auth/refresh` 刷新）。
 3. 用户端接口（`/client/api/**`）使用用户端 Token：`Authorization: Bearer {clientAccessToken}`（登录接口获取，`POST /client/api/auth/refresh` 刷新）。
-4. 公开接口：`POST /api/auth/register`、`POST /api/auth/login`、`GET /api/components`、用户端注册/登录路径无需 Token；本地存储直链 `GET /files/**` 无需 Token（需启用 `deadman-plugin-storage-local`）。
+4. 公开接口：`POST /api/auth/register`、`POST /api/auth/login`、`GET /api/components`、用户端注册/登录路径、`POST /open-api/oauth/token`（凭 client_secret 鉴权，非 JWT）无需 Token；本地存储直链 `GET /files/**` 无需 Token（需启用 `deadman-plugin-storage-local`）。
 
 默认服务地址：`http://localhost:8080`（见各文件 `servers`）。

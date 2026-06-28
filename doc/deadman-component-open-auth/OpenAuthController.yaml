@@ -1,0 +1,441 @@
+# com.mtfm.deadman.component.openauth.controller.OpenAppAdminController
+# com.mtfm.deadman.component.openauth.controller.OpenOAuthTokenController
+openapi: 3.0.3
+info:
+  title: OpenAuthController
+  version: 1.0.0
+  description: |
+    开放授权组件 — 第三方应用（App）管理与 OAuth Token 兑换。
+
+    ## 认证模式（类微信 code 换 token）
+
+    1. 管理端创建开放应用，获得 `appId` 与 `clientSecret`（密钥仅创建/轮换时展示一次）
+    2. 用户登录业务系统（如用户端 JWT）
+    3. 已登录用户向目标 App 申请 `auth_code`（见 [ClientOpenAuthController.yaml](../deadman-support-client-open-auth/ClientOpenAuthController.yaml)）
+    4. 第三方后端使用 `client_id` + `client_secret` + `code` 调用 `POST /open-api/oauth/token` 兑换 `open_access_token`
+
+    ## 配置
+
+    - 组件开关：`deadman.component.open-auth.enabled=true`
+    - JWT 密钥：`deadman.component.open-auth.jwt.secret`（至少 32 字节）
+
+    ## 权限
+
+    管理端 App 管理接口需要管理端 JWT 及对应权限码（`open-app:*`）。
+
+servers:
+  - url: http://localhost:8080
+    description: 本地 deadman-app
+
+paths:
+  /api/open-apps:
+    get:
+      summary: 开放应用列表
+      description: 需要权限码 `open-app:list:read`
+      operationId: listOpenApps
+      tags: [开放应用管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultOpenAppSummaryList'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    post:
+      summary: 创建开放应用
+      description: |
+        需要权限码 `open-app:create`。
+        响应中的 `clientSecret` 仅此次返回，请妥善保存；后续不可再查询明文。
+      operationId: createOpenApp
+      tags: [开放应用管理]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOpenAppRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultCreateOpenAppResultVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/open-apps/{id}:
+    parameters:
+      - $ref: '#/components/parameters/OpenAppId'
+    put:
+      summary: 更新开放应用
+      description: 需要权限码 `open-app:update`
+      operationId: updateOpenApp
+      tags: [开放应用管理]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOpenAppRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultOpenAppSummaryVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+    delete:
+      summary: 删除开放应用
+      description: 需要权限码 `open-app:delete`（逻辑删除）
+      operationId: deleteOpenApp
+      tags: [开放应用管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVoid'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /api/open-apps/{id}/rotate-secret:
+    parameters:
+      - $ref: '#/components/parameters/OpenAppId'
+    post:
+      summary: 轮换应用密钥
+      description: |
+        需要权限码 `open-app:secret:rotate`。
+        新 `clientSecret` 仅此次返回。
+      operationId: rotateOpenAppSecret
+      tags: [开放应用管理]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultRotateOpenAppSecretResultVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../_shared/components.yaml#/components/responses/Forbidden'
+
+  /open-api/oauth/token:
+    post:
+      summary: 兑换 open_access_token
+      description: |
+        公开接口（无需 JWT），通过 `client_secret` 鉴权。
+
+        仅支持 `grant_type=authorization_code`。
+        `code` 须由已登录用户通过 `/client/api/open/codes` 申请，且与 `client_id` 绑定。
+        `code` 一次性有效，默认 5 分钟过期。
+
+        成功响应为统一 `Result` 包装，`data` 内为 token 信息（字段名 snake_case）。
+      operationId: exchangeOpenOAuthToken
+      tags: [开放 OAuth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenOAuthTokenRequest'
+            example:
+              grant_type: authorization_code
+              client_id: a1b2c3d4e5f6789012345678abcdef01
+              client_secret: "0123456789abcdef0123456789abcdef0123456789abcdef"
+              code: "auth_code_from_frontend"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultOpenOAuthTokenVO'
+              example:
+                code: 0
+                msg: success
+                timestamp: 1710000000000
+                data:
+                  access_token: eyJhbGciOiJIUzI1NiJ9...
+                  token_type: Bearer
+                  expires_in: 3600
+                  scope: kb:search kb:doc:read
+                  subject:
+                    realm: client
+                    subjectType: client_user
+                    subjectId: 1234567890123456789
+                    subjectCode: CL000001
+        '400':
+          description: 参数错误、授权码无效或 client_secret 不匹配
+          content:
+            application/json:
+              schema:
+                $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../_shared/components.yaml#/components/securitySchemes/BearerAuth'
+
+  parameters:
+    OpenAppId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: 开放应用主键 ID
+
+  schemas:
+    CreateOpenAppRequest:
+      type: object
+      required: [appName, allowedRealms]
+      properties:
+        appName:
+          type: string
+          maxLength: 64
+          description: 应用名称
+        description:
+          type: string
+          maxLength: 256
+          description: 应用说明
+        allowedRealms:
+          type: array
+          minItems: 1
+          items:
+            type: string
+          description: 允许的用户域，如 client、admin
+          example: [client]
+        defaultScopes:
+          type: array
+          items:
+            type: string
+          description: 该应用可用的 scope 上限，写入 token
+          example: [kb:search, kb:doc:read]
+        codeTtlSec:
+          type: integer
+          default: 300
+          description: auth_code 有效期（秒）
+        tokenTtlSec:
+          type: integer
+          default: 3600
+          description: open_access_token 有效期（秒）
+
+    UpdateOpenAppRequest:
+      type: object
+      required: [appName]
+      properties:
+        appName:
+          type: string
+          maxLength: 64
+        description:
+          type: string
+          maxLength: 256
+        status:
+          type: integer
+          description: 0-禁用 1-启用
+        allowedRealms:
+          type: array
+          items:
+            type: string
+        defaultScopes:
+          type: array
+          items:
+            type: string
+        codeTtlSec:
+          type: integer
+        tokenTtlSec:
+          type: integer
+
+    OpenAppSummaryVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        appId:
+          type: string
+          description: 对外 AppId（32 位）
+        appName:
+          type: string
+        status:
+          type: integer
+          description: 0-禁用 1-启用
+        description:
+          type: string
+          nullable: true
+        allowedRealms:
+          type: array
+          items:
+            type: string
+        defaultScopes:
+          type: array
+          items:
+            type: string
+        codeTtlSec:
+          type: integer
+        tokenTtlSec:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+
+    CreateOpenAppResultVO:
+      type: object
+      properties:
+        appId:
+          type: string
+        appName:
+          type: string
+        clientSecret:
+          type: string
+          description: 应用密钥明文，仅创建时返回一次
+        allowedRealms:
+          type: array
+          items:
+            type: string
+        defaultScopes:
+          type: array
+          items:
+            type: string
+
+    RotateOpenAppSecretResultVO:
+      type: object
+      properties:
+        appId:
+          type: string
+        clientSecret:
+          type: string
+          description: 新密钥明文，仅轮换时返回一次
+
+    OpenOAuthTokenRequest:
+      type: object
+      required: [grant_type, client_id, client_secret, code]
+      properties:
+        grant_type:
+          type: string
+          enum: [authorization_code]
+          description: 固定为 authorization_code
+        client_id:
+          type: string
+          description: 开放应用 AppId
+        client_secret:
+          type: string
+          description: 应用密钥
+        code:
+          type: string
+          description: 用户申请的 auth_code
+
+    OpenAuthSubjectVO:
+      type: object
+      properties:
+        realm:
+          type: string
+          description: 用户域，如 client
+        subjectType:
+          type: string
+          description: 主体类型，如 client_user
+        subjectId:
+          type: integer
+          format: int64
+        subjectCode:
+          type: string
+          description: 用户对外编码
+
+    OpenOAuthTokenVO:
+      type: object
+      description: Token 字段使用 snake_case（OAuth 惯例）
+      properties:
+        access_token:
+          type: string
+          description: open_access_token（JWT，realm=OPEN）
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          format: int64
+          description: 有效期（秒）
+        scope:
+          type: string
+          description: 空格分隔的 scope 字符串
+        subject:
+          $ref: '#/components/schemas/OpenAuthSubjectVO'
+
+    ResultOpenAppSummaryList:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/OpenAppSummaryVO'
+
+    ResultOpenAppSummaryVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/OpenAppSummaryVO'
+
+    ResultCreateOpenAppResultVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CreateOpenAppResultVO'
+
+    ResultRotateOpenAppSecretResultVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/RotateOpenAppSecretResultVO'
+
+    ResultOpenOAuthTokenVO:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/OpenOAuthTokenVO'
+
+    ResultVoid:
+      allOf:
+        - $ref: '../_shared/components.yaml#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              nullable: true

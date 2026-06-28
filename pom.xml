@@ -36,8 +36,10 @@
         <module>plugins/deadman-plugin-logistics-kuaidi100</module>
         <module>plugins/deadman-plugin-im-tencent</module>
         <module>components/deadman-component-client</module>
+        <module>components/deadman-component-open-auth</module>
         <module>support/deadman-support-wechat</module>
         <module>support/deadman-support-client-wechat</module>
+        <module>support/deadman-support-client-open-auth</module>
         <module>support/deadman-support-client-file</module>
         <module>support/deadman-support-client-im</module>
         <module>support/deadman-support-admin-im</module>
@@ -90,6 +92,16 @@
             <dependency>
                 <groupId>com.mtfm</groupId>
                 <artifactId>deadman-component-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
+                <artifactId>deadman-component-open-auth</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
+                <artifactId>deadman-support-client-open-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
