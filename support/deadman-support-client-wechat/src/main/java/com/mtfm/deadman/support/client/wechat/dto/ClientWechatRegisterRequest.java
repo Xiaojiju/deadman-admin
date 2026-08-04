@@ -10,10 +10,12 @@ import jakarta.validation.constraints.Size;
  * @param username  登录用户名
  * @param password  密码
  * @param nickname  昵称，可为空
+ * @param avatar    头像 URL，可为空
  */
 public record ClientWechatRegisterRequest(
         @NotBlank(message = "绑定令牌不能为空") String bindToken,
         @NotBlank @Size(min = 3, max = 64) String username,
         @NotBlank @Size(min = 8, max = 64) String password,
-        @Size(max = 64) String nickname) {
+        @Size(max = 64) String nickname,
+        @Size(max = 512) String avatar) {
 }

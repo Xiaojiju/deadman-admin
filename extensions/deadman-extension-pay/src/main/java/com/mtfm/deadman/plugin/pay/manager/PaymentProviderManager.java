@@ -3,8 +3,10 @@ package com.mtfm.deadman.plugin.pay.manager;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
@@ -65,6 +67,38 @@ public class PaymentProviderManager {
             throw new BusinessException(ResultCode.PAY_PROVIDER_NOT_FOUND, "支付 Provider 不存在：" + resolved);
         }
         return provider;
+    }
+
+    /**
+     * 按支付方式解析 Provider：优先按 {@link PaymentProvider#providerId()} 精确匹配，
+     * 否则按 {@link PaymentProvider#payMethod()} 匹配（不区分大小写）。
+     *
+     * @param paymentMethod Provider 标识或支付方式（如 {@code wechat-jsapi}、{@code JSAPI}）
+     * @return Provider 实例
+     */
+    public PaymentProvider requireByPaymentMethod(String paymentMethod) {
+        if (!StringUtils.hasText(paymentMethod)) {
+            return requireDefault();
+        }
+        String trimmed = paymentMethod.trim();
+        PaymentProvider byId = providers.get(trimmed);
+        if (byId != null) {
+            return byId;
+        }
+        List<PaymentProvider> byPayMethod = providers.values().stream()
+                .filter(provider -> provider.payMethod().equalsIgnoreCase(trimmed))
+                .toList();
+        if (byPayMethod.size() == 1) {
+            return byPayMethod.getFirst();
+        }
+        if (byPayMethod.isEmpty()) {
+            throw new BusinessException(ResultCode.PAY_PROVIDER_NOT_FOUND, "支付方式不可用：" + trimmed);
+        }
+        String candidates = byPayMethod.stream()
+                .map(PaymentProvider::providerId)
+                .collect(Collectors.joining(", "));
+        throw new BusinessException(
+                ResultCode.BAD_REQUEST, "支付方式存在多个 Provider，请指定 providerId：" + trimmed + "（" + candidates + "）");
     }
 
     /**

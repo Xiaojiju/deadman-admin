@@ -5,11 +5,13 @@ import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 
 /**
  * 用户端认证上下文工具。
+ * <p>
+ * 常规「必须登录」接口请使用 {@link com.mtfm.deadman.common.auth.RequireAuth}（{@code AuthRealm.CLIENT}），
+ * 本类保留给匿名与已登录均可访问、需在方法内分支处理的场景。
  */
 public final class ClientAuthSupport {
 
-    private ClientAuthSupport() {
-    }
+    private ClientAuthSupport() {}
 
     /**
      * 要求已登录用户。

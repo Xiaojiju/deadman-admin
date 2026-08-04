@@ -12,8 +12,8 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @AutoConfiguration
 @EnableConfigurationProperties(ClientComponentProperties.class)
-@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true",
+    matchIfMissing = true)
 @MapperScan("com.mtfm.deadman.component.client.mapper")
 @ComponentScan(basePackages = "com.mtfm.deadman.component.client")
-public class DeadmanClientComponentAutoConfiguration {
-}
+public class DeadmanClientComponentAutoConfiguration {}

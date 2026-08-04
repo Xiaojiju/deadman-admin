@@ -1,9 +1,10 @@
 package com.mtfm.deadman.support.client.wechat.controller;
 
 import com.mtfm.deadman.common.exception.BusinessException;
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.common.result.ResultCode;
-import com.mtfm.deadman.component.client.ClientAuthSupport;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 import com.mtfm.deadman.component.client.constants.ClientAuthConstants;
 import com.mtfm.deadman.plugin.wechat.miniprogram.dto.WechatBindPhoneRequest;
@@ -29,6 +30,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/client/api/wechat-miniprogram")
+@RequireAuth(AuthRealm.CLIENT)
 @RequiredArgsConstructor
 public class ClientWechatMiniprogramController {
 
@@ -45,12 +47,11 @@ public class ClientWechatMiniprogramController {
     @PostMapping("/phone/bind")
     public Result<WechatBindPhoneVO> bindPhone(
             @AuthenticationPrincipal ClientLoginUser loginUser, @Valid @RequestBody WechatBindPhoneRequest request) {
-        ClientLoginUser user = ClientAuthSupport.requireLogin(loginUser);
         WechatPhoneBindingHandler handler = phoneBindingHandlers.stream()
                 .filter(item -> ClientAuthConstants.LOGIN_GROUP_ID.equals(item.loginGroupId()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND, "用户端微信手机号绑定未配置"));
-        return Result.ok(handler.bindPhone(user.getUserId(), request));
+        return Result.ok(handler.bindPhone(loginUser.getUserId(), request));
     }
 
     /**
@@ -64,12 +65,11 @@ public class ClientWechatMiniprogramController {
     public Result<WechatFaceVerifyInitiateVO> initiateFaceVerify(
             @AuthenticationPrincipal ClientLoginUser loginUser,
             @Valid @RequestBody WechatFaceVerifyInitiateRequest request) {
-        ClientLoginUser user = ClientAuthSupport.requireLogin(loginUser);
         WechatFaceVerifyHandler handler = faceVerifyHandlers.stream()
                 .filter(item -> ClientAuthConstants.LOGIN_GROUP_ID.equals(item.loginGroupId()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND, "用户端微信人脸核身未配置"));
-        return Result.ok(handler.initiateVerify(user.getUserId(), request));
+        return Result.ok(handler.initiateVerify(loginUser.getUserId(), request));
     }
 
     /**
@@ -83,11 +83,10 @@ public class ClientWechatMiniprogramController {
     public Result<WechatFaceVerifyQueryVO> queryFaceVerify(
             @AuthenticationPrincipal ClientLoginUser loginUser,
             @Valid @RequestBody WechatFaceVerifyQueryRequest request) {
-        ClientLoginUser user = ClientAuthSupport.requireLogin(loginUser);
         WechatFaceVerifyHandler handler = faceVerifyHandlers.stream()
                 .filter(item -> ClientAuthConstants.LOGIN_GROUP_ID.equals(item.loginGroupId()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND, "用户端微信人脸核身未配置"));
-        return Result.ok(handler.queryVerifyResult(user.getUserId(), request));
+        return Result.ok(handler.queryVerifyResult(loginUser.getUserId(), request));
     }
 }

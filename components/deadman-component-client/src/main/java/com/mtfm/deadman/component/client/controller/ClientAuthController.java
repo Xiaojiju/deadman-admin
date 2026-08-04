@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 用户端认证接口：注册。
- * <p>登录由各 {@link com.mtfm.deadman.component.client.spi.ClientLoginProvider} 的独立 Filter 处理。
+ * <p>
+ * 登录由各 {@link com.mtfm.deadman.component.client.spi.ClientLoginProvider} 的独立 Filter 处理。
  */
 @RestController
 @RequestMapping("/client/api/auth")

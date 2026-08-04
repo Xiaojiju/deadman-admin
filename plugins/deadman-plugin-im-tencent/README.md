@@ -4,6 +4,9 @@
 
 > **测试状态：** 已实现 Mock 网关与单元测试；生产 SecretKey 联调需自行验证。
 
+**Client / Admin 完整接入文档（推荐阅读）：**  
+[doc/deadman-plugin-im-tencent/ImClientAdminIntegration.md](../../doc/deadman-plugin-im-tencent/ImClientAdminIntegration.md)
+
 ## 职责
 
 | 能力 | 说明 |
@@ -57,10 +60,20 @@ deadman:
 
 ### 4. 前端
 
+详见 [ImClientAdminIntegration.md](../../doc/deadman-plugin-im-tencent/ImClientAdminIntegration.md)。摘要：
+
 ```
-GET /client/api/im/credential  （需 CLIENT JWT）
+# 用户端（CLIENT JWT）
+GET /client/api/im/credential
 → { sdkAppId, imUserId, userSig, expireAt }
 → TIM SDK login
+
+# 管理端（Admin JWT）
+GET /api/im/credential
+→ 同上，登录管理端 IM 账号
+
+GET /api/im/users/lookup?realm=client&subjectId={userCode}
+→ { realmId, subjectId, imUserId }  # 客服定位对端
 ```
 
 ## 扩展新用户域

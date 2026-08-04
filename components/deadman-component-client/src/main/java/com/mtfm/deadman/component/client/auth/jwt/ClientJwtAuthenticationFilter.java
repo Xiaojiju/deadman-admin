@@ -13,16 +13,12 @@ import org.springframework.stereotype.Component;
 public class ClientJwtAuthenticationFilter extends RealmJwtAuthenticationFilter {
 
     /**
-     * @param providerRegistry         Provider 注册表
+     * @param providerRegistry Provider 注册表
      * @param clientUserDetailsService 用户端用户详情服务
      */
-    public ClientJwtAuthenticationFilter(
-            AuthTokenIssueProviderRegistry providerRegistry, ClientUserDetailsService clientUserDetailsService) {
-        super(
-                providerRegistry,
-                ClientAuthConstants.JWT_REALM,
-                path -> path != null && path.startsWith("/client/api"),
-                clientUserDetailsService,
-                "用户端");
+    public ClientJwtAuthenticationFilter(AuthTokenIssueProviderRegistry providerRegistry,
+        ClientUserDetailsService clientUserDetailsService) {
+        super(providerRegistry, ClientAuthConstants.JWT_REALM, path -> path != null && path.startsWith("/client/api"),
+            clientUserDetailsService, "用户端");
     }
 }

@@ -6,5 +6,4 @@ import com.mtfm.deadman.component.client.entity.ClientUserPassword;
 /**
  * 用户端密码 Mapper。
  */
-public interface ClientUserPasswordMapper extends BaseMapper<ClientUserPassword> {
-}
+public interface ClientUserPasswordMapper extends BaseMapper<ClientUserPassword> {}

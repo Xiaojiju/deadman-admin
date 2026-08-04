@@ -6,5 +6,4 @@ import com.mtfm.deadman.component.client.entity.ClientUserBase;
 /**
  * 用户端用户基础信息 Mapper。
  */
-public interface ClientUserBaseMapper extends BaseMapper<ClientUserBase> {
-}
+public interface ClientUserBaseMapper extends BaseMapper<ClientUserBase> {}

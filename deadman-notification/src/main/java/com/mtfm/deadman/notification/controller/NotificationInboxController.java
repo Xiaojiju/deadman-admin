@@ -1,12 +1,13 @@
 package com.mtfm.deadman.notification.controller;
 
 import com.mtfm.deadman.common.page.PageVO;
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.notification.dto.NotificationInboxPageQuery;
 import com.mtfm.deadman.notification.service.NotificationInboxService;
 import com.mtfm.deadman.notification.vo.NotificationInboxVO;
 import com.mtfm.deadman.security.LoginUser;
-import com.mtfm.deadman.security.SecurityAuthSupport;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,10 +37,10 @@ public class NotificationInboxController {
      */
     @GetMapping
     @PreAuthorize("hasAuthority('notification:inbox:read')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<PageVO<NotificationInboxVO>> pageInbox(
             @AuthenticationPrincipal LoginUser loginUser, @Valid NotificationInboxPageQuery query) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        return Result.ok(notificationInboxService.pageInbox(user.getUserId(), query));
+        return Result.ok(notificationInboxService.pageInbox(loginUser.getUserId(), query));
     }
 
     /**
@@ -50,9 +51,9 @@ public class NotificationInboxController {
      */
     @GetMapping("/unread-count")
     @PreAuthorize("hasAuthority('notification:inbox:read')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<Long> unreadCount(@AuthenticationPrincipal LoginUser loginUser) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        return Result.ok(notificationInboxService.countUnread(user.getUserId()));
+        return Result.ok(notificationInboxService.countUnread(loginUser.getUserId()));
     }
 
     /**
@@ -64,10 +65,10 @@ public class NotificationInboxController {
      */
     @PostMapping("/{recipientId}/read")
     @PreAuthorize("hasAuthority('notification:inbox:update')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<Void> markRead(
             @AuthenticationPrincipal LoginUser loginUser, @PathVariable Long recipientId) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        notificationInboxService.markRead(user.getUserId(), recipientId);
+        notificationInboxService.markRead(loginUser.getUserId(), recipientId);
         return Result.ok();
     }
 
@@ -79,9 +80,9 @@ public class NotificationInboxController {
      */
     @PostMapping("/read-all")
     @PreAuthorize("hasAuthority('notification:inbox:update')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<Void> markAllRead(@AuthenticationPrincipal LoginUser loginUser) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        notificationInboxService.markAllRead(user.getUserId());
+        notificationInboxService.markAllRead(loginUser.getUserId());
         return Result.ok();
     }
 }

@@ -1,7 +1,8 @@
 package com.mtfm.deadman.component.client.controller;
 
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.component.client.ClientAuthSupport;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 import com.mtfm.deadman.component.client.service.ClientUserService;
 import com.mtfm.deadman.component.client.vo.ClientUserProfileVO;
@@ -28,8 +29,8 @@ public class ClientUserController {
      * @return 用户资料
      */
     @GetMapping("/me")
+    @RequireAuth(AuthRealm.CLIENT)
     public Result<ClientUserProfileVO> currentProfile(@AuthenticationPrincipal ClientLoginUser loginUser) {
-        ClientLoginUser user = ClientAuthSupport.requireLogin(loginUser);
-        return Result.ok(clientUserService.getProfileByUserCode(user.getUserCode()));
+        return Result.ok(clientUserService.getProfileByUserCode(loginUser.getUserCode()));
     }
 }

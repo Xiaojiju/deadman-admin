@@ -1,10 +1,11 @@
 package com.mtfm.deadman.support.client.file.biztype;
 
-import com.mtfm.deadman.plugin.file.biztype.FileBizTypeContributor;
-import org.springframework.stereotype.Component;
-
 import java.util.Collection;
 import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.mtfm.deadman.plugin.file.biztype.FileBizTypeContributor;
 
 /**
  * 用户端常用文件业务分类贡献者，供 C 端上传接口校验 bizType。
@@ -19,6 +20,6 @@ public class ClientFileBizTypeContributor implements FileBizTypeContributor {
      */
     @Override
     public Collection<String> contribute() {
-        return List.of("rent", "spare-part", "merchant-license", "avatar");
+        return List.of("rent", "spare-part", "listing", "merchant-license", "avatar", "banner");
     }
 }

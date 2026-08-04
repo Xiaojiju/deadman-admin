@@ -18,13 +18,13 @@ public interface ClientUserProvisioner {
     /**
      * OAuth 用户注入请求。
      *
-     * @param provider       OAuth 提供商
-     * @param subject        OAuth 用户唯一标识
+     * @param provider OAuth 提供商
+     * @param subject OAuth 用户唯一标识
      * @param accountIdentifier 账号标识，通常与 subject 相同
-     * @param nickname       昵称
-     * @param avatar         头像 URL
+     * @param nickname 昵称
+     * @param avatar 头像 URL
      */
-    record ClientUserProvisionRequest(
-            String provider, String subject, String accountIdentifier, String nickname, String avatar) {
+    record ClientUserProvisionRequest(String provider, String subject, String accountIdentifier, String nickname,
+        String avatar) {
     }
 }

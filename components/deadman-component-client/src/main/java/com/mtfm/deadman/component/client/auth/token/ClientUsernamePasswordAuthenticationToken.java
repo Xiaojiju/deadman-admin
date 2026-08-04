@@ -30,11 +30,11 @@ public class ClientUsernamePasswordAuthenticationToken extends AbstractAuthentic
     /**
      * 创建已认证令牌。
      *
-     * @param principal   用户主体
+     * @param principal 用户主体
      * @param authorities 权限
      */
-    public ClientUsernamePasswordAuthenticationToken(
-            Object principal, Collection<? extends GrantedAuthority> authorities) {
+    public ClientUsernamePasswordAuthenticationToken(Object principal,
+        Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
         this.credentials = null;

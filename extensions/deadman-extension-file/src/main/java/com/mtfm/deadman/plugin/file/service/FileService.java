@@ -2,8 +2,13 @@ package com.mtfm.deadman.plugin.file.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,6 +104,55 @@ public class FileService {
      */
     public FileMetadataVO getById(Long fileId) {
         return toVo(requireMetadata(fileId));
+    }
+
+    /**
+     * 按主键批量查询文件元数据（保持入参顺序；缺失 ID 会抛出 FILE_NOT_FOUND）。
+     *
+     * @param fileIds 文件主键集合
+     * @return 元数据列表
+     */
+    public List<FileMetadataVO> listByIds(Collection<Long> fileIds) {
+        if (fileIds == null || fileIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> orderedIds = new ArrayList<>();
+        for (Long fileId : fileIds) {
+            if (fileId != null) {
+                orderedIds.add(fileId);
+            }
+        }
+        if (orderedIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, FileMetadataVO> found = findByIdsAsMap(orderedIds);
+        List<FileMetadataVO> result = new ArrayList<>(orderedIds.size());
+        for (Long fileId : orderedIds) {
+            FileMetadataVO meta = found.get(fileId);
+            if (meta == null) {
+                throw new BusinessException(ResultCode.FILE_NOT_FOUND, "文件不存在：" + fileId);
+            }
+            result.add(meta);
+        }
+        return result;
+    }
+
+    /**
+     * 按主键批量查询已存在的文件元数据（缺失 ID 跳过，不抛错）。
+     *
+     * @param fileIds 文件主键集合
+     * @return fileId → 元数据
+     */
+    public Map<Long, FileMetadataVO> findByIdsAsMap(Collection<Long> fileIds) {
+        if (fileIds == null || fileIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> distinctIds = fileIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (distinctIds.isEmpty()) {
+            return Map.of();
+        }
+        List<FileMetadata> rows = fileMetadataMapper.selectByIds(distinctIds);
+        return rows.stream().collect(Collectors.toMap(FileMetadata::getId, FileService::toVo, (a, b) -> a));
     }
 
     /**

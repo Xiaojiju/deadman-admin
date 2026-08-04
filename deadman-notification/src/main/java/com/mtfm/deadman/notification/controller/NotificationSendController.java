@@ -1,6 +1,8 @@
 package com.mtfm.deadman.notification.controller;
 
 import com.mtfm.deadman.common.page.PageVO;
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.notification.dto.NotificationSentPageQuery;
 import com.mtfm.deadman.notification.dto.SendNotificationRequest;
@@ -8,7 +10,6 @@ import com.mtfm.deadman.notification.service.NotificationSendService;
 import com.mtfm.deadman.notification.vo.NotificationSendResultVO;
 import com.mtfm.deadman.notification.vo.NotificationSentVO;
 import com.mtfm.deadman.security.LoginUser;
-import com.mtfm.deadman.security.SecurityAuthSupport;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,10 +39,10 @@ public class NotificationSendController {
      */
     @PostMapping("/send")
     @PreAuthorize("hasAuthority('notification:send')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<NotificationSendResultVO> send(
             @AuthenticationPrincipal LoginUser loginUser, @Valid @RequestBody SendNotificationRequest request) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        return Result.ok(notificationSendService.send(user.getUserId(), request));
+        return Result.ok(notificationSendService.send(loginUser.getUserId(), request));
     }
 
     /**

@@ -21,16 +21,13 @@ public class CompositeClientLoginFailureCallback {
     /**
      * 触发所有已注册的失败回调。
      *
-     * @param request    请求
-     * @param response   响应
+     * @param request 请求
+     * @param response 响应
      * @param providerId 提供商标识
-     * @param exception  认证异常
+     * @param exception 认证异常
      */
-    public void onLoginFailure(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            String providerId,
-            AuthenticationException exception) {
+    public void onLoginFailure(HttpServletRequest request, HttpServletResponse response, String providerId,
+        AuthenticationException exception) {
         for (ClientLoginFailureCallback callback : callbacks) {
             callback.onLoginFailure(request, response, providerId, exception);
         }

@@ -41,15 +41,15 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
      */
     public boolean existsUsername(String username) {
         return count(new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getAccountType, AccountType.USERNAME.getCode())
-                .eq(ClientUserAccount::getAccountIdentifier, username)) > 0;
+            .eq(ClientUserAccount::getAccountType, AccountType.USERNAME.getCode())
+            .eq(ClientUserAccount::getAccountIdentifier, username)) > 0;
     }
 
     /**
      * 按 OAuth 提供商与 subject 查询账号。
      *
      * @param provider OAuth 提供商
-     * @param subject  subject
+     * @param subject subject
      * @return 账号
      */
     public ClientUserAccount findByOAuth(String provider, String subject) {
@@ -63,8 +63,8 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
      * @return 手机号，未绑定时为 null
      */
     public String findPhoneByUserId(Long userId) {
-        ClientUserAccount account = getOne(new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getUserId, userId)
+        ClientUserAccount account =
+            getOne(new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userId)
                 .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode()));
         return account == null ? null : account.getAccountIdentifier();
     }
@@ -79,25 +79,22 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        return list(new LambdaQueryWrapper<ClientUserAccount>()
-                        .in(ClientUserAccount::getUserId, userIds)
-                        .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode()))
-                .stream()
-                .collect(Collectors.toMap(
-                        ClientUserAccount::getUserId, ClientUserAccount::getAccountIdentifier, (a, b) -> a));
+        return list(new LambdaQueryWrapper<ClientUserAccount>().in(ClientUserAccount::getUserId, userIds)
+            .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode())).stream().collect(
+                Collectors.toMap(ClientUserAccount::getUserId, ClientUserAccount::getAccountIdentifier, (a, b) -> a));
     }
 
     /**
      * 判断手机号是否已被其他用户占用。
      *
-     * @param phone         手机号
+     * @param phone 手机号
      * @param excludeUserId 排除的用户 ID
      * @return 是否已占用
      */
     public boolean existsPhone(String phone, Long excludeUserId) {
         LambdaQueryWrapper<ClientUserAccount> wrapper = new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode())
-                .eq(ClientUserAccount::getAccountIdentifier, phone);
+            .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode())
+            .eq(ClientUserAccount::getAccountIdentifier, phone);
         if (excludeUserId != null) {
             wrapper.ne(ClientUserAccount::getUserId, excludeUserId);
         }
@@ -108,7 +105,7 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
      * 绑定或更新用户手机号。
      *
      * @param userId 用户 ID
-     * @param phone  手机号
+     * @param phone 手机号
      */
     public void bindOrUpdatePhone(Long userId, String phone) {
         if (!StringUtils.hasText(phone)) {
@@ -117,17 +114,12 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
         if (existsPhone(phone, userId)) {
             throw new BusinessException(ResultCode.PHONE_EXISTS);
         }
-        ClientUserAccount existing = getOne(new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getUserId, userId)
+        ClientUserAccount existing =
+            getOne(new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userId)
                 .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode()));
         if (existing == null) {
-            save(ClientUserAccount.builder()
-                    .userId(userId)
-                    .accountType(AccountType.PHONE.getCode())
-                    .accountIdentifier(phone)
-                    .verified(1)
-                    .status(UserStatus.ACTIVE.getValue())
-                    .build());
+            save(ClientUserAccount.builder().userId(userId).accountType(AccountType.PHONE.getCode())
+                .accountIdentifier(phone).verified(1).status(UserStatus.ACTIVE.getValue()).build());
             return;
         }
         existing.setAccountIdentifier(phone);
@@ -143,9 +135,8 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
      */
     public Optional<String> findMiniprogramOpenid(Long userId) {
         ClientUserAccount account = getOne(new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getUserId, userId)
-                .eq(ClientUserAccount::getAccountType, AccountType.OAUTH.getCode())
-                .eq(ClientUserAccount::getOauthProvider, "wechat-miniprogram"));
+            .eq(ClientUserAccount::getUserId, userId).eq(ClientUserAccount::getAccountType, AccountType.OAUTH.getCode())
+            .eq(ClientUserAccount::getOauthProvider, "wechat-miniprogram"));
         if (account == null || !StringUtils.hasText(account.getOauthSubject())) {
             return Optional.empty();
         }
@@ -155,9 +146,9 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
     /**
      * 将 OAuth 账号绑定到指定用户；若 openid 已被其他用户占用则抛出业务异常。
      *
-     * @param userId   用户 ID
+     * @param userId 用户 ID
      * @param provider OAuth 提供商标识
-     * @param subject  OAuth 用户唯一标识（如 openid）
+     * @param subject OAuth 用户唯一标识（如 openid）
      */
     public void bindOAuth(Long userId, String provider, String subject) {
         if (!StringUtils.hasText(provider) || !StringUtils.hasText(subject)) {
@@ -170,21 +161,14 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
             }
             return;
         }
-        save(ClientUserAccount.builder()
-                .userId(userId)
-                .accountType(AccountType.OAUTH.getCode())
-                .accountIdentifier(subject)
-                .oauthProvider(provider)
-                .oauthSubject(subject)
-                .verified(1)
-                .status(UserStatus.ACTIVE.getValue())
-                .build());
+        save(ClientUserAccount.builder().userId(userId).accountType(AccountType.OAUTH.getCode())
+            .accountIdentifier(subject).oauthProvider(provider).oauthSubject(subject).verified(1)
+            .status(UserStatus.ACTIVE.getValue()).build());
     }
 
     private ClientUserAccount findByTypeAndIdentifier(String accountType, String identifier, String oauthProvider) {
         LambdaQueryWrapper<ClientUserAccount> wrapper = new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getAccountType, accountType)
-                .eq(ClientUserAccount::getAccountIdentifier, identifier);
+            .eq(ClientUserAccount::getAccountType, accountType).eq(ClientUserAccount::getAccountIdentifier, identifier);
         if (oauthProvider != null) {
             wrapper.eq(ClientUserAccount::getOauthProvider, oauthProvider);
         } else {

@@ -111,6 +111,16 @@ public class PayService {
     }
 
     /**
+     * 按支付方式解析 Provider。
+     *
+     * @param paymentMethod Provider 标识或支付方式
+     * @return Provider 实例
+     */
+    public PaymentProvider requirePaymentProvider(String paymentMethod) {
+        return paymentProviderManager.requireByPaymentMethod(paymentMethod);
+    }
+
+    /**
      * 列出已注册的支付 Provider。
      *
      * @return Provider 标识列表

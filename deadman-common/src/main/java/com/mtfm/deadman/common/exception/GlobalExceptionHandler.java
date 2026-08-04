@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
 
@@ -86,6 +87,22 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMissingParameter(MissingServletRequestParameterException ex) {
         return Result.of(ResultCode.BAD_REQUEST.getCode(), "缺少必填参数：" + ex.getParameterName());
+    }
+
+    /**
+     * 静态资源或路径不存在（如本地文件未上传、URL 拼写错误）。
+     * <p>
+     * 仅记录 warn 日志，避免落入通用异常处理打印完整堆栈。
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Result<Void> handleNoResourceFound(NoResourceFoundException ex) {
+        String resourcePath = ex.getResourcePath();
+        log.warn("资源不存在: {} {}", ex.getHttpMethod(), resourcePath);
+        if (resourcePath != null && resourcePath.startsWith("/files/")) {
+            return Result.of(ResultCode.FILE_NOT_FOUND);
+        }
+        return Result.of(ResultCode.NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)

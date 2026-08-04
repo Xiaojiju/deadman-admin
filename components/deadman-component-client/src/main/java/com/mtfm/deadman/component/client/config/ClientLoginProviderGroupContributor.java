@@ -17,10 +17,8 @@ public class ClientLoginProviderGroupContributor implements LoginProviderGroupCo
 
     @Override
     public LoginProviderGroup group() {
-        return new LoginProviderGroup(
-                ClientAuthConstants.LOGIN_GROUP_ID,
-                "/client/api",
-                clientComponentProperties.getAuth().getBasePath(),
-                clientComponentProperties.getAuth().getLoginPathPrefix());
+        return new LoginProviderGroup(ClientAuthConstants.LOGIN_GROUP_ID, "/client/api",
+            clientComponentProperties.getAuth().getBasePath(),
+            clientComponentProperties.getAuth().getLoginPathPrefix());
     }
 }

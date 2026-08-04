@@ -1,7 +1,8 @@
 package com.mtfm.deadman.support.client.file.controller;
 
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.component.client.ClientAuthSupport;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 import com.mtfm.deadman.plugin.file.service.FileService;
 import com.mtfm.deadman.plugin.file.vo.FileMetadataVO;
@@ -34,12 +35,12 @@ public class ClientFileController {
      * @return 文件元数据（含 accessUrl，OSS 模式下为 CDN 或签名 URL）
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequireAuth(AuthRealm.CLIENT)
     public Result<FileMetadataVO> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam("bizType") String bizType,
             @RequestParam(value = "providerId", required = false) String providerId,
             @AuthenticationPrincipal ClientLoginUser loginUser) {
-        ClientLoginUser user = ClientAuthSupport.requireLogin(loginUser);
-        return Result.ok(fileService.upload(file, bizType, providerId, user.getUserId()));
+        return Result.ok(fileService.upload(file, bizType, providerId, loginUser.getUserId()));
     }
 }

@@ -64,7 +64,7 @@ public class ClientWechatRegisterLoginProvider implements LoginProvider {
         ClientWechatRegisterAuthenticationToken registerToken = (ClientWechatRegisterAuthenticationToken) authentication;
         ClientWechatRegisterRequest request = registerToken.getRegisterRequest();
         return clientWechatAuthService.registerAndBind(
-                request.bindToken(), request.username(), request.password(), request.nickname());
+                request.bindToken(), request.username(), request.password(), request.nickname(), request.avatar());
     }
 
     private ClientWechatRegisterRequest parseRequest(HttpServletRequest request) {

@@ -32,17 +32,14 @@ public class ClientOAuthLoginUserService implements OAuthLoginUserService {
     @Override
     public Authentication resolveOAuthLogin(OAuthLoginRequest request) throws AuthenticationException {
         ClientUserAccount account =
-                clientUserAccountService.findByOAuth(request.oauthProvider(), request.oauthSubject());
+            clientUserAccountService.findByOAuth(request.oauthProvider(), request.oauthSubject());
         ClientUserBase userBase;
         if (account != null) {
             userBase = clientUserService.requireById(account.getUserId());
         } else {
-            userBase = clientUserProvisioner.provisionOAuthUser(new ClientUserProvisioner.ClientUserProvisionRequest(
-                    request.oauthProvider(),
-                    request.oauthSubject(),
-                    request.loginIdentifier(),
-                    request.nickname(),
-                    request.avatar()));
+            userBase = clientUserProvisioner
+                .provisionOAuthUser(new ClientUserProvisioner.ClientUserProvisionRequest(request.oauthProvider(),
+                    request.oauthSubject(), request.loginIdentifier(), request.nickname(), request.avatar()));
         }
 
         if (userBase.getStatus() == null || userBase.getStatus() != UserStatus.ACTIVE.getValue()) {
@@ -50,7 +47,7 @@ public class ClientOAuthLoginUserService implements OAuthLoginUserService {
         }
 
         ClientLoginUser loginUser = clientUserService.buildLoginUser(userBase, request.loginIdentifier());
-        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                loginUser, null, loginUser.getAuthorities());
+        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(loginUser, null,
+            loginUser.getAuthorities());
     }
 }

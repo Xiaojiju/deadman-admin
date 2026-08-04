@@ -29,20 +29,15 @@ public class ClientLoginUser implements UserDetails, ClientAuthenticatedUser {
     /**
      * 构造用户端登录用户。
      *
-     * @param userId          用户 ID
-     * @param userCode        用户编码
+     * @param userId 用户 ID
+     * @param userCode 用户编码
      * @param loginIdentifier 登录标识
-     * @param nickname        昵称
-     * @param enabled         是否启用
-     * @param authorities     权限集合
+     * @param nickname 昵称
+     * @param enabled 是否启用
+     * @param authorities 权限集合
      */
-    public ClientLoginUser(
-            Long userId,
-            String userCode,
-            String loginIdentifier,
-            String nickname,
-            boolean enabled,
-            Collection<? extends GrantedAuthority> authorities) {
+    public ClientLoginUser(Long userId, String userCode, String loginIdentifier, String nickname, boolean enabled,
+        Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.userCode = userCode;
         this.loginIdentifier = loginIdentifier;

@@ -17,8 +17,7 @@ public final class ClientPermissions {
     public static final String UPDATE = "client-user:update";
     public static final String DELETE = "client-user:delete";
 
-    private ClientPermissions() {
-    }
+    private ClientPermissions() {}
 
     /**
      * 用户端组件权限组定义。
@@ -26,12 +25,8 @@ public final class ClientPermissions {
      * @return 权限组
      */
     public static List<PermissionGroupDescriptor> permissionGroups() {
-        return List.of(new PermissionGroupDescriptor(
-                GROUP_CODE,
-                "用户端用户管理",
-                List.of(
-                        new PermissionItemDescriptor(LIST_READ, "查看用户端用户列表"),
-                        new PermissionItemDescriptor(UPDATE, "禁用用户端用户"),
-                        new PermissionItemDescriptor(DELETE, "注销用户端用户"))));
+        return List.of(new PermissionGroupDescriptor(GROUP_CODE, "用户端用户管理",
+            List.of(new PermissionItemDescriptor(LIST_READ, "查看用户端用户列表"),
+                new PermissionItemDescriptor(UPDATE, "禁用用户端用户"), new PermissionItemDescriptor(DELETE, "注销用户端用户"))));
     }
 }

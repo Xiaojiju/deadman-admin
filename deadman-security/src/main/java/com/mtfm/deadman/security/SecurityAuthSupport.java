@@ -3,7 +3,10 @@ package com.mtfm.deadman.security;
 import com.mtfm.deadman.common.util.AuthPrincipalSupport;
 
 /**
- * 控制器层鉴权辅助方法。
+ * 管理端控制器鉴权辅助方法。
+ * <p>
+ * 常规「必须登录」接口请使用 {@link com.mtfm.deadman.common.auth.RequireAuth}（{@code AuthRealm.ADMIN}），
+ * 本类保留给匿名与已登录均可访问、需在方法内分支处理的场景。
  */
 public final class SecurityAuthSupport {
 

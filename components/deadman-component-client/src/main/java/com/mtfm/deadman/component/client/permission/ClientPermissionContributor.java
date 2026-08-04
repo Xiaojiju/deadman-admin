@@ -11,7 +11,8 @@ import java.util.List;
  * 用户端组件权限贡献者。
  */
 @Component
-@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true",
+    matchIfMissing = true)
 public class ClientPermissionContributor implements PermissionContributor {
 
     /**

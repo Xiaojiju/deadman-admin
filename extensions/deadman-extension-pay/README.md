@@ -435,5 +435,6 @@ DDL：`src/main/resources/db/pay/schema.sql`
 | 模块 | 说明 |
 |------|------|
 | [deadman-plugin-pay-wechat](../../plugins/deadman-plugin-pay-wechat/) | 微信 JSAPI 支付实现 |
+| [deadman-plugin-pay-mock](../../plugins/deadman-plugin-pay-mock/) | Mock 支付实现（本地/测试） |
 | [extensions/README.md](../README.md) | 能力延伸目录说明 |
 | [plugins/README.md](../../plugins/README.md) | 插件目录说明 |

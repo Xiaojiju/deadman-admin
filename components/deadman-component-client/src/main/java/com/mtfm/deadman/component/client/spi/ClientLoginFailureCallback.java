@@ -12,14 +12,11 @@ public interface ClientLoginFailureCallback {
     /**
      * 登录失败时回调。
      *
-     * @param request   请求
-     * @param response  响应
+     * @param request 请求
+     * @param response 响应
      * @param providerId 登录提供商标识
      * @param exception 认证异常
      */
-    void onLoginFailure(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            String providerId,
-            AuthenticationException exception);
+    void onLoginFailure(HttpServletRequest request, HttpServletResponse response, String providerId,
+        AuthenticationException exception);
 }

@@ -1,8 +1,9 @@
 package com.mtfm.deadman.security.controller;
 
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.security.LoginUser;
-import com.mtfm.deadman.security.SecurityAuthSupport;
 import com.mtfm.deadman.system.dto.user.UpdateUserRequest;
 import com.mtfm.deadman.system.service.UserService;
 import com.mtfm.deadman.system.vo.user.UserProfileVO;
@@ -34,9 +35,9 @@ public class UserController {
      */
     @GetMapping("/me")
     @PreAuthorize("hasAuthority('user:profile:read')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<UserProfileVO> me(@AuthenticationPrincipal LoginUser loginUser) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        return Result.ok(userService.getProfileByUserCode(user.getUserCode()));
+        return Result.ok(userService.getProfileByUserCode(loginUser.getUserCode()));
     }
 
     /**
@@ -48,9 +49,9 @@ public class UserController {
      */
     @PutMapping("/me")
     @PreAuthorize("hasAuthority('user:profile:update')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<UserProfileVO> updateMe(
             @AuthenticationPrincipal LoginUser loginUser, @Valid @RequestBody UpdateUserRequest request) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        return Result.ok(userService.updateProfileByUserCode(user.getUserCode(), request));
+        return Result.ok(userService.updateProfileByUserCode(loginUser.getUserCode(), request));
     }
 }

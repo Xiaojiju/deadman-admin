@@ -7,7 +7,7 @@
 | 目录 | 职责 | 示例 |
 |------|------|------|
 | **extensions/** | 主能力：SPI、门面 Service、统一数据模型、自动配置 | `deadman-extension-pay`、`deadman-extension-file` |
-| **plugins/** | 具体实现：渠道 API、存储 Provider、回调 Controller | `deadman-plugin-pay-wechat`、`deadman-plugin-storage-oss` |
+| **plugins/** | 具体实现：渠道 API、存储 Provider、回调 Controller | `deadman-plugin-pay-wechat`、`deadman-plugin-storage-oss`、`deadman-plugin-storage-cos` |
 
 与 [support/](../support/README.md) 的区别：Support 是核心与插件/组件之间的**桥接层**；Extension 是**可复用的业务能力主体**，可被多个插件实现依赖。
 
@@ -16,6 +16,7 @@
 | 模块 | 配置前缀 | 说明 |
 |------|----------|------|
 | [deadman-extension-pay](deadman-extension-pay/) | `deadman.plugin.pay` | 支付 SPI、`PayService`、统一订单表 |
+| [deadman-extension-flow-logic](deadman-extension-flow-logic/) | —（纯库） | 串行流程引擎（FilterChain 节点编排） |
 | [deadman-extension-file](deadman-extension-file/) | `deadman.plugin.file` | 文件 SPI、`FileService`、元数据表与 REST API |
 | [deadman-extension-logistics](deadman-extension-logistics/) | `deadman.plugin.logistics` | 物流 SPI、`LogisticsService`、快递轨迹 REST API |
 

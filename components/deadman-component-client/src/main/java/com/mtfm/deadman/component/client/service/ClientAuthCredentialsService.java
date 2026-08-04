@@ -13,6 +13,7 @@ import com.mtfm.deadman.security.vo.auth.RegisterResultVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * 用户端认证凭证：注册（令牌仅在登录成功后签发）。
@@ -51,20 +52,15 @@ public class ClientAuthCredentialsService {
         }
 
         String userCode = ClientUserCodeGenerator.generate(clientComponentProperties.getUser().getUserCodePrefix());
-        ClientUserBase userBase = ClientUserBase.builder()
-                .userCode(userCode)
-                .nickname(request.nickname() != null ? request.nickname() : request.username())
-                .status(UserStatus.ACTIVE.getValue())
-                .build();
+        ClientUserBase userBase = ClientUserBase.builder().userCode(userCode)
+            .nickname(request.nickname() != null ? request.nickname() : request.username())
+            .avatar(StringUtils.hasText(request.avatar()) ? request.avatar().trim() : null)
+            .status(UserStatus.ACTIVE.getValue()).build();
         clientUserService.save(userBase);
 
-        ClientUserAccount account = ClientUserAccount.builder()
-                .userId(userBase.getId())
-                .accountType(AccountType.USERNAME.getCode())
-                .accountIdentifier(request.username())
-                .verified(1)
-                .status(UserStatus.ACTIVE.getValue())
-                .build();
+        ClientUserAccount account =
+            ClientUserAccount.builder().userId(userBase.getId()).accountType(AccountType.USERNAME.getCode())
+                .accountIdentifier(request.username()).verified(1).status(UserStatus.ACTIVE.getValue()).build();
         clientUserAccountService.save(account);
 
         clientUserPasswordService.createPassword(userBase.getId(), request.password());

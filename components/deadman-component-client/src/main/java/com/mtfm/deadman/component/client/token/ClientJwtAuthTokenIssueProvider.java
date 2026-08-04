@@ -20,20 +20,19 @@ import org.springframework.stereotype.Component;
  * 用户端（CLIENT）JWT 双令牌签发 Provider，复用 security 模块 JWT 引擎。
  */
 @Component
-@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true",
+    matchIfMissing = true)
 public class ClientJwtAuthTokenIssueProvider extends AbstractJwtAuthTokenIssueProvider {
 
     private final ClientUserService clientUserService;
 
     /**
      * @param clientComponentProperties 用户端组件配置
-     * @param redisTemplateProvider     Redis 模板（可选）
-     * @param clientUserService         用户端用户服务
+     * @param redisTemplateProvider Redis 模板（可选）
+     * @param clientUserService 用户端用户服务
      */
-    public ClientJwtAuthTokenIssueProvider(
-            ClientComponentProperties clientComponentProperties,
-            ObjectProvider<StringRedisTemplate> redisTemplateProvider,
-            ClientUserService clientUserService) {
+    public ClientJwtAuthTokenIssueProvider(ClientComponentProperties clientComponentProperties,
+        ObjectProvider<StringRedisTemplate> redisTemplateProvider, ClientUserService clientUserService) {
         super(RealmJwtSupport.create(buildSettings(clientComponentProperties), redisTemplateProvider));
         this.clientUserService = clientUserService;
     }
@@ -50,19 +49,11 @@ public class ClientJwtAuthTokenIssueProvider extends AbstractJwtAuthTokenIssuePr
     private static RealmJwtSettings buildSettings(ClientComponentProperties properties) {
         ClientComponentProperties.Jwt jwt = properties.getJwt();
         String authBase = properties.getAuth().getBasePath();
-        return RealmJwtSettingsFactory.create(
-                ClientAuthConstants.JWT_REALM,
-                jwt.getSecret(),
-                jwt.getAccessExpirationMs(),
-                jwt.getExpirationMs(),
-                jwt.getRefreshExpirationMs(),
-                properties.getSecurity().isMultiSessionEnabled(),
-                ClientAuthConstants.SESSION_KEY_PREFIX,
-                ClientAuthConstants.REFRESH_KEY_PREFIX,
-                ClientAuthConstants.REFRESH_USER_INDEX_PREFIX,
-                jwt.isRefreshCookieSecure(),
-                ClientAuthConstants.REFRESH_TOKEN_PATH,
-                ClientAuthConstants.REFRESH_TOKEN_COOKIE_NAME,
-                authBase);
+        return RealmJwtSettingsFactory.create(ClientAuthConstants.JWT_REALM, jwt.getSecret(),
+            jwt.getAccessExpirationMs(), jwt.getExpirationMs(), jwt.getRefreshExpirationMs(),
+            properties.getSecurity().isMultiSessionEnabled(), ClientAuthConstants.SESSION_KEY_PREFIX,
+            ClientAuthConstants.REFRESH_KEY_PREFIX, ClientAuthConstants.REFRESH_USER_INDEX_PREFIX,
+            jwt.isRefreshCookieSecure(), ClientAuthConstants.REFRESH_TOKEN_PATH,
+            ClientAuthConstants.REFRESH_TOKEN_COOKIE_NAME, authBase);
     }
 }

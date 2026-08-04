@@ -38,23 +38,15 @@ public class DefaultClientUserProvisioner implements ClientUserProvisioner {
         }
 
         String userCode = ClientUserCodeGenerator.generate(clientComponentProperties.getUser().getUserCodePrefix());
-        ClientUserBase userBase = ClientUserBase.builder()
-                .userCode(userCode)
-                .nickname(StringUtils.hasText(request.nickname()) ? request.nickname() : request.provider() + "用户")
-                .avatar(request.avatar())
-                .status(UserStatus.ACTIVE.getValue())
-                .build();
+        ClientUserBase userBase = ClientUserBase.builder().userCode(userCode)
+            .nickname(StringUtils.hasText(request.nickname()) ? request.nickname() : request.provider() + "用户")
+            .avatar(request.avatar()).status(UserStatus.ACTIVE.getValue()).build();
         clientUserService.save(userBase);
 
-        ClientUserAccount account = ClientUserAccount.builder()
-                .userId(userBase.getId())
-                .accountType(AccountType.OAUTH.getCode())
-                .accountIdentifier(request.accountIdentifier())
-                .oauthProvider(request.provider())
-                .oauthSubject(request.subject())
-                .verified(1)
-                .status(UserStatus.ACTIVE.getValue())
-                .build();
+        ClientUserAccount account =
+            ClientUserAccount.builder().userId(userBase.getId()).accountType(AccountType.OAUTH.getCode())
+                .accountIdentifier(request.accountIdentifier()).oauthProvider(request.provider())
+                .oauthSubject(request.subject()).verified(1).status(UserStatus.ACTIVE.getValue()).build();
         clientUserAccountService.save(account);
         return userBase;
     }

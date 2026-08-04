@@ -51,3 +51,33 @@ CREATE TABLE IF NOT EXISTS client_user_password (
     UNIQUE KEY uk_client_user_password_user_id (user_id),
     CONSTRAINT fk_client_user_password_user_id FOREIGN KEY (user_id) REFERENCES client_user_base (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户端密码';
+
+-- 用户端站内信主记录
+CREATE TABLE IF NOT EXISTS client_notification (
+    id                BIGINT        NOT NULL COMMENT '主键',
+    title             VARCHAR(128)  NOT NULL COMMENT '标题',
+    content           VARCHAR(512)  NOT NULL COMMENT '正文',
+    biz_type          VARCHAR(64)   NOT NULL COMMENT '业务类型',
+    biz_id            BIGINT        NULL COMMENT '业务主键',
+    extra_json        JSON          NULL COMMENT '扩展载荷 JSON',
+    recipient_count   INT           NOT NULL DEFAULT 0 COMMENT '实际投递用户数',
+    create_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_client_notification_biz (biz_type, biz_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户端站内信';
+
+-- 用户端站内信收件记录
+CREATE TABLE IF NOT EXISTS client_notification_recipient (
+    id                BIGINT        NOT NULL COMMENT '主键',
+    notification_id   BIGINT        NOT NULL COMMENT '通知主键',
+    user_id           BIGINT        NOT NULL COMMENT '收件人用户 ID',
+    read_status       SMALLINT      NOT NULL DEFAULT 0 COMMENT '阅读状态：0-未读，1-已读',
+    read_time         TIMESTAMP     NULL COMMENT '阅读时间',
+    create_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    KEY idx_client_notification_recipient_user (user_id, read_status),
+    KEY idx_client_notification_recipient_notice (notification_id),
+    CONSTRAINT fk_client_notification_recipient_notice FOREIGN KEY (notification_id) REFERENCES client_notification (id),
+    CONSTRAINT fk_client_notification_recipient_user FOREIGN KEY (user_id) REFERENCES client_user_base (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户端站内信收件';

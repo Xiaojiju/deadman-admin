@@ -6,5 +6,4 @@ import com.mtfm.deadman.component.client.entity.ClientUserAccount;
 /**
  * 用户端登录账号 Mapper。
  */
-public interface ClientUserAccountMapper extends BaseMapper<ClientUserAccount> {
-}
+public interface ClientUserAccountMapper extends BaseMapper<ClientUserAccount> {}

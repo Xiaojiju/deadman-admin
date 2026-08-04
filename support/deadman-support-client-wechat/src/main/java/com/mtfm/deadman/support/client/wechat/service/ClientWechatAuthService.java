@@ -92,15 +92,17 @@ public class ClientWechatAuthService {
      * @param username  登录用户名
      * @param password  密码
      * @param nickname  昵称，可为空
+     * @param avatar    头像 URL，可为空
      * @return 已认证的用户端登录用户
      */
     @Transactional(rollbackFor = Exception.class)
-    public Authentication registerAndBind(String bindToken, String username, String password, String nickname) {
+    public Authentication registerAndBind(String bindToken, String username, String password, String nickname,
+            String avatar) {
         ClientWechatPendingSession session = consumeBindSession(bindToken);
         ClientUserBase userBase;
         try {
             userBase = clientAuthCredentialsService.registerUser(
-                    new ClientRegisterRequest(username.trim(), password, nickname));
+                    new ClientRegisterRequest(username.trim(), password, nickname, avatar));
         } catch (BusinessException ex) {
             if (ex.getCode() == ResultCode.ACCOUNT_EXISTS.getCode()) {
                 throw new BadCredentialsException("用户名已存在", ex);

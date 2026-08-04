@@ -25,11 +25,10 @@ public class ClientLoginFailureHandler implements AuthenticationFailureHandler {
     private final LoginProviderGroupManager loginProviderGroupManager;
 
     @Override
-    public void onAuthenticationFailure(
-            HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
-            throws IOException {
-        String providerId = loginProviderGroupManager.resolveProviderIdByLoginUri(
-                ClientAuthConstants.LOGIN_GROUP_ID, request.getRequestURI());
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+        AuthenticationException exception) throws IOException {
+        String providerId = loginProviderGroupManager.resolveProviderIdByLoginUri(ClientAuthConstants.LOGIN_GROUP_ID,
+            request.getRequestURI());
         failureCallback.onLoginFailure(request, response, providerId, exception);
         LoginFailureResponseSupport.writeLoginFailure(response, jsonMapper, exception);
     }

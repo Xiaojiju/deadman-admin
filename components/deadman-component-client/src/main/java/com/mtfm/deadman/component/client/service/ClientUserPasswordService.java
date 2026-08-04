@@ -23,24 +23,20 @@ public class ClientUserPasswordService extends ServiceImpl<ClientUserPasswordMap
     /**
      * 为新用户创建密码记录。
      *
-     * @param userId      用户 ID
+     * @param userId 用户 ID
      * @param rawPassword 明文密码
      */
     @Transactional(rollbackFor = Exception.class)
     public void createPassword(Long userId, String rawPassword) {
         PasswordEncoderRegistry.EncodedPassword encoded = passwordEncoderRegistry.encodeWithRandomEncoder(rawPassword);
-        save(ClientUserPassword.builder()
-                .userId(userId)
-                .passwordHash(encoded.hash())
-                .encoderId(encoded.encoderId())
-                .passwordVersion(1)
-                .build());
+        save(ClientUserPassword.builder().userId(userId).passwordHash(encoded.hash()).encoderId(encoded.encoderId())
+            .passwordVersion(1).build());
     }
 
     /**
      * 校验明文密码是否匹配。
      *
-     * @param userId      用户 ID
+     * @param userId 用户 ID
      * @param rawPassword 明文密码
      * @return 是否匹配
      */

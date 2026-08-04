@@ -21,12 +21,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * 用户端独立 SecurityFilterChain，与管理端 Filter 完全隔离，AuthenticationManager 由 security
- * 统一 Provider 管理器提供。
+ * 用户端独立 SecurityFilterChain，与管理端 Filter 完全隔离，AuthenticationManager 由 security 统一 Provider 管理器提供。
  */
 @Configuration
 @ConditionalOnClass(SecurityFilterChain.class)
-@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true",
+    matchIfMissing = true)
 @RequiredArgsConstructor
 public class ClientSecurityConfiguration {
 
@@ -48,29 +48,24 @@ public class ClientSecurityConfiguration {
     @Order(20)
     SecurityFilterChain clientSecurityFilterChain(HttpSecurity http) throws Exception {
         LoginProviderGroup clientGroup = loginProviderGroupManager.requireGroup(ClientAuthConstants.LOGIN_GROUP_ID);
-        AuthenticationManager clientAuthenticationManager = loginProviderGroupManager
-                .requireAuthenticationManager(ClientAuthConstants.LOGIN_GROUP_ID);
+        AuthenticationManager clientAuthenticationManager =
+            loginProviderGroupManager.requireAuthenticationManager(ClientAuthConstants.LOGIN_GROUP_ID);
         String authBase = clientComponentProperties.getAuth().getBasePath();
 
         http.securityMatcher("/client/api/**");
-        RealmSecurityFilterChainSupport.applyStatelessJwtDefaults(
-                http, clientAuthenticationManager, securityJsonHandlers, securityJsonHandlers);
+        RealmSecurityFilterChainSupport.applyStatelessJwtDefaults(http, clientAuthenticationManager,
+            securityJsonHandlers, securityJsonHandlers);
         http.authorizeHttpRequests(auth -> {
             auth.requestMatchers(HttpMethod.POST, authBase + "/register").permitAll();
             auth.requestMatchers(HttpMethod.POST, ClientAuthConstants.REFRESH_TOKEN_PATH).permitAll();
-            RealmSecurityFilterChainSupport.permitProviderLoginEndpoints(
-                    auth, loginProviderGroupManager, ClientAuthConstants.LOGIN_GROUP_ID, clientGroup);
+            RealmSecurityFilterChainSupport.permitProviderLoginEndpoints(auth, loginProviderGroupManager,
+                ClientAuthConstants.LOGIN_GROUP_ID, clientGroup);
             auth.requestMatchers("/error").permitAll();
             auth.anyRequest().authenticated();
         });
-        RealmSecurityFilterChainSupport.registerJwtFilters(
-                http, authTokenRefreshFilter, clientJwtAuthenticationFilter);
-        return RealmSecurityFilterChainSupport.buildWithProviderLoginFilters(
-                http,
-                clientGroup,
-                loginProviderGroupManager,
-                clientAuthenticationManager,
-                clientLoginSuccessHandler,
-                clientLoginFailureHandler);
+        RealmSecurityFilterChainSupport.registerJwtFilters(http, authTokenRefreshFilter, clientJwtAuthenticationFilter);
+        return RealmSecurityFilterChainSupport.buildWithProviderLoginFilters(http, clientGroup,
+            loginProviderGroupManager, clientAuthenticationManager, clientLoginSuccessHandler,
+            clientLoginFailureHandler);
     }
 }

@@ -37,8 +37,8 @@ public class ClientUserService extends ServiceImpl<ClientUserBaseMapper, ClientU
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
         String username = resolveUsername(userBase.getId());
-        return new ClientUserProfileVO(
-                userBase.getUserCode(), username, userBase.getNickname(), userBase.getAvatar(), userBase.getStatus());
+        return new ClientUserProfileVO(userBase.getUserCode(), username, userBase.getNickname(), userBase.getAvatar(),
+            userBase.getStatus());
     }
 
     /**
@@ -58,24 +58,19 @@ public class ClientUserService extends ServiceImpl<ClientUserBaseMapper, ClientU
     /**
      * 构建登录用户负载体。
      *
-     * @param userBase        用户基础信息
+     * @param userBase 用户基础信息
      * @param loginIdentifier 登录标识
      * @return 登录用户
      */
     public ClientLoginUser buildLoginUser(ClientUserBase userBase, String loginIdentifier) {
         boolean enabled = userBase.getStatus() != null && userBase.getStatus() == UserStatus.ACTIVE.getValue();
-        return new ClientLoginUser(
-                userBase.getId(),
-                userBase.getUserCode(),
-                loginIdentifier,
-                userBase.getNickname(),
-                enabled,
-                List.of());
+        return new ClientLoginUser(userBase.getId(), userBase.getUserCode(), loginIdentifier, userBase.getNickname(),
+            enabled, List.of());
     }
 
     private String resolveUsername(Long userId) {
-        ClientUserAccount account = clientUserAccountService.getOne(new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getUserId, userId)
+        ClientUserAccount account = clientUserAccountService
+            .getOne(new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userId)
                 .eq(ClientUserAccount::getAccountType, AccountType.USERNAME.getCode()));
         return account == null ? null : account.getAccountIdentifier();
     }

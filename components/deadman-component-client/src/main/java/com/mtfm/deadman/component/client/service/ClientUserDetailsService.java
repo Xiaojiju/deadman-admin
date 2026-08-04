@@ -29,14 +29,12 @@ public class ClientUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String userCode) throws UsernameNotFoundException {
-        ClientUserBase userBase = clientUserService.lambdaQuery()
-                .eq(ClientUserBase::getUserCode, userCode)
-                .one();
+        ClientUserBase userBase = clientUserService.lambdaQuery().eq(ClientUserBase::getUserCode, userCode).one();
         if (userBase == null) {
             throw new UsernameNotFoundException("用户不存在: " + userCode);
         }
-        ClientUserAccount account = clientUserAccountService.getOne(new LambdaQueryWrapper<ClientUserAccount>()
-                .eq(ClientUserAccount::getUserId, userBase.getId())
+        ClientUserAccount account = clientUserAccountService
+            .getOne(new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userBase.getId())
                 .eq(ClientUserAccount::getAccountType, AccountType.USERNAME.getCode()));
         String username = account != null ? account.getAccountIdentifier() : null;
         ClientLoginUser loginUser = clientUserService.buildLoginUser(userBase, username);

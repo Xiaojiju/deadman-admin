@@ -43,24 +43,18 @@ public class ClientUserAdminService {
      * @return 分页结果
      */
     public PageVO<ClientUserAdminSummaryVO> pageUsers(ClientUserAdminPageQuery query) {
-        LambdaQueryWrapper<ClientUserBase> wrapper = new LambdaQueryWrapper<ClientUserBase>()
-                .orderByDesc(ClientUserBase::getCreateTime);
+        LambdaQueryWrapper<ClientUserBase> wrapper =
+            new LambdaQueryWrapper<ClientUserBase>().orderByDesc(ClientUserBase::getCreateTime);
         if (query.getStatus() != null) {
             wrapper.eq(ClientUserBase::getStatus, query.getStatus());
         }
         if (StringUtils.hasText(query.getKeyword())) {
             String keyword = query.getKeyword().trim();
             List<Long> accountMatchedIds = clientUserAccountService
-                    .list(new LambdaQueryWrapper<ClientUserAccount>()
-                            .in(
-                                    ClientUserAccount::getAccountType,
-                                    AccountType.USERNAME.getCode(),
-                                    AccountType.PHONE.getCode())
-                            .like(ClientUserAccount::getAccountIdentifier, keyword))
-                    .stream()
-                    .map(ClientUserAccount::getUserId)
-                    .distinct()
-                    .toList();
+                .list(new LambdaQueryWrapper<ClientUserAccount>()
+                    .in(ClientUserAccount::getAccountType, AccountType.USERNAME.getCode(), AccountType.PHONE.getCode())
+                    .like(ClientUserAccount::getAccountIdentifier, keyword))
+                .stream().map(ClientUserAccount::getUserId).distinct().toList();
             wrapper.and(w -> {
                 w.like(ClientUserBase::getNickname, keyword).or().like(ClientUserBase::getUserCode, keyword);
                 if (!accountMatchedIds.isEmpty()) {
@@ -69,8 +63,8 @@ public class ClientUserAdminService {
             });
         }
 
-        Page<ClientUserBase> page = clientUserService.page(
-                new Page<>(query.resolvedCurrent(), query.resolvedSize()), wrapper);
+        Page<ClientUserBase> page =
+            clientUserService.page(new Page<>(query.resolvedCurrent(), query.resolvedSize()), wrapper);
         List<ClientUserBase> records = page.getRecords();
         if (records.isEmpty()) {
             return PageVO.of(List.of(), page.getTotal(), query);
@@ -81,16 +75,9 @@ public class ClientUserAdminService {
         Map<Long, String> phones = clientUserAccountService.loadPhonesByUserIds(userIds);
 
         List<ClientUserAdminSummaryVO> items = records.stream()
-                .map(user -> new ClientUserAdminSummaryVO(
-                        user.getId(),
-                        user.getUserCode(),
-                        usernames.get(user.getId()),
-                        user.getNickname(),
-                        user.getAvatar(),
-                        phones.get(user.getId()),
-                        user.getStatus(),
-                        user.getCreateTime()))
-                .toList();
+            .map(user -> new ClientUserAdminSummaryVO(user.getId(), user.getUserCode(), usernames.get(user.getId()),
+                user.getNickname(), user.getAvatar(), phones.get(user.getId()), user.getStatus(), user.getCreateTime()))
+            .toList();
         return PageVO.of(items, page.getTotal(), query);
     }
 
@@ -131,10 +118,10 @@ public class ClientUserAdminService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void deleteUser(Long userId) {
-        clientUserAccountService.remove(
-                new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userId));
-        clientUserPasswordService.remove(
-                new LambdaQueryWrapper<ClientUserPassword>().eq(ClientUserPassword::getUserId, userId));
+        clientUserAccountService
+            .remove(new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userId));
+        clientUserPasswordService
+            .remove(new LambdaQueryWrapper<ClientUserPassword>().eq(ClientUserPassword::getUserId, userId));
         clientUserService.removeById(userId);
         invalidateSessions(userId);
     }
@@ -142,32 +129,18 @@ public class ClientUserAdminService {
     private ClientUserAdminDetailVO toDetail(ClientUserBase user) {
         String username = loadPrimaryUsernames(List.of(user.getId())).get(user.getId());
         String phone = clientUserAccountService.findPhoneByUserId(user.getId());
-        List<ClientUserAccountBindingVO> accounts = clientUserAccountService.list(
-                new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, user.getId()))
-                .stream()
-                .map(account -> new ClientUserAccountBindingVO(
-                        account.getAccountType(),
-                        account.getAccountIdentifier(),
-                        account.getOauthProvider(),
-                        account.getVerified(),
-                        account.getStatus()))
-                .toList();
-        return new ClientUserAdminDetailVO(
-                user.getId(),
-                user.getUserCode(),
-                username,
-                user.getNickname(),
-                user.getAvatar(),
-                phone,
-                user.getStatus(),
-                accounts,
-                user.getCreateTime(),
-                user.getUpdateTime());
+        List<ClientUserAccountBindingVO> accounts = clientUserAccountService
+            .list(new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, user.getId())).stream()
+            .map(account -> new ClientUserAccountBindingVO(account.getAccountType(), account.getAccountIdentifier(),
+                account.getOauthProvider(), account.getVerified(), account.getStatus()))
+            .toList();
+        return new ClientUserAdminDetailVO(user.getId(), user.getUserCode(), username, user.getNickname(),
+            user.getAvatar(), phone, user.getStatus(), accounts, user.getCreateTime(), user.getUpdateTime());
     }
 
     private void syncAccountStatus(Long userId, Integer status) {
-        List<ClientUserAccount> accounts = clientUserAccountService.list(
-                new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userId));
+        List<ClientUserAccount> accounts = clientUserAccountService
+            .list(new LambdaQueryWrapper<ClientUserAccount>().eq(ClientUserAccount::getUserId, userId));
         for (ClientUserAccount account : accounts) {
             account.setStatus(status);
         }
@@ -185,11 +158,9 @@ public class ClientUserAdminService {
             return Collections.emptyMap();
         }
         return clientUserAccountService
-                .list(new LambdaQueryWrapper<ClientUserAccount>()
-                        .in(ClientUserAccount::getUserId, userIds)
-                        .eq(ClientUserAccount::getAccountType, AccountType.USERNAME.getCode()))
-                .stream()
-                .collect(Collectors.toMap(
-                        ClientUserAccount::getUserId, ClientUserAccount::getAccountIdentifier, (a, b) -> a));
+            .list(new LambdaQueryWrapper<ClientUserAccount>().in(ClientUserAccount::getUserId, userIds)
+                .eq(ClientUserAccount::getAccountType, AccountType.USERNAME.getCode()))
+            .stream().collect(
+                Collectors.toMap(ClientUserAccount::getUserId, ClientUserAccount::getAccountIdentifier, (a, b) -> a));
     }
 }

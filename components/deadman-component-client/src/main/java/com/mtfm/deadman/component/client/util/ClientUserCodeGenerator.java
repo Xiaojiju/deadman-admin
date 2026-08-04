@@ -11,8 +11,7 @@ public final class ClientUserCodeGenerator {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final HexFormat HEX = HexFormat.of();
 
-    private ClientUserCodeGenerator() {
-    }
+    private ClientUserCodeGenerator() {}
 
     /**
      * 生成用户编码。

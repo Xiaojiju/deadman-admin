@@ -43,3 +43,26 @@ CREATE TABLE IF NOT EXISTS client_user_password (
     PRIMARY KEY (id),
     CONSTRAINT uk_client_user_password_user_id UNIQUE (user_id)
 );
+
+CREATE TABLE IF NOT EXISTS client_notification (
+    id                BIGINT        NOT NULL,
+    title             VARCHAR(128)  NOT NULL,
+    content           VARCHAR(512)  NOT NULL,
+    biz_type          VARCHAR(64)   NOT NULL,
+    biz_id            BIGINT        NULL,
+    extra_json        VARCHAR(2048) NULL,
+    recipient_count   INT           NOT NULL DEFAULT 0,
+    create_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS client_notification_recipient (
+    id                BIGINT        NOT NULL,
+    notification_id   BIGINT        NOT NULL,
+    user_id           BIGINT        NOT NULL,
+    read_status       SMALLINT      NOT NULL DEFAULT 0,
+    read_time         TIMESTAMP     NULL,
+    create_time       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);

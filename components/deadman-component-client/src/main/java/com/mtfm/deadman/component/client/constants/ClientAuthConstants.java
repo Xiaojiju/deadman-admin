@@ -29,6 +29,5 @@ public final class ClientAuthConstants {
     /** Refresh Token HttpOnly Cookie 名称 */
     public static final String REFRESH_TOKEN_COOKIE_NAME = "deadman_client_refresh_token";
 
-    private ClientAuthConstants() {
-    }
+    private ClientAuthConstants() {}
 }

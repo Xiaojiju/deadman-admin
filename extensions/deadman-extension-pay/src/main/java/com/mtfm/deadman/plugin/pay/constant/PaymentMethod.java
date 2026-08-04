@@ -17,6 +17,9 @@ public final class PaymentMethod {
     /** H5 支付 */
     public static final String H5 = "H5";
 
+    /** Mock 模拟支付（仅用于本地/测试） */
+    public static final String MOCK = "MOCK";
+
     private PaymentMethod() {
     }
 }

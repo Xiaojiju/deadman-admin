@@ -84,6 +84,10 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-storage-cos</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
             <artifactId>deadman-extension-pay</artifactId>
         </dependency>
         <dependency>

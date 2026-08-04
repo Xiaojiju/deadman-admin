@@ -12,7 +12,8 @@ import java.util.List;
  * 用户端组件向核心注册表贡献描述信息。
  */
 @Configuration
-@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "deadman.component.client", name = "enabled", havingValue = "true",
+    matchIfMissing = true)
 public class ClientComponentRegistration {
 
     /**
@@ -23,12 +24,7 @@ public class ClientComponentRegistration {
      */
     @Bean
     DeadmanComponentDescriptor clientDeadmanComponentDescriptor(ClientComponentProperties properties) {
-        return new DeadmanComponentDescriptor(
-                "client",
-                "用户端",
-                "独立用户体系：注册、登录与个人中心",
-                "/client/api",
-                100,
-                new DeadmanComponentUiHints(properties.getAuth().getBasePath(), List.of("auth", "profile")));
+        return new DeadmanComponentDescriptor("client", "用户端", "独立用户体系：注册、登录与个人中心", "/client/api", 100,
+            new DeadmanComponentUiHints(properties.getAuth().getBasePath(), List.of("auth", "profile")));
     }
 }

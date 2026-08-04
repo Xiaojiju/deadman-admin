@@ -1,8 +1,9 @@
 package com.mtfm.deadman.security.controller;
 
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.security.LoginUser;
-import com.mtfm.deadman.security.SecurityAuthSupport;
 import com.mtfm.deadman.security.dto.auth.ChangePasswordRequest;
 import com.mtfm.deadman.security.dto.auth.RegisterRequest;
 import com.mtfm.deadman.security.service.AuthCredentialsService;
@@ -54,9 +55,9 @@ public class AuthController {
      */
     @GetMapping("/permissions")
     @PreAuthorize("hasAuthority('auth:permissions:read')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<UserAuthorityVO> currentPermissions(@AuthenticationPrincipal LoginUser loginUser) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        return Result.ok(authPermissionService.getUserAuthority(user.getUserId()));
+        return Result.ok(authPermissionService.getUserAuthority(loginUser.getUserId()));
     }
 
     /**
@@ -68,10 +69,10 @@ public class AuthController {
      */
     @PutMapping("/password")
     @PreAuthorize("hasAuthority('auth:password:change')")
+    @RequireAuth(AuthRealm.ADMIN)
     public Result<Void> changePassword(
             @AuthenticationPrincipal LoginUser loginUser, @Valid @RequestBody ChangePasswordRequest request) {
-        LoginUser user = SecurityAuthSupport.requireLogin(loginUser);
-        authCredentialsService.changePassword(user.getUserId(), user.getUserCode(), request);
+        authCredentialsService.changePassword(loginUser.getUserId(), loginUser.getUserCode(), request);
         return Result.ok();
     }
 }

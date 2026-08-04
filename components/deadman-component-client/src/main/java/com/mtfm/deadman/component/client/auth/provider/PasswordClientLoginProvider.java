@@ -46,8 +46,7 @@ public class PasswordClientLoginProvider implements ClientLoginProvider {
         if (!StringUtils.hasText(loginRequest.username()) || !StringUtils.hasText(loginRequest.password())) {
             throw new AuthenticationServiceException("用户名或密码不能为空");
         }
-        return new ClientUsernamePasswordAuthenticationToken(
-                loginRequest.username().trim(), loginRequest.password());
+        return new ClientUsernamePasswordAuthenticationToken(loginRequest.username().trim(), loginRequest.password());
     }
 
     @Override
@@ -58,9 +57,8 @@ public class PasswordClientLoginProvider implements ClientLoginProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String loginUsername = authentication.getName();
-        String rawPassword = authentication.getCredentials() == null
-                ? null
-                : authentication.getCredentials().toString();
+        String rawPassword =
+            authentication.getCredentials() == null ? null : authentication.getCredentials().toString();
         if (rawPassword == null) {
             throw new BadCredentialsException("密码不能为空");
         }

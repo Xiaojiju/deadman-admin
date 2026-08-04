@@ -1,7 +1,8 @@
 package com.mtfm.deadman.support.client.openauth.controller;
 
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.component.client.ClientAuthSupport;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 import com.mtfm.deadman.component.client.constants.ClientAuthConstants;
 import com.mtfm.deadman.component.openauth.dto.OpenAuthCodeRequest;
@@ -34,12 +35,12 @@ public class ClientOpenAuthController {
      * @return 授权码
      */
     @PostMapping("/codes")
+    @RequireAuth(AuthRealm.CLIENT)
     public Result<OpenAuthCodeVO> issueCode(
             @AuthenticationPrincipal ClientLoginUser loginUser, @Valid @RequestBody OpenAuthCodeRequest request) {
-        ClientLoginUser user = ClientAuthSupport.requireLogin(loginUser);
         return Result.ok(openAuthFacadeService.issueAuthCode(
                 ClientAuthConstants.LOGIN_GROUP_ID,
-                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()),
+                new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities()),
                 request.appId()));
     }
 }

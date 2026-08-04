@@ -31,7 +31,8 @@ deadman-admin/                          # 父 POM（依赖版本管理）
 │   ├── deadman-plugin-wechat/          # 微信小程序登录与手机号
 │   ├── deadman-plugin-excel/           # EasyExcel 导入导出工具包
 │   ├── deadman-plugin-storage-local/   # 本地磁盘存储 Provider
-│   └── deadman-plugin-storage-oss/     # 阿里云 OSS 存储 Provider
+│   ├── deadman-plugin-storage-oss/     # 阿里云 OSS 存储 Provider
+│   └── deadman-plugin-storage-cos/     # 腾讯云 COS 存储 Provider
 ├── components/                         # 可插拔业务组件（见 components/README.md）
 │   └── deadman-component-client/       # 用户端（独立 JWT，/client/api）
 └── deadman-app/                        # 默认组装与启动入口
