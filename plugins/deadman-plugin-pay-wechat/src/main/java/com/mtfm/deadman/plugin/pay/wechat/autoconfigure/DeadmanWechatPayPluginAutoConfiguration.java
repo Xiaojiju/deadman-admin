@@ -37,6 +37,7 @@ public class DeadmanWechatPayPluginAutoConfiguration {
         if (properties.shouldUseMock()) {
             return new MockWechatPayApiGateway();
         }
+        properties.requireRealGatewayCredentials();
         return new WechatPayApiGatewayImpl(properties);
     }
 }

@@ -4,7 +4,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
 import com.mtfm.deadman.plugin.pay.event.PaymentOrderStatusChangedEvent;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderStatusChangedPublisher;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderStatusChangedPublisher;
 
 import lombok.RequiredArgsConstructor;
 

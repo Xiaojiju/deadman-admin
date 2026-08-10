@@ -56,11 +56,7 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-component-open-auth</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-support-client-open-auth</artifactId>
+            <artifactId>deadman-component-engineering</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
@@ -76,15 +72,11 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
+            <artifactId>deadman-extension-crypto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-storage-local</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-storage-oss</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-storage-cos</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
@@ -93,6 +85,10 @@
         <dependency>
             <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-pay-wechat</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-pay-mock</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>

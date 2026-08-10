@@ -82,6 +82,21 @@ deadman:
       jwt:
         secret: ${DEADMAN_OPEN_AUTH_JWT_SECRET:7a4e9c2f1b8d6035e91a4c7f2d8b6e0a3c5f9d1b7e4a8620f3d6b9c1e5a7d4f8b2}
         issuer: deadman-open-auth
+    engineering:
+      enabled: ${DEADMAN_COMPONENT_ENGINEERING_ENABLED:true}
+      api:
+        client-base-path: /client/api/engineering
+        admin-base-path: /api/engineering
+      banner-push:
+        scheduler-enabled: ${DEADMAN_COMPONENT_ENGINEERING_BANNER_PUSH_SCHEDULER_ENABLED:true}
+        fixed-delay-ms: ${DEADMAN_COMPONENT_ENGINEERING_BANNER_PUSH_FIXED_DELAY_MS:60000}
+      shop-qr-code:
+        # 扫码落地页，如 pages/merchant/detail；为空跳转小程序主页。scene 为店铺码 shopCode
+        page: ${DEADMAN_COMPONENT_ENGINEERING_SHOP_QR_PAGE:}
+        check-path: ${DEADMAN_COMPONENT_ENGINEERING_SHOP_QR_CHECK_PATH:true}
+        env-version: ${DEADMAN_COMPONENT_ENGINEERING_SHOP_QR_ENV_VERSION:release}
+        width: ${DEADMAN_COMPONENT_ENGINEERING_SHOP_QR_WIDTH:430}
+        cache-ttl: ${DEADMAN_COMPONENT_ENGINEERING_SHOP_QR_CACHE_TTL:30d}
   support:
     client-open-auth:
       enabled: ${DEADMAN_SUPPORT_CLIENT_OPEN_AUTH_ENABLED:true}
@@ -136,27 +151,60 @@ deadman:
       public-url-mode: cdn
       signed-url-expire-seconds: 3600
       path-prefix: ""
-    storage-cos:
-      enabled: ${DEADMAN_PLUGIN_STORAGE_COS_ENABLED:false}
-      region: ${COS_REGION:ap-guangzhou}
-      secret-id: ${COS_SECRET_ID:}
-      secret-key: ${COS_SECRET_KEY:}
-      default-bucket: ${COS_BUCKET_DEFAULT:engineering-public}
-      bucket-routing:
-        rent: engineering-user-upload
-        spare-part: engineering-merchant
-        merchant-license: engineering-private
-      cdn-domains: {}
-      bucket-access-modes:
-        engineering-private: signed
-      public-url-mode: cdn
-      signed-url-expire-seconds: 3600
-      path-prefix: ""
     data-scope:
       enabled: ${DEADMAN_PLUGIN_DATA_SCOPE_ENABLED:true}
+    crypto:
+      enabled: ${DEADMAN_PLUGIN_CRYPTO_ENABLED:true}
+      # 启用却无密钥时启动失败，避免静默明文
+      require-keys: ${DEADMAN_CRYPTO_REQUIRE_KEYS:true}
+      # 指定模块却无模块密钥时禁止回退 default-key
+      strict-module-key: ${DEADMAN_CRYPTO_STRICT_MODULE_KEY:true}
+      default-algorithm: AES_GCM_ENVELOPE
+      default-key-id: default
+      # openssl rand -base64 32
+      default-key: ${DEADMAN_CRYPTO_DEFAULT_KEY:}
+      module-keys:
+        pay:
+          key-id: pay
+          key: ${DEADMAN_CRYPTO_PAY_KEY:}
+      # 密钥轮换：旧 keyId 仅用于解密历史密文
+      # additional-keys:
+      #   pay-v1: ${DEADMAN_CRYPTO_PAY_V1_KEY:}
     pay:
       enabled: ${DEADMAN_PLUGIN_PAY_ENABLED:true}
+      # 本地联调可切：default-provider: mock
       default-provider: wechat-jsapi
+      # 测试模式：启用后预下单金额固定为 0.01 元（1 分），仅用于沙箱/联调，生产务必关闭
+      test-mode:
+        enabled: ${DEADMAN_PLUGIN_PAY_TEST_MODE_ENABLED:false}
+        fixed-amount-cents: ${DEADMAN_PLUGIN_PAY_TEST_MODE_FIXED_AMOUNT_CENTS:1}
+      abnormal-refund:
+        # 默认关闭：自动退商户户不会按「退给买家」推进业务；确认运营流程后再开启
+        auto-enabled: ${DEADMAN_PLUGIN_PAY_ABNORMAL_REFUND_AUTO_ENABLED:false}
+        default-receive-type: ${DEADMAN_PLUGIN_PAY_ABNORMAL_REFUND_RECEIVE_TYPE:MERCHANT_BANK_CARD}
+      refund-sync:
+        scheduler-enabled: ${DEADMAN_PLUGIN_PAY_REFUND_SYNC_SCHEDULER_ENABLED:true}
+        cron: ${DEADMAN_PLUGIN_PAY_REFUND_SYNC_CRON:30 * * * * ?}
+        min-age: ${DEADMAN_PLUGIN_PAY_REFUND_SYNC_MIN_AGE:1m}
+        max-age: ${DEADMAN_PLUGIN_PAY_REFUND_SYNC_MAX_AGE:24h}
+        batch-size: ${DEADMAN_PLUGIN_PAY_REFUND_SYNC_BATCH_SIZE:50}
+        parallel-enabled: ${DEADMAN_PLUGIN_PAY_REFUND_SYNC_PARALLEL_ENABLED:true}
+      # 商家转账：创建限额（总金额/拆单笔数）
+      transfer-limits:
+        max-amount-cents: ${DEADMAN_PLUGIN_PAY_TRANSFER_MAX_AMOUNT_CENTS:10000000}
+        max-bills-per-batch: ${DEADMAN_PLUGIN_PAY_TRANSFER_MAX_BILLS:500}
+      # 商家转账：待转派发（额度解锁后自动继续）
+      transfer-dispatch:
+        scheduler-enabled: ${DEADMAN_PLUGIN_PAY_TRANSFER_DISPATCH_SCHEDULER_ENABLED:true}
+        cron: ${DEADMAN_PLUGIN_PAY_TRANSFER_DISPATCH_CRON:15 * * * * ?}
+        batch-size: ${DEADMAN_PLUGIN_PAY_TRANSFER_DISPATCH_BATCH_SIZE:20}
+      # 商家转账：非终态查单
+      transfer-sync:
+        scheduler-enabled: ${DEADMAN_PLUGIN_PAY_TRANSFER_SYNC_SCHEDULER_ENABLED:true}
+        cron: ${DEADMAN_PLUGIN_PAY_TRANSFER_SYNC_CRON:45 * * * * ?}
+        min-age: ${DEADMAN_PLUGIN_PAY_TRANSFER_SYNC_MIN_AGE:1m}
+        max-age: ${DEADMAN_PLUGIN_PAY_TRANSFER_SYNC_MAX_AGE:48h}
+        batch-size: ${DEADMAN_PLUGIN_PAY_TRANSFER_SYNC_BATCH_SIZE:50}
       sync:
         scheduler-enabled: ${DEADMAN_PLUGIN_PAY_SYNC_SCHEDULER_ENABLED:true}
         cron: ${DEADMAN_PLUGIN_PAY_SYNC_CRON:0 * * * * ?}
@@ -166,9 +214,18 @@ deadman:
         parallel-enabled: ${DEADMAN_PLUGIN_PAY_SYNC_PARALLEL_ENABLED:true}
         executor-bean-name: ${DEADMAN_PLUGIN_PAY_SYNC_EXECUTOR_BEAN_NAME:}
         parallelism: ${DEADMAN_PLUGIN_PAY_SYNC_PARALLELISM:4}
+    pay-mock:
+      enabled: ${DEADMAN_PLUGIN_PAY_MOCK_ENABLED:false}
+      auto-complete-on-prepay: ${DEADMAN_PLUGIN_PAY_MOCK_AUTO_COMPLETE:true}
+      auto-complete-on-refund: ${DEADMAN_PLUGIN_PAY_MOCK_AUTO_COMPLETE_REFUND:true}
+      auto-complete-on-transfer: ${DEADMAN_PLUGIN_PAY_MOCK_AUTO_COMPLETE_TRANSFER:true}
+      notify-endpoint: ${DEADMAN_PLUGIN_PAY_MOCK_NOTIFY_ENDPOINT:/client/api/pay/mock/notify}
+      refund-notify-endpoint: ${DEADMAN_PLUGIN_PAY_MOCK_REFUND_NOTIFY_ENDPOINT:/client/api/pay/mock/refund/notify}
+      transfer-notify-endpoint: ${DEADMAN_PLUGIN_PAY_MOCK_TRANSFER_NOTIFY_ENDPOINT:/client/api/pay/mock/transfer/notify}
     pay-wechat:
       enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_ENABLED:false}
-      mock-enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_MOCK_ENABLED:true}
+      # 生产务必 false；本地无商户号联调可显式 true
+      mock-enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_MOCK_ENABLED:false}
       mch-id: ${WECHAT_PAY_MCH_ID:}
       api-v3-key: ${WECHAT_PAY_API_V3_KEY:}
       merchant-serial-no: ${WECHAT_PAY_SERIAL_NO:}
@@ -179,11 +236,19 @@ deadman:
           app-id: ${WECHAT_PAY_JSAPI_APP_ID:${DEADMAN_WECHAT_MINIPROGRAM_APP_ID:}}
           notify-endpoint: ${WECHAT_PAY_JSAPI_NOTIFY_ENDPOINT:/client/api/pay/wechat/jsapi/notify}
           notify-url: ${WECHAT_PAY_JSAPI_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/jsapi/notify}
+          refund-notify-endpoint: ${WECHAT_PAY_JSAPI_REFUND_NOTIFY_ENDPOINT:/client/api/pay/wechat/jsapi/refund/notify}
+          refund-notify-url: ${WECHAT_PAY_JSAPI_REFUND_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/jsapi/refund/notify}
+          transfer-notify-endpoint: ${WECHAT_PAY_JSAPI_TRANSFER_NOTIFY_ENDPOINT:/client/api/pay/wechat/jsapi/transfer/notify}
+          transfer-notify-url: ${WECHAT_PAY_JSAPI_TRANSFER_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/jsapi/transfer/notify}
         wechat-native:
           enabled: ${DEADMAN_PLUGIN_PAY_WECHAT_NATIVE_ENABLED:false}
           app-id: ${WECHAT_PAY_NATIVE_APP_ID:}
           notify-endpoint: ${WECHAT_PAY_NATIVE_NOTIFY_ENDPOINT:/client/api/pay/wechat/native/notify}
           notify-url: ${WECHAT_PAY_NATIVE_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/native/notify}
+          refund-notify-endpoint: ${WECHAT_PAY_NATIVE_REFUND_NOTIFY_ENDPOINT:/client/api/pay/wechat/native/refund/notify}
+          refund-notify-url: ${WECHAT_PAY_NATIVE_REFUND_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/native/refund/notify}
+          transfer-notify-endpoint: ${WECHAT_PAY_NATIVE_TRANSFER_NOTIFY_ENDPOINT:/client/api/pay/wechat/native/transfer/notify}
+          transfer-notify-url: ${WECHAT_PAY_NATIVE_TRANSFER_NOTIFY_URL:https://your-domain.example.com/client/api/pay/wechat/native/transfer/notify}
     logistics:
       enabled: ${DEADMAN_PLUGIN_LOGISTICS_ENABLED:true}
       default-provider: kuaidi100

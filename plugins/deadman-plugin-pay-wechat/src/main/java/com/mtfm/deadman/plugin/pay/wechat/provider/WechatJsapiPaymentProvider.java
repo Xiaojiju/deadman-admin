@@ -8,14 +8,14 @@ import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentMethod;
 import com.mtfm.deadman.plugin.pay.constant.PaymentPlatform;
-import com.mtfm.deadman.plugin.pay.spi.PaymentChannelExtra;
-import com.mtfm.deadman.plugin.pay.spi.PaymentClientInvokeParams;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentProvider;
-import com.mtfm.deadman.plugin.pay.spi.PaymentQueryResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentChannelExtra;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentClientInvokeParams;
+import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentNotifyResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentQueryResult;
 import com.mtfm.deadman.plugin.pay.wechat.client.WechatPayApiGateway;
 import com.mtfm.deadman.plugin.pay.wechat.client.WechatPayJsapiPrepayResult;
 import com.mtfm.deadman.plugin.pay.wechat.config.WechatPayPluginProperties;
@@ -96,7 +96,7 @@ public class WechatJsapiPaymentProvider implements PaymentProvider {
      * {@inheritDoc}
      */
     @Override
-    public PaymentNotifyResult parseNotify(PaymentNotifyContext context) {
+    public PaymentNotifyResult parseNotify(ChannelNotifyContext context) {
         WechatPayNotifyParseResult parsed = wechatPayApiGateway.parseNotify(context);
         return toNotifyResult(parsed, context.rawBody());
     }
@@ -147,6 +147,7 @@ public class WechatJsapiPaymentProvider implements PaymentProvider {
                 parsed.outTradeNo(),
                 parsed.transactionId(),
                 WechatPayTradeStateMapper.toPaymentStatus(parsed.tradeState()),
+                parsed.amountTotal(),
                 rawPayload);
     }
 
@@ -155,6 +156,7 @@ public class WechatJsapiPaymentProvider implements PaymentProvider {
                 parsed.outTradeNo(),
                 parsed.transactionId(),
                 WechatPayTradeStateMapper.toPaymentStatus(parsed.tradeState()),
+                parsed.amountTotal(),
                 null);
     }
 }

@@ -41,6 +41,9 @@ public class PaymentOrder {
     /** 订单金额（分） */
     private Integer amountTotal;
 
+    /** 已成功退款累计金额（分） */
+    private Integer amountRefunded;
+
     /** 支付状态 */
     private String status;
 

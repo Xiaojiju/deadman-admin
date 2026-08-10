@@ -1,12 +1,17 @@
 package com.mtfm.deadman.plugin.wechat.common;
 
-import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
+
+import com.mtfm.deadman.common.exception.BusinessException;
+import com.mtfm.deadman.common.result.ResultCode;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -42,6 +47,37 @@ public class WechatRestClientSupport {
     public JsonNode postForJson(String url, Object requestBody) {
         String rawBody = restClient.post().uri(url).body(requestBody).retrieve().body(String.class);
         return parseJsonBody(rawBody);
+    }
+
+    /**
+     * 发起 POST 请求并返回原始字节（用于小程序码等二进制接口）。
+     * <p>
+     * 微信成功时直接返回图片 Buffer；失败时返回 JSON（含 errcode/errmsg），此时抛出业务异常。
+     * 若 {@code requestBody} 已是 JSON 字符串，则按 UTF-8 原始字节提交，避免二次序列化。
+     *
+     * @param url         请求地址
+     * @param requestBody 请求体（JSON 字符串或可序列化对象）
+     * @param errorHint   失败时的默认错误提示
+     * @return 图片等二进制内容
+     */
+    public byte[] postForBytes(String url, Object requestBody, String errorHint) {
+        var requestSpec = restClient.post().uri(url).contentType(MediaType.APPLICATION_JSON);
+        if (requestBody instanceof String jsonBody) {
+            requestSpec = requestSpec.body(jsonBody.getBytes(StandardCharsets.UTF_8));
+        } else {
+            requestSpec = requestSpec.body(requestBody);
+        }
+        byte[] bytes = requestSpec.retrieve().body(byte[].class);
+        if (bytes == null || bytes.length == 0) {
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, errorHint + "：响应为空");
+        }
+        // 失败响应以 '{' 开头的 JSON；成功为图片魔数（如 PNG 0x89）
+        if (bytes[0] == '{') {
+            JsonNode body = parseJsonBody(new String(bytes, StandardCharsets.UTF_8));
+            assertWechatSuccess(body, errorHint);
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, errorHint + "：响应格式异常");
+        }
+        return bytes;
     }
 
     /**

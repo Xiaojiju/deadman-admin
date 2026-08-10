@@ -36,6 +36,11 @@
 | deadman-plugin-wechat | [WechatLoginProviderRegistration.md](deadman-plugin-wechat/WechatLoginProviderRegistration.md) | 微信 LoginProvider 注册与覆盖机制 |
 | deadman-extension-file | [FileController.yaml](deadman-plugin-file/FileController.yaml) | 文件上传、下载与元数据 |
 | deadman-plugin-data-scope | [UserDataScopeAdminController.yaml](deadman-plugin-data-scope/UserDataScopeAdminController.yaml) | 用户数据范围查询与分配 |
+| deadman-plugin-im-tencent | [ImClientAdminIntegration.md](deadman-plugin-im-tencent/ImClientAdminIntegration.md) | Client / Admin 腾讯云 IM 接入（凭证签发与用户映射） |
+| deadman-component-engineering | [Engineering.md](deadman-component-engineering/Engineering.md) | 工程信息组件 API 概览（含备件订单/支付） |
+| deadman-component-engineering | [ListingImages-Frontend.md](deadman-component-engineering/ListingImages-Frontend.md) | 信息发布图片上传与 imageIds（小程序前端对接） |
+| deadman-component-engineering | [client/](deadman-component-engineering/client/README.md) | 用户端 OpenAPI（按业务分类拆分） |
+| deadman-component-engineering | [admin/](deadman-component-engineering/admin/README.md) | 管理端 OpenAPI（按业务分类拆分） |
 
 公共片段：[\_shared/components.yaml](_shared/components.yaml)（管理端/用户端 JWT、`Result`、`PageParam` / `PageVO`、通用 401/403）。
 

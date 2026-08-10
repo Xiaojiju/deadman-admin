@@ -14,11 +14,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentQueryResult;
+import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentNotifyResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentQueryResult;
 import com.mtfm.deadman.plugin.pay.wechat.client.WechatPayApiGateway;
 import com.mtfm.deadman.plugin.pay.wechat.client.WechatPayJsapiPrepayResult;
 import com.mtfm.deadman.plugin.pay.wechat.config.WechatPayPluginProperties;
@@ -86,21 +86,22 @@ class WechatJsapiPaymentProviderTest {
 
     @Test
     void shouldParseNotifyViaWechatGateway() {
-        when(wechatPayApiGateway.parseNotify(any(PaymentNotifyContext.class)))
-                .thenReturn(new WechatPayNotifyParseResult("PO20260622120000123456", "wx_tx_001", "SUCCESS"));
+        when(wechatPayApiGateway.parseNotify(any(ChannelNotifyContext.class)))
+                .thenReturn(new WechatPayNotifyParseResult("PO20260622120000123456", "wx_tx_001", "SUCCESS", 100));
 
-        PaymentNotifyResult result = provider.parseNotify(new PaymentNotifyContext(
+        PaymentNotifyResult result = provider.parseNotify(new ChannelNotifyContext(
                 "{\"out_trade_no\":\"PO20260622120000123456\",\"trade_state\":\"SUCCESS\"}"));
 
         assertThat(result.outTradeNo()).isEqualTo("PO20260622120000123456");
         assertThat(result.channelTransactionId()).isEqualTo("wx_tx_001");
         assertThat(result.targetStatus()).isEqualTo("SUCCESS");
+        assertThat(result.amountTotal()).isEqualTo(100);
     }
 
     @Test
     void shouldQueryOrderViaWechatGateway() {
         when(wechatPayApiGateway.queryOrderByOutTradeNo("PO20260622120000123456"))
-                .thenReturn(new WechatPayNotifyParseResult("PO20260622120000123456", "wx_tx_001", "SUCCESS"));
+                .thenReturn(new WechatPayNotifyParseResult("PO20260622120000123456", "wx_tx_001", "SUCCESS", 100));
 
         PaymentQueryResult result = provider.queryOrder("PO20260622120000123456");
 

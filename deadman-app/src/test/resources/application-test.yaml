@@ -15,6 +15,7 @@ spring:
         - classpath:db/schema-h2.sql
         - classpath:db/client/schema-h2.sql
         - classpath:db/open-auth/schema-h2.sql
+        - classpath:db/engineering/schema-h2.sql
         - classpath:db/file/schema-h2.sql
 
 deadman:
@@ -41,6 +42,8 @@ deadman:
     pay:
       enabled: true
       default-provider: wechat-jsapi
+    pay-mock:
+      enabled: true
     pay-wechat:
       enabled: false
       mock-enabled: true

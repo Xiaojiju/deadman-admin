@@ -5,12 +5,15 @@ import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.wechat.common.WechatRestClientSupport;
 import com.mtfm.deadman.plugin.wechat.miniprogram.config.WechatMiniprogramPluginProperties;
 import com.mtfm.deadman.plugin.wechat.miniprogram.dto.WechatFaceCertInfo;
+import com.mtfm.deadman.plugin.wechat.miniprogram.dto.WechatUnlimitedQrCodeRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -23,6 +26,7 @@ public class DefaultWechatApiClient implements WechatApiClient {
     private final WechatMiniprogramPluginProperties properties;
     private final WechatAccessTokenHolder accessTokenHolder;
     private final WechatRestClientSupport restClientSupport;
+    private final JsonMapper jsonMapper;
 
     /**
      * 使用 wx.login code 换取 openid。
@@ -143,6 +147,67 @@ public class DefaultWechatApiClient implements WechatApiClient {
         restClientSupport.assertWechatSuccess(body, "查询人脸核身结果失败");
         int verifyRet = body.has("verify_ret") ? body.get("verify_ret").asInt() : 0;
         return new WechatQueryVerifyInfoResult(verifyRet);
+    }
+
+    /**
+     * 获取不限制的小程序码。
+     *
+     * @param request 小程序码参数
+     * @return 图片二进制
+     */
+    @Override
+    public byte[] getUnlimitedQrCode(WechatUnlimitedQrCodeRequest request) {
+        if (request == null || !StringUtils.hasText(request.scene())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "小程序码 scene 不能为空");
+        }
+        if (request.scene().length() > 32) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "小程序码 scene 最多 32 个字符");
+        }
+        String accessToken = getAccessToken();
+        String url = properties.getApiBaseUrl() + "/wxa/getwxacodeunlimit?access_token=" + accessToken;
+        return restClientSupport.postForBytes(url, buildUnlimitedQrCodeBody(request), "获取小程序码失败");
+    }
+
+    /**
+     * 组装 getwxacodeunlimit 请求体 JSON 字符串，仅写入非空可选字段。
+     *
+     * @param request 请求参数
+     * @return JSON 请求体字符串
+     */
+    private String buildUnlimitedQrCodeBody(WechatUnlimitedQrCodeRequest request) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("scene", request.scene());
+        if (StringUtils.hasText(request.page())) {
+            body.put("page", request.page());
+        }
+        if (request.checkPath() != null) {
+            body.put("check_path", request.checkPath());
+        }
+        if (StringUtils.hasText(request.envVersion())) {
+            body.put("env_version", request.envVersion());
+        }
+        if (request.width() != null) {
+            body.put("width", request.width());
+        }
+        if (request.autoColor() != null) {
+            body.put("auto_color", request.autoColor());
+        }
+        if (request.lineColor() != null) {
+            body.put(
+                    "line_color",
+                    Map.of(
+                            "r", request.lineColor().r(),
+                            "g", request.lineColor().g(),
+                            "b", request.lineColor().b()));
+        }
+        if (request.hyaline() != null) {
+            body.put("is_hyaline", request.hyaline());
+        }
+        try {
+            return jsonMapper.writeValueAsString(body);
+        } catch (Exception ex) {
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "组装小程序码请求体失败");
+        }
     }
 
     /**

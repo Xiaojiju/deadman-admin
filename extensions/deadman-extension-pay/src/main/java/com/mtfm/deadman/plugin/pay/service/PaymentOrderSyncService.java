@@ -14,7 +14,7 @@ import org.springframework.util.StringUtils;
 import com.mtfm.deadman.plugin.pay.config.PayOrderSyncExecutorNames;
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderSnapshot;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderSnapshot;
 
 import lombok.extern.slf4j.Slf4j;
 

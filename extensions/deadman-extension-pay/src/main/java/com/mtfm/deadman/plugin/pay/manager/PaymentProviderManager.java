@@ -11,7 +11,7 @@ import org.springframework.util.StringUtils;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
-import com.mtfm.deadman.plugin.pay.spi.PaymentProvider;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
 
 import lombok.extern.slf4j.Slf4j;
 

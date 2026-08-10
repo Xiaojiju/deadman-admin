@@ -10,10 +10,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
+import com.mtfm.deadman.plugin.pay.service.DefaultOutRefundNoSupplier;
 import com.mtfm.deadman.plugin.pay.service.DefaultPaymentOutTradeNoSupplier;
 import com.mtfm.deadman.plugin.pay.service.SpringPaymentOrderStatusChangedPublisher;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderStatusChangedPublisher;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier;
+import com.mtfm.deadman.plugin.pay.service.SpringRefundOrderStatusChangedPublisher;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderStatusChangedPublisher;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOutTradeNoSupplier;
+import com.mtfm.deadman.plugin.pay.spi.refund.OutRefundNoSupplier;
+import com.mtfm.deadman.plugin.pay.spi.refund.RefundOrderStatusChangedPublisher;
 
 /**
  * 支付插件自动配置。
@@ -48,5 +52,29 @@ public class DeadmanPayPluginAutoConfiguration {
     public PaymentOrderStatusChangedPublisher paymentOrderStatusChangedPublisher(
             ApplicationEventPublisher applicationEventPublisher) {
         return new SpringPaymentOrderStatusChangedPublisher(applicationEventPublisher);
+    }
+
+    /**
+     * 注册默认平台退款单号生成器，宿主可声明同名类型 Bean 覆盖。
+     *
+     * @return 退款单号生成 SPI 默认实现
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public OutRefundNoSupplier outRefundNoSupplier() {
+        return new DefaultOutRefundNoSupplier();
+    }
+
+    /**
+     * 注册默认退款状态变更发布器，宿主可声明 {@link RefundOrderStatusChangedPublisher} Bean 覆盖。
+     *
+     * @param applicationEventPublisher Spring 事件发布实现
+     * @return 退款状态变更发布 SPI
+     */
+    @Bean
+    @ConditionalOnMissingBean(RefundOrderStatusChangedPublisher.class)
+    public RefundOrderStatusChangedPublisher refundOrderStatusChangedPublisher(
+            ApplicationEventPublisher applicationEventPublisher) {
+        return new SpringRefundOrderStatusChangedPublisher(applicationEventPublisher);
     }
 }

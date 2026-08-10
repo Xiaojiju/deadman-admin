@@ -16,14 +16,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
 import com.mtfm.deadman.plugin.pay.manager.PaymentProviderManager;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderSnapshot;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderStatusChangedPublisher;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier;
-import com.mtfm.deadman.plugin.pay.spi.PaymentProvider;
-import com.mtfm.deadman.plugin.pay.spi.PaymentQueryResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderSnapshot;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOutTradeNoSupplier;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentQueryResult;
 
 /**
  * PayService 主动查单单元测试。
@@ -38,10 +38,13 @@ class PayServiceSyncOrderTest {
     private PaymentOrderService paymentOrderService;
 
     @Mock
+    private PaymentChannelResultApplier paymentChannelResultApplier;
+
+    @Mock
     private PaymentOutTradeNoSupplier paymentOutTradeNoSupplier;
 
     @Mock
-    private PaymentOrderStatusChangedPublisher paymentOrderStatusChangedPublisher;
+    private PayPluginProperties payPluginProperties;
 
     @Mock
     private PaymentProvider paymentProvider;
@@ -73,22 +76,35 @@ class PayServiceSyncOrderTest {
         when(paymentProviderManager.require("wechat-jsapi")).thenReturn(paymentProvider);
         when(paymentProvider.queryOrder("PO20260622120000123456"))
                 .thenReturn(new PaymentQueryResult(
-                        "PO20260622120000123456", "wx_tx_001", PaymentOrderStatus.SUCCESS, null));
-        when(paymentOrderService.transitionStatus(
-                        eq("PO20260622120000123456"), eq("wx_tx_001"), eq(PaymentOrderStatus.SUCCESS), eq(null)))
-                .thenReturn(PaymentOrderStatus.NOT_PAY);
-
-        PaymentOrder paidOrder = pendingOrder.toBuilder()
-                .status(PaymentOrderStatus.SUCCESS)
-                .channelTransactionId("wx_tx_001")
-                .build();
-        when(paymentOrderService.reload("PO20260622120000123456")).thenReturn(paidOrder);
+                        "PO20260622120000123456", "wx_tx_001", PaymentOrderStatus.SUCCESS, null, null));
+        PaymentOrderSnapshot paidSnapshot = new PaymentOrderSnapshot(
+                "PO20260622120000123456",
+                "BIZ001",
+                "wechat-jsapi",
+                "WECHAT",
+                "JSAPI",
+                "测试商品",
+                100,
+                0,
+                PaymentOrderStatus.SUCCESS,
+                null,
+                "wx_tx_001",
+                pendingOrder.getCreateTime(),
+                pendingOrder.getUpdateTime());
+        when(paymentChannelResultApplier.apply(
+                        eq("PO20260622120000123456"),
+                        eq("wx_tx_001"),
+                        eq(PaymentOrderStatus.SUCCESS),
+                        eq(null),
+                        eq(null)))
+                .thenReturn(paidSnapshot);
 
         PaymentOrderSnapshot snapshot = payService.syncOrderFromChannel("PO20260622120000123456");
 
         assertThat(snapshot.status()).isEqualTo(PaymentOrderStatus.SUCCESS);
         verify(paymentProvider).queryOrder("PO20260622120000123456");
-        verify(paymentOrderStatusChangedPublisher).publish(paidOrder, PaymentOrderStatus.NOT_PAY, PaymentOrderStatus.SUCCESS);
+        verify(paymentChannelResultApplier)
+                .apply("PO20260622120000123456", "wx_tx_001", PaymentOrderStatus.SUCCESS, null, null);
     }
 
     @Test
@@ -97,13 +113,12 @@ class PayServiceSyncOrderTest {
         when(paymentProviderManager.require("wechat-jsapi")).thenReturn(paymentProvider);
         when(paymentProvider.queryOrder("PO20260622120000123456"))
                 .thenReturn(new PaymentQueryResult(
-                        "PO20260622120000123456", null, PaymentOrderStatus.NOT_PAY, null));
+                        "PO20260622120000123456", null, PaymentOrderStatus.NOT_PAY, null, null));
 
         PaymentOrderSnapshot snapshot = payService.syncOrderFromChannel("PO20260622120000123456");
 
         assertThat(snapshot.status()).isEqualTo(PaymentOrderStatus.NOT_PAY);
-        verify(paymentOrderService, never()).transitionStatus(any(), any(), any(), any());
-        verify(paymentOrderStatusChangedPublisher, never()).publish(any(), any(), any());
+        verify(paymentChannelResultApplier, never()).apply(any(), any(), any(), any(), any());
     }
 
     @Test

@@ -17,6 +17,18 @@ public class WechatPayProviderBindingProperties {
     /** 提交给微信 API 的支付结果回调完整 URL */
     private String notifyUrl;
 
-    /** 本应用接收该 Provider 回调的 endpoint 路径 */
+    /** 本应用接收该 Provider 支付回调的 endpoint 路径 */
     private String notifyEndpoint = "/client/api/pay/wechat/jsapi/notify";
+
+    /** 提交给微信 API 的退款结果回调完整 URL */
+    private String refundNotifyUrl;
+
+    /** 本应用接收该 Provider 退款回调的 endpoint 路径 */
+    private String refundNotifyEndpoint = "/client/api/pay/wechat/jsapi/refund/notify";
+
+    /** 提交给微信 API 的商家转账结果回调完整 URL */
+    private String transferNotifyUrl;
+
+    /** 本应用接收该 Provider 商家转账回调的 endpoint 路径 */
+    private String transferNotifyEndpoint = "/client/api/pay/wechat/jsapi/transfer/notify";
 }

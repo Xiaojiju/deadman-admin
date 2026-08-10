@@ -6,7 +6,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 默认平台支付单号生成工具，供 {@link com.mtfm.deadman.plugin.pay.service.DefaultPaymentOutTradeNoSupplier} 使用。
- * 宿主自定义单号请实现 {@link com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier}。
+ * 宿主自定义单号请实现 {@link com.mtfm.deadman.plugin.pay.spi.payment.PaymentOutTradeNoSupplier}。
  */
 public final class PaymentOutTradeNoGenerator {
 

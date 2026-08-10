@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mtfm.deadman.plugin.pay.mock.constant.MockPayProviderIds;
 import com.mtfm.deadman.plugin.pay.mock.provider.MockPaymentProvider;
 import com.mtfm.deadman.plugin.pay.service.PayService;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
+import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class MockPayNotifyController {
     @PostMapping("${deadman.plugin.pay-mock.notify-endpoint:/client/api/pay/mock/notify}")
     public Map<String, String> notify(@RequestBody String body) {
         try {
-            payService.handleNotify(MockPaymentProvider.PROVIDER_ID, new PaymentNotifyContext(body));
+            payService.handleNotify(MockPaymentProvider.PROVIDER_ID, new ChannelNotifyContext(body));
             return Map.of("code", "SUCCESS", "message", "ok");
         } catch (Exception ex) {
             log.warn("Mock 支付回调处理失败：provider={}", MockPayProviderIds.MOCK, ex);

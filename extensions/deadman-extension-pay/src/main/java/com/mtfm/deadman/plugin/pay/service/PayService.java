@@ -1,34 +1,40 @@
 package com.mtfm.deadman.plugin.pay.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import com.mtfm.deadman.common.exception.BusinessException;
+import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
 import com.mtfm.deadman.plugin.pay.manager.PaymentProviderManager;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderSnapshot;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderStatusChangedPublisher;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentProvider;
-import com.mtfm.deadman.plugin.pay.spi.PaymentQueryResult;
+import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentNotifyResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderSnapshot;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOutTradeNoSupplier;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentQueryResult;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 支付统一门面，编排「预下单 → 写入订单 → 回调 → 事件通知 → 状态变更」完整流程。
+ * <p>
+ * 渠道 HTTP 均在事务外调用；本地落库由短事务完成（状态与事件同事务）。
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PayService {
 
     private final PaymentProviderManager paymentProviderManager;
     private final PaymentOrderService paymentOrderService;
+    private final PaymentChannelResultApplier paymentChannelResultApplier;
     private final PaymentOutTradeNoSupplier paymentOutTradeNoSupplier;
-    private final PaymentOrderStatusChangedPublisher paymentOrderStatusChangedPublisher;
+    private final PayPluginProperties payPluginProperties;
 
     /**
      * 使用默认 Provider 创建预下单。
@@ -36,26 +42,73 @@ public class PayService {
      * @param context 预下单上下文
      * @return 预下单结果
      */
-    @Transactional(rollbackFor = Exception.class)
     public PaymentPrepayResult createPrepay(PaymentPrepayContext context) {
         return createPrepay(context, null);
     }
 
     /**
-     * 指定 Provider 创建预下单：写入平台单 → 调用渠道 → 回写预支付信息。
+     * 指定 Provider 创建预下单：短事务落单 → 渠道外呼 → 短事务回写。
+     * <p>
+     * 若 Provider {@link PaymentProvider#autoCompleteAfterPrepay()} 为 true（如 Mock），
+     * 预下单后立即按查单结果完成支付并发布状态变更事件，无需真实回调。
      *
      * @param context    预下单上下文
      * @param providerId 支付 Provider 标识，为空时使用默认
      * @return 预下单结果
      */
-    @Transactional(rollbackFor = Exception.class)
     public PaymentPrepayResult createPrepay(PaymentPrepayContext context, String providerId) {
+        PaymentPrepayContext effectiveContext = applyTestModeAmount(context);
         PaymentProvider provider = paymentProviderManager.require(providerId);
-        String outTradeNo = paymentOutTradeNoSupplier.generate(context, provider);
-        PaymentOrder order = paymentOrderService.createPendingOrder(outTradeNo, context, provider);
-        PaymentPrepayResult result = provider.createPrepay(context, outTradeNo);
+        String outTradeNo = paymentOutTradeNoSupplier.generate(effectiveContext, provider);
+        PaymentOrder order = paymentOrderService.createPendingOrder(outTradeNo, effectiveContext, provider);
+        PaymentPrepayResult result = provider.createPrepay(effectiveContext, outTradeNo);
         paymentOrderService.updatePrepayResult(order, result.prepayId(), result.channelExtra());
+        if (provider.autoCompleteAfterPrepay()) {
+            PaymentQueryResult queryResult = provider.queryOrder(outTradeNo);
+            paymentChannelResultApplier.apply(
+                    queryResult.outTradeNo(),
+                    queryResult.channelTransactionId(),
+                    queryResult.targetStatus(),
+                    queryResult.amountTotal(),
+                    queryResult.rawPayload());
+        }
         return result;
+    }
+
+    /**
+     * 测试模式下将预下单金额覆盖为固定小额（默认 1 分 / 0.01 元），本地支付单与渠道金额一致。
+     *
+     * @param context 原始预下单上下文
+     * @return 可能被改写金额后的上下文
+     */
+    private PaymentPrepayContext applyTestModeAmount(PaymentPrepayContext context) {
+        if (context == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "预下单上下文不能为空");
+        }
+        PayPluginProperties.TestMode testMode = payPluginProperties.getTestMode();
+        if (testMode == null || !testMode.isEnabled()) {
+            return context;
+        }
+        int fixedAmountCents = testMode.getFixedAmountCents();
+        if (fixedAmountCents <= 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "测试模式固定支付金额必须大于 0 分");
+        }
+        if (context.getAmountTotal() == fixedAmountCents) {
+            return context;
+        }
+        log.warn(
+                "支付测试模式已启用：预下单金额由 {} 分覆盖为 {} 分（{} 元），bizOrderNo={}",
+                context.getAmountTotal(),
+                fixedAmountCents,
+                String.format("%.2f", fixedAmountCents / 100.0),
+                context.getBizOrderNo());
+        return PaymentPrepayContext.builder()
+                .bizOrderNo(context.getBizOrderNo())
+                .description(context.getDescription())
+                .amountTotal(fixedAmountCents)
+                .payerUserId(context.getPayerUserId())
+                .channelParams(context.getChannelParams())
+                .build();
     }
 
     /**
@@ -69,19 +122,19 @@ public class PayService {
     }
 
     /**
-     * 处理支付回调：解析 → 比较状态 → 更新状态 → 发布事件。
+     * 处理支付回调：渠道解析（事务外）→ 短事务落库 → 发布事件。
      *
      * @param providerId 支付 Provider 标识
      * @param context    回调上下文
      */
-    @Transactional(rollbackFor = Exception.class)
-    public void handleNotify(String providerId, PaymentNotifyContext context) {
+    public void handleNotify(String providerId, ChannelNotifyContext context) {
         PaymentProvider provider = paymentProviderManager.require(providerId);
         PaymentNotifyResult notifyResult = provider.parseNotify(context);
-        handleChannelPaymentResult(
+        paymentChannelResultApplier.apply(
                 notifyResult.outTradeNo(),
                 notifyResult.channelTransactionId(),
                 notifyResult.targetStatus(),
+                notifyResult.amountTotal(),
                 notifyResult.rawPayload());
     }
 
@@ -92,7 +145,6 @@ public class PayService {
      * @param outTradeNo 平台支付单号
      * @return 同步后的支付单快照
      */
-    @Transactional(rollbackFor = Exception.class)
     public PaymentOrderSnapshot syncOrderFromChannel(String outTradeNo) {
         PaymentOrder order = paymentOrderService.requireByOutTradeNo(outTradeNo);
         if (!PaymentOrderStatus.NOT_PAY.equals(order.getStatus())) {
@@ -103,10 +155,11 @@ public class PayService {
         if (queryResult.targetStatus().equals(order.getStatus())) {
             return toSnapshot(order);
         }
-        return handleChannelPaymentResult(
+        return paymentChannelResultApplier.apply(
                 queryResult.outTradeNo(),
                 queryResult.channelTransactionId(),
                 queryResult.targetStatus(),
+                queryResult.amountTotal(),
                 queryResult.rawPayload());
     }
 
@@ -129,26 +182,6 @@ public class PayService {
         return paymentProviderManager.listProviderIds();
     }
 
-    /**
-     * 统一处理渠道支付结果：更新状态 → 发布事件（回调与主动查单共用）。
-     *
-     * @param outTradeNo           平台支付单号
-     * @param channelTransactionId 渠道支付单号
-     * @param targetStatus         目标状态
-     * @param rawPayload           渠道原文
-     * @return 更新后的支付单快照
-     */
-    private PaymentOrderSnapshot handleChannelPaymentResult(
-            String outTradeNo, String channelTransactionId, String targetStatus, String rawPayload) {
-        String previousStatus = paymentOrderService.transitionStatus(
-                outTradeNo, channelTransactionId, targetStatus, rawPayload);
-        PaymentOrder current = paymentOrderService.reload(outTradeNo);
-        if (!previousStatus.equals(current.getStatus())) {
-            paymentOrderStatusChangedPublisher.publish(current, previousStatus, current.getStatus());
-        }
-        return toSnapshot(current);
-    }
-
     private static PaymentOrderSnapshot toSnapshot(PaymentOrder order) {
         return new PaymentOrderSnapshot(
                 order.getOutTradeNo(),
@@ -158,6 +191,7 @@ public class PayService {
                 order.getPayMethod(),
                 order.getDescription(),
                 order.getAmountTotal(),
+                order.getAmountRefunded() == null ? 0 : order.getAmountRefunded(),
                 order.getStatus(),
                 order.getChannelPrepayId(),
                 order.getChannelTransactionId(),

@@ -6,7 +6,7 @@ import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
+import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
 
 /**
  * 微信支付回调请求头工具。
@@ -23,7 +23,7 @@ public final class WechatPayNotifyHeaderUtils {
      * @param name    请求头名称
      * @return 请求头值
      */
-    public static String requireHeader(PaymentNotifyContext context, String name) {
+    public static String requireHeader(ChannelNotifyContext context, String name) {
         String value = findHeader(context.headers(), name);
         if (!StringUtils.hasText(value)) {
             throw new BusinessException(ResultCode.PAY_NOTIFY_PARSE_FAILED, "缺少微信支付回调请求头：" + name);

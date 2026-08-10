@@ -14,22 +14,27 @@ import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentMethod;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.constant.PaymentPlatform;
+import com.mtfm.deadman.plugin.pay.mock.config.MockPayPluginProperties;
 import com.mtfm.deadman.plugin.pay.mock.constant.MockPayProviderIds;
-import com.mtfm.deadman.plugin.pay.spi.PaymentClientInvokeParams;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayResult;
-import com.mtfm.deadman.plugin.pay.spi.PaymentProvider;
-import com.mtfm.deadman.plugin.pay.spi.PaymentQueryResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentClientInvokeParams;
+import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentNotifyResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayResult;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentQueryResult;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Mock 支付 Provider：本地/测试环境模拟预下单、查单与回调，无需真实渠道。
+ * <p>
+ * 默认在预下单后自动完成支付（{@code auto-complete-on-prepay=true}），无需手动回调。
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "deadman.plugin.pay-mock", name = "enabled", havingValue = "true")
 public class MockPaymentProvider implements PaymentProvider {
 
@@ -37,6 +42,9 @@ public class MockPaymentProvider implements PaymentProvider {
     public static final String PROVIDER_ID = MockPayProviderIds.MOCK;
 
     private static final Pattern JSON_STRING_FIELD = Pattern.compile("\"([a-z_]+)\"\\s*:\\s*\"([^\"]*)\"");
+    private static final Pattern JSON_INT_FIELD = Pattern.compile("\"([a-z_]+)\"\\s*:\\s*(\\d+)");
+
+    private final MockPayPluginProperties properties;
 
     /**
      * {@inheritDoc}
@@ -66,12 +74,21 @@ public class MockPaymentProvider implements PaymentProvider {
      * {@inheritDoc}
      */
     @Override
+    public boolean autoCompleteAfterPrepay() {
+        return properties.isAutoCompleteOnPrepay();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public PaymentPrepayResult createPrepay(PaymentPrepayContext context, String outTradeNo) {
         log.info(
-                "Mock 支付预下单：outTradeNo={}, bizOrderNo={}, amount={}",
+                "Mock 支付预下单：outTradeNo={}, bizOrderNo={}, amount={}, autoComplete={}",
                 outTradeNo,
                 context.getBizOrderNo(),
-                context.getAmountTotal());
+                context.getAmountTotal(),
+                properties.isAutoCompleteOnPrepay());
         String prepayId = "mock_prepay_" + UUID.randomUUID().toString().replace("-", "");
         String timeStamp = String.valueOf(Instant.now().getEpochSecond());
         String nonceStr = UUID.randomUUID().toString().replace("-", "");
@@ -86,7 +103,7 @@ public class MockPaymentProvider implements PaymentProvider {
      * 接受简化 JSON：{@code {"out_trade_no":"...","transaction_id":"...","status":"SUCCESS"}}
      */
     @Override
-    public PaymentNotifyResult parseNotify(PaymentNotifyContext context) {
+    public PaymentNotifyResult parseNotify(ChannelNotifyContext context) {
         String outTradeNo = readJsonStringField(context.rawBody(), "out_trade_no");
         String transactionId = readJsonStringField(context.rawBody(), "transaction_id");
         String status = readJsonStringField(context.rawBody(), "status");
@@ -98,19 +115,20 @@ public class MockPaymentProvider implements PaymentProvider {
         }
         String targetStatus = resolveTargetStatus(status);
         log.info("Mock 支付回调：outTradeNo={}, status={}", outTradeNo, targetStatus);
-        return new PaymentNotifyResult(outTradeNo, transactionId, targetStatus, context.rawBody());
+        Integer amountTotal = readJsonIntField(context.rawBody(), "total");
+        return new PaymentNotifyResult(outTradeNo, transactionId, targetStatus, amountTotal, context.rawBody());
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * Mock 模式查单默认返回支付成功，便于定时同步或手动 sync 完成支付。
+     * Mock 模式查单默认返回支付成功，便于定时同步、预下单自动完成或手动 sync。
      */
     @Override
     public PaymentQueryResult queryOrder(String outTradeNo) {
         String transactionId = "mock_tx_" + UUID.randomUUID().toString().replace("-", "");
         log.info("Mock 支付查单：outTradeNo={}, status={}", outTradeNo, PaymentOrderStatus.SUCCESS);
-        return new PaymentQueryResult(outTradeNo, transactionId, PaymentOrderStatus.SUCCESS, null);
+        return new PaymentQueryResult(outTradeNo, transactionId, PaymentOrderStatus.SUCCESS, null, null);
     }
 
     private static String resolveTargetStatus(String status) {
@@ -130,6 +148,23 @@ public class MockPaymentProvider implements PaymentProvider {
         while (matcher.find()) {
             if (fieldName.equals(matcher.group(1))) {
                 return matcher.group(2);
+            }
+        }
+        return null;
+    }
+
+    private static Integer readJsonIntField(String json, String fieldName) {
+        if (!StringUtils.hasText(json)) {
+            return null;
+        }
+        Matcher matcher = JSON_INT_FIELD.matcher(json);
+        while (matcher.find()) {
+            if (fieldName.equals(matcher.group(1))) {
+                try {
+                    return Integer.parseInt(matcher.group(2));
+                } catch (NumberFormatException ex) {
+                    return null;
+                }
             }
         }
         return null;

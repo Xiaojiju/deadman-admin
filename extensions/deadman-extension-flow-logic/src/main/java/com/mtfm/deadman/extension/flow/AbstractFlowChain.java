@@ -1,106 +1,275 @@
 package com.mtfm.deadman.extension.flow;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.springframework.beans.factory.BeanFactory;
 
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
-
-import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.extension.flow.error.FlowErrorHandler;
+import com.mtfm.deadman.extension.flow.event.FlowNodeEventListener;
+import com.mtfm.deadman.extension.flow.gateway.ExclusiveBranch;
+import com.mtfm.deadman.extension.flow.gateway.ExclusiveGateway;
+import com.mtfm.deadman.extension.flow.gateway.ParallelGateway;
+import com.mtfm.deadman.extension.flow.node.EndNode;
+import com.mtfm.deadman.extension.flow.node.LogicNode;
 
 /**
- * 流程链抽象基类：负责节点编排与 {@link #proceed} 推进；子类只声明节点顺序。
+ * 流程链抽象基类：负责元素编排与引擎推进。
  * <p>
- * 编排仅支持按插入顺序执行。可通过 {@link #addNode(Class)} 按类型从容器解析，
- * 或 {@link #addNode(FlowNode)} 直接挂实例。
+ * 支持普通节点、互斥/并行网关、结束节点、嵌套子链；可挂拦截器、错误处理器与节点成功事件监听。
  *
  * @param <K> 流程类型键
  * @param <C> 上下文类型
  */
-@Slf4j
-public abstract class AbstractFlowChain<K, C extends FlowContext> implements FlowChain<K, C> {
+public abstract class AbstractFlowChain<K, C extends FlowContext> implements FlowChain<K, C>, FlowElement<C> {
 
+    /** 流程类型键 */
     private final K flowType;
+
+    /** Spring Bean 工厂 */
     private final BeanFactory beanFactory;
-    private final List<FlowNode<C>> buildingNodes = new ArrayList<>();
-    private final List<FlowNode<C>> nodes;
+
+    /** 编排期临时列表 */
+    private final List<FlowElement<C>> buildingElements = new ArrayList<>();
+
+    /** 冻结后的有序元素 */
+    private final List<FlowElement<C>> elements;
+
+    /** 横切拦截器 */
     private final List<? extends FlowInterceptor<? super C>> interceptors;
-    private final Map<String, List<FlowBranch<? super C>>> branchesByNodeId;
+
+    /** 错误处理器（可为 null） */
+    private final FlowErrorHandler<? super C> errorHandler;
+
+    /** 节点成功事件监听器 */
+    private final List<? extends FlowNodeEventListener<? super C>> eventListeners;
+
+    /** 是否已冻结 */
     private boolean configured;
 
     /**
-     * 构造并完成编排冻结。
+     * 完整构造并冻结编排。
      *
-     * @param flowType     流程类型键
-     * @param beanFactory  Spring Bean 工厂（按类型解析节点）
-     * @param interceptors 拦截器（可为空列表）
-     * @param branches     支流（可为空列表）
+     * @param flowType 流程类型键
+     * @param beanFactory Bean 工厂
+     * @param interceptors 拦截器，可为 null
+     * @param errorHandler 错误处理器，可为 null（表示异常原样抛出）
+     * @param eventListeners 节点成功监听器，可为 null
      */
     protected AbstractFlowChain(K flowType, BeanFactory beanFactory,
-            List<? extends FlowInterceptor<? super C>> interceptors, List<? extends FlowBranch<? super C>> branches) {
+            List<? extends FlowInterceptor<? super C>> interceptors, FlowErrorHandler<? super C> errorHandler,
+            List<? extends FlowNodeEventListener<? super C>> eventListeners) {
         this.flowType = Objects.requireNonNull(flowType, "flowType");
         this.beanFactory = Objects.requireNonNull(beanFactory, "beanFactory");
         this.interceptors = interceptors == null ? List.of() : List.copyOf(interceptors);
-        List<? extends FlowBranch<? super C>> allBranches = branches == null ? List.of() : branches;
-        this.branchesByNodeId = allBranches.stream().sorted(Comparator.comparingInt(FlowBranch::order))
-                .collect(Collectors.groupingBy(FlowBranch::afterNodeId, Collectors.toList()));
+        this.errorHandler = errorHandler;
+        this.eventListeners = eventListeners == null ? List.of() : List.copyOf(eventListeners);
         configure();
         this.configured = true;
-        if (buildingNodes.isEmpty()) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "流程节点未配置: " + flowType);
+        if (buildingElements.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "流程元素未配置: " + flowType);
         }
-        this.nodes = List.copyOf(buildingNodes);
-        buildingNodes.clear();
+        validateEndNodePosition();
+        validateUniqueElementIds();
+        this.elements = List.copyOf(buildingElements);
+        buildingElements.clear();
     }
 
     /**
-     * 子类在此按执行顺序调用 {@link #addNode} / {@link #addNodes} 完成编排。
+     * 仅 BeanFactory 的便捷构造。
+     *
+     * @param flowType 流程类型键
+     * @param beanFactory Bean 工厂
+     */
+    protected AbstractFlowChain(K flowType, BeanFactory beanFactory) {
+        this(flowType, beanFactory, List.of(), null, List.of());
+    }
+
+    /**
+     * 带拦截器的便捷构造。
+     *
+     * @param flowType 流程类型键
+     * @param beanFactory Bean 工厂
+     * @param interceptors 拦截器
+     */
+    protected AbstractFlowChain(K flowType, BeanFactory beanFactory,
+            List<? extends FlowInterceptor<? super C>> interceptors) {
+        this(flowType, beanFactory, interceptors, null, List.of());
+    }
+
+    /**
+     * 子类在此编排元素。
      */
     protected abstract void configure();
 
     /**
-     * 按节点类型从容器解析并追加到链尾（执行顺序 = 插入顺序）。
+     * 追加单个普通逻辑节点。
      *
-     * @param nodeType 节点 Bean 类型
-     * @return this，便于链式调用
+     * @param nodeType 节点类型
+     * @return this
      */
     @SuppressWarnings("unchecked")
-    protected final AbstractFlowChain<K, C> addNode(Class<? extends FlowNode<?>> nodeType) {
+    protected final AbstractFlowChain<K, C> addLogic(Class<? extends LogicNode<?>> nodeType) {
         Objects.requireNonNull(nodeType, "nodeType");
-        return addNode((FlowNode<C>) beanFactory.getBean(nodeType));
+        return addElement((FlowElement<C>) beanFactory.getBean(nodeType));
     }
 
     /**
-     * 直接追加节点实例到链尾（执行顺序 = 插入顺序）。
+     * 批量追加普通逻辑节点。
      *
-     * @param node 节点实例
-     * @return this，便于链式调用
-     */
-    protected final AbstractFlowChain<K, C> addNode(FlowNode<C> node) {
-        ensureConfiguring();
-        buildingNodes.add(Objects.requireNonNull(node, "node"));
-        return this;
-    }
-
-    /**
-     * 按类型批量追加节点（参数顺序即执行顺序）。
-     *
-     * @param nodeTypes 节点 Bean 类型序列
-     * @return this，便于链式调用
+     * @param nodeTypes 节点类型序列
+     * @return this
      */
     @SafeVarargs
-    protected final AbstractFlowChain<K, C> addNodes(Class<? extends FlowNode<?>>... nodeTypes) {
+    protected final AbstractFlowChain<K, C> addLogic(Class<? extends LogicNode<?>>... nodeTypes) {
         Objects.requireNonNull(nodeTypes, "nodeTypes");
-        for (Class<? extends FlowNode<?>> nodeType : nodeTypes) {
-            addNode(nodeType);
+        for (Class<? extends LogicNode<?>> nodeType : nodeTypes) {
+            addLogic(nodeType);
         }
         return this;
+    }
+
+    /**
+     * 追加结束节点（必须位于链尾，构造期校验）。
+     *
+     * @param endNodeType 结束节点类型
+     * @return this
+     */
+    @SuppressWarnings("unchecked")
+    protected final AbstractFlowChain<K, C> addEnd(Class<? extends EndNode<?>> endNodeType) {
+        Objects.requireNonNull(endNodeType, "endNodeType");
+        return addElement((FlowElement<C>) beanFactory.getBean(endNodeType));
+    }
+
+    /**
+     * 追加互斥网关。
+     *
+     * @param gatewayId 网关 ID
+     * @param branches 分支（含默认）
+     * @return this
+     */
+    @SafeVarargs
+    protected final AbstractFlowChain<K, C> addExclusive(String gatewayId, ExclusiveBranch<C>... branches) {
+        Objects.requireNonNull(branches, "branches");
+        return addElement(new ExclusiveGateway<>(gatewayId, List.of(branches)));
+    }
+
+    /**
+     * 追加并行网关（子链）。
+     *
+     * @param gatewayId 网关 ID
+     * @param branches 并行子链
+     * @return this
+     */
+    @SafeVarargs
+    protected final AbstractFlowChain<K, C> addParallel(String gatewayId, FlowChain<?, C>... branches) {
+        Objects.requireNonNull(branches, "branches");
+        return addElement(new ParallelGateway<>(gatewayId, List.of(branches)));
+    }
+
+    /**
+     * 追加并行网关（单个普通节点自动包装为子链）。
+     *
+     * @param gatewayId 网关 ID
+     * @param nodes 并行普通节点
+     * @return this
+     */
+    @SafeVarargs
+    protected final AbstractFlowChain<K, C> addParallelNodes(String gatewayId, LogicNode<C>... nodes) {
+        Objects.requireNonNull(nodes, "nodes");
+        List<FlowChain<?, C>> branches = new ArrayList<>(nodes.length);
+        for (LogicNode<C> node : nodes) {
+            Objects.requireNonNull(node, "node");
+            branches.add(NestedFlowChain.of(node.nodeId() + "-branch", node));
+        }
+        return addElement(new ParallelGateway<>(gatewayId, branches));
+    }
+
+    /**
+     * 按类型解析节点后追加并行网关。
+     *
+     * @param gatewayId 网关 ID
+     * @param nodeTypes 节点类型
+     * @return this
+     */
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    protected final AbstractFlowChain<K, C> addParallel(String gatewayId, Class<? extends LogicNode<?>>... nodeTypes) {
+        Objects.requireNonNull(nodeTypes, "nodeTypes");
+        List<FlowChain<?, C>> branches = new ArrayList<>(nodeTypes.length);
+        for (Class<? extends LogicNode<?>> nodeType : nodeTypes) {
+            LogicNode<C> node = (LogicNode<C>) beanFactory.getBean(nodeType);
+            branches.add(NestedFlowChain.of(node.nodeId() + "-branch", node));
+        }
+        return addElement(new ParallelGateway<>(gatewayId, branches));
+    }
+
+    /**
+     * 嵌入子链。
+     *
+     * @param subChain 子链
+     * @return this
+     */
+    protected final AbstractFlowChain<K, C> addSubChain(FlowChain<?, C> subChain) {
+        Objects.requireNonNull(subChain, "subChain");
+        if (subChain instanceof FlowElement<?> element) {
+            @SuppressWarnings("unchecked")
+            FlowElement<C> typed = (FlowElement<C>) element;
+            return addElement(typed);
+        }
+        return addElement(new FlowChainElementAdapter<>(subChain));
+    }
+
+    /**
+     * 直接追加元素。
+     *
+     * @param element 元素
+     * @return this
+     */
+    protected final AbstractFlowChain<K, C> addElement(FlowElement<C> element) {
+        ensureConfiguring();
+        buildingElements.add(Objects.requireNonNull(element, "element"));
+        return this;
+    }
+
+    /**
+     * 构建轻量子链。
+     *
+     * @param subChainId 子链 ID
+     * @param elements 元素
+     * @return 子链
+     */
+    @SafeVarargs
+    protected final NestedFlowChain<C> subChain(String subChainId, FlowElement<C>... elements) {
+        return NestedFlowChain.of(subChainId, elements);
+    }
+
+    /**
+     * 按类型构建仅含普通节点的轻量子链。
+     *
+     * @param subChainId 子链 ID
+     * @param nodeTypes 节点类型
+     * @return 子链
+     */
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    protected final NestedFlowChain<C> subChain(String subChainId, Class<? extends LogicNode<?>>... nodeTypes) {
+        Objects.requireNonNull(nodeTypes, "nodeTypes");
+        List<FlowElement<C>> list = new ArrayList<>(nodeTypes.length);
+        for (Class<? extends LogicNode<?>> nodeType : nodeTypes) {
+            list.add((FlowElement<C>) beanFactory.getBean(nodeType));
+        }
+        return new NestedFlowChain<>(subChainId, list);
+    }
+
+    @Override
+    public final String elementId() {
+        return String.valueOf(flowType);
     }
 
     @Override
@@ -109,78 +278,86 @@ public abstract class AbstractFlowChain<K, C extends FlowContext> implements Flo
     }
 
     @Override
-    public final void proceed(C context) {
-        new Cursor(0).proceed(context);
+    public final boolean run(C context) {
+        execute(context);
+        return false;
     }
 
-    private void ensureConfiguring() {
-        if (configured) {
-            throw new IllegalStateException("流程链已冻结，不可再编排节点: " + flowType);
+    @Override
+    public final void execute(C context) {
+        FlowEngine.execute(String.valueOf(flowType), elements, interceptors, errorHandler, eventListeners, context);
+    }
+
+    /**
+     * 结束节点若存在，必须位于元素列表最后一位。
+     */
+    private void validateEndNodePosition() {
+        for (int i = 0; i < buildingElements.size(); i++) {
+            FlowElement<C> element = buildingElements.get(i);
+            if (element instanceof EndNode && i != buildingElements.size() - 1) {
+                throw new BusinessException(ResultCode.BAD_REQUEST,
+                        "结束节点必须位于链尾: flowType=" + flowType + ", elementId=" + element.elementId());
+            }
         }
     }
 
     /**
-     * 单次调用游标（类比 Spring Security {@code VirtualFilterChain}）。
+     * 同一条链顶层元素 ID 必须唯一（含网关/子链容器 ID）。
      */
-    private final class Cursor implements FlowChain<K, C> {
-
-        private int index;
-
-        private Cursor(int index) {
-            this.index = index;
-        }
-
-        @Override
-        public K flowType() {
-            return AbstractFlowChain.this.flowType;
-        }
-
-        @Override
-        public void proceed(C context) {
-            if (context.isAborted()) {
-                log.info("流程已中断，停止推进: flowType={}, reason={}", flowType, context.getAbortReason());
-                return;
+    private void validateUniqueElementIds() {
+        Set<String> ids = new HashSet<>();
+        for (FlowElement<C> element : buildingElements) {
+            String id = element.elementId();
+            if (id == null || id.isBlank()) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "流程元素 ID 不能为空: flowType=" + flowType);
             }
-            if (index >= nodes.size()) {
-                return;
+            if (!ids.add(id)) {
+                throw new BusinessException(ResultCode.BAD_REQUEST,
+                        "流程元素 ID 重复: flowType=" + flowType + ", elementId=" + id);
             }
-            FlowNode<C> node = nodes.get(index++);
-            String nodeId = node.nodeId();
-            log.debug("执行流程节点: flowType={}, nodeId={}, index={}", flowType, nodeId, index);
-            for (FlowInterceptor<? super C> interceptor : interceptors) {
-                interceptor.beforeNode(nodeId, context);
-            }
-            if (context.isAborted()) {
-                return;
-            }
-            FlowChain<K, C> continuation = new FlowChain<>() {
-                @Override
-                public K flowType() {
-                    return AbstractFlowChain.this.flowType;
-                }
-
-                @Override
-                public void proceed(C ctx) {
-                    for (FlowInterceptor<? super C> interceptor : interceptors) {
-                        interceptor.afterNode(nodeId, ctx);
-                    }
-                    runBranches(nodeId, ctx);
-                    Cursor.this.proceed(ctx);
-                }
-            };
-            node.execute(context, continuation);
         }
     }
 
-    private void runBranches(String nodeId, C context) {
-        List<FlowBranch<? super C>> nodeBranches = branchesByNodeId.getOrDefault(nodeId, List.of());
-        for (FlowBranch<? super C> branch : nodeBranches) {
-            if (context.isAborted()) {
-                return;
-            }
-            log.debug("执行流程支流: flowType={}, afterNodeId={}, branch={}", flowType, nodeId,
-                    branch.getClass().getSimpleName());
-            branch.execute(context);
+    private void ensureConfiguring() {
+        if (configured) {
+            throw new IllegalStateException("流程链已冻结，不可再编排元素: " + flowType);
+        }
+    }
+
+    /**
+     * 将未实现 {@link FlowElement} 的链适配为可编排元素。
+     *
+     * @param <C> 上下文类型
+     */
+    private static final class FlowChainElementAdapter<C extends FlowContext>
+            implements FlowElement<C>, FlowChain<Object, C> {
+
+        /** 被适配的链 */
+        private final FlowChain<?, C> chain;
+
+        private FlowChainElementAdapter(FlowChain<?, C> chain) {
+            this.chain = chain;
+        }
+
+        @Override
+        public String elementId() {
+            return String.valueOf(chain.flowType());
+        }
+
+        @Override
+        public Object flowType() {
+            return chain.flowType();
+        }
+
+        @Override
+        public boolean run(C context) {
+            chain.execute(context);
+            return false;
+        }
+
+        @Override
+        public void execute(C context) {
+            chain.execute(context);
         }
     }
 }

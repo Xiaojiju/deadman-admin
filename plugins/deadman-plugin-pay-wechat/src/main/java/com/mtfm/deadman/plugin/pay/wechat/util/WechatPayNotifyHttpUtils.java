@@ -4,7 +4,7 @@ import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.mtfm.deadman.plugin.pay.spi.PaymentNotifyContext;
+import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -23,8 +23,8 @@ public final class WechatPayNotifyHttpUtils {
      * @param request HTTP 请求
      * @return 回调上下文
      */
-    public static PaymentNotifyContext toNotifyContext(String body, HttpServletRequest request) {
-        return new PaymentNotifyContext(body, extractWechatHeaders(request));
+    public static ChannelNotifyContext toNotifyContext(String body, HttpServletRequest request) {
+        return new ChannelNotifyContext(body, extractWechatHeaders(request));
     }
 
     private static Map<String, String> extractWechatHeaders(HttpServletRequest request) {

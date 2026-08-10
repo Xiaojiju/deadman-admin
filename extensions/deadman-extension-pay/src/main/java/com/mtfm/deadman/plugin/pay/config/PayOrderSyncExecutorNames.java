@@ -11,6 +11,11 @@ public final class PayOrderSyncExecutorNames {
      */
     public static final String EXECUTOR_BEAN_NAME = "payOrderSyncExecutor";
 
+    /**
+     * 支付模块异步任务线程池（异常退款 AFTER_COMMIT 处理等）。
+     */
+    public static final String ASYNC_EXECUTOR_BEAN_NAME = "payAsyncExecutor";
+
     private PayOrderSyncExecutorNames() {
     }
 }

@@ -1,26 +1,33 @@
 package com.mtfm.deadman.extension.flow;
 
 /**
- * 串行流程链（语义对齐 Servlet {@code FilterChain}）。
+ * 执行链：涵盖一整段业务逻辑组合的容器。
  * <p>
- * 节点完成自身逻辑后须调用 {@link #proceed} 才会进入下一节点；不调用即短路。
+ * 可以：
+ * <ul>
+ *   <li>独立存在并由执行器直接 {@link #execute}（如结算链、履约链）</li>
+ *   <li>作为子链嵌入父链或互斥/并行网关分支</li>
+ * </ul>
+ * 链内部由有序 {@link FlowElement} 组成，推进细节由实现类委托引擎完成。
  *
- * @param <K> 流程类型键（常用枚举）
+ * @param <K> 流程类型键（常用枚举；轻量子链可用 String）
  * @param <C> 上下文类型
  */
 public interface FlowChain<K, C extends FlowContext> {
 
     /**
-     * 本链对应的流程类型。
+     * 本链对应的流程类型键。
+     * <p>
+     * 用于 {@link FlowChainRegistry} 注册/查找，以及日志中的链标识。
      *
-     * @return 流程类型键
+     * @return 流程类型键，不可为 null
      */
     K flowType();
 
     /**
-     * 推进到下一节点（入口由执行器调用；节点执行完后自行再调）。
+     * 从链头开始执行全部元素，直至结束节点、abort 或元素耗尽。
      *
-     * @param context 流程上下文
+     * @param context 流程上下文（整条链共享）
      */
-    void proceed(C context);
+    void execute(C context);
 }

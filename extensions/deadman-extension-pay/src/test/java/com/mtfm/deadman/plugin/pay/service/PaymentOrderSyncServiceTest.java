@@ -21,7 +21,7 @@ import org.springframework.context.ApplicationContext;
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
-import com.mtfm.deadman.plugin.pay.spi.PaymentOrderSnapshot;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderSnapshot;
 
 /**
  * PaymentOrderSyncService 单元测试。
@@ -132,6 +132,7 @@ class PaymentOrderSyncServiceTest {
                         "JSAPI",
                         "测试",
                         100,
+                        0,
                         PaymentOrderStatus.SUCCESS,
                         "prepay",
                         "wx_tx",

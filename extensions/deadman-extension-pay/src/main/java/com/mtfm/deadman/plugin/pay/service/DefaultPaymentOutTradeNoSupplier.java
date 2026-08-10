@@ -1,8 +1,8 @@
 package com.mtfm.deadman.plugin.pay.service;
 
-import com.mtfm.deadman.plugin.pay.spi.PaymentOutTradeNoSupplier;
-import com.mtfm.deadman.plugin.pay.spi.PaymentPrepayContext;
-import com.mtfm.deadman.plugin.pay.spi.PaymentProvider;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOutTradeNoSupplier;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentPrepayContext;
+import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
 import com.mtfm.deadman.plugin.pay.util.PaymentOutTradeNoGenerator;
 
 /**

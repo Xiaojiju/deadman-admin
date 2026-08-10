@@ -20,8 +20,8 @@ public class WechatPayPluginProperties {
     /** 是否启用微信支付插件（商户级共享配置） */
     private boolean enabled = false;
 
-    /** 是否使用 Mock 网关（无真实商户号或显式开启时生效） */
-    private boolean mockEnabled = true;
+    /** 是否使用 Mock 网关（仅显式开启时生效；生产务必为 false） */
+    private boolean mockEnabled = false;
 
     /** 微信支付商户号 */
     private String mchId;
@@ -40,17 +40,29 @@ public class WechatPayPluginProperties {
 
     /**
      * 是否应使用 Mock 网关。
+     * <p>
+     * 仅 {@code mock-enabled=true} 时走 Mock；凭证缺失时不再静默降级，避免生产误用无验签网关。
      *
      * @return 是否 Mock
      */
     public boolean shouldUseMock() {
-        if (mockEnabled) {
-            return true;
-        }
-        return !StringUtils.hasText(mchId)
+        return mockEnabled;
+    }
+
+    /**
+     * 校验真实网关所需商户凭证是否齐全。
+     *
+     * @throws IllegalStateException 凭证缺失
+     */
+    public void requireRealGatewayCredentials() {
+        if (!StringUtils.hasText(mchId)
                 || !StringUtils.hasText(apiV3Key)
                 || !StringUtils.hasText(merchantSerialNo)
-                || !StringUtils.hasText(privateKeyPath);
+                || !StringUtils.hasText(privateKeyPath)) {
+            throw new IllegalStateException(
+                    "微信支付真实网关缺少 mchId/apiV3Key/merchantSerialNo/privateKeyPath，"
+                            + "请补齐凭证或显式开启 deadman.plugin.pay-wechat.mock-enabled=true");
+        }
     }
 
     /**
@@ -69,11 +81,17 @@ public class WechatPayPluginProperties {
         if (!StringUtils.hasText(binding.getNotifyEndpoint())) {
             binding.setNotifyEndpoint(defaultNotifyEndpoint(providerId));
         }
+        if (!StringUtils.hasText(binding.getRefundNotifyEndpoint())) {
+            binding.setRefundNotifyEndpoint(defaultRefundNotifyEndpoint(providerId));
+        }
+        if (!StringUtils.hasText(binding.getTransferNotifyEndpoint())) {
+            binding.setTransferNotifyEndpoint(defaultTransferNotifyEndpoint(providerId));
+        }
         return binding;
     }
 
     /**
-     * 列出所有已启用 Provider 的回调 endpoint。
+     * 列出所有已启用 Provider 的支付/退款/转账回调 endpoint。
      *
      * @return endpoint 路径列表
      */
@@ -83,13 +101,15 @@ public class WechatPayPluginProperties {
             WechatPayProviderBindingProperties binding = entry.getValue();
             if (binding != null && binding.isEnabled()) {
                 endpoints.add(normalizeEndpoint(binding.getNotifyEndpoint(), entry.getKey()));
+                endpoints.add(normalizeRefundEndpoint(binding.getRefundNotifyEndpoint(), entry.getKey()));
+                endpoints.add(normalizeTransferEndpoint(binding.getTransferNotifyEndpoint(), entry.getKey()));
             }
         }
         return endpoints;
     }
 
     /**
-     * 解析 Provider 默认回调 endpoint。
+     * 解析 Provider 默认支付回调 endpoint。
      *
      * @param providerId Provider 标识
      * @return endpoint 路径
@@ -103,6 +123,34 @@ public class WechatPayPluginProperties {
     }
 
     /**
+     * 解析 Provider 默认退款回调 endpoint。
+     *
+     * @param providerId Provider 标识
+     * @return endpoint 路径
+     */
+    public static String defaultRefundNotifyEndpoint(String providerId) {
+        return switch (providerId) {
+            case "wechat-jsapi" -> "/client/api/pay/wechat/jsapi/refund/notify";
+            case "wechat-native" -> "/client/api/pay/wechat/native/refund/notify";
+            default -> "/client/api/pay/wechat/" + providerId + "/refund/notify";
+        };
+    }
+
+    /**
+     * 解析 Provider 默认商家转账回调 endpoint。
+     *
+     * @param providerId Provider 标识
+     * @return endpoint 路径
+     */
+    public static String defaultTransferNotifyEndpoint(String providerId) {
+        return switch (providerId) {
+            case "wechat-jsapi" -> "/client/api/pay/wechat/jsapi/transfer/notify";
+            case "wechat-native" -> "/client/api/pay/wechat/native/transfer/notify";
+            default -> "/client/api/pay/wechat/" + providerId + "/transfer/notify";
+        };
+    }
+
+    /**
      * 规范化 endpoint 路径。
      *
      * @param endpoint   原始路径
@@ -111,6 +159,36 @@ public class WechatPayPluginProperties {
      */
     public static String normalizeEndpoint(String endpoint, String providerId) {
         String resolved = StringUtils.hasText(endpoint) ? endpoint.trim() : defaultNotifyEndpoint(providerId);
+        return normalizePath(resolved);
+    }
+
+    /**
+     * 规范化退款回调 endpoint 路径。
+     *
+     * @param endpoint   原始路径
+     * @param providerId Provider 标识
+     * @return 规范化路径
+     */
+    public static String normalizeRefundEndpoint(String endpoint, String providerId) {
+        String resolved =
+                StringUtils.hasText(endpoint) ? endpoint.trim() : defaultRefundNotifyEndpoint(providerId);
+        return normalizePath(resolved);
+    }
+
+    /**
+     * 规范化商家转账回调 endpoint 路径。
+     *
+     * @param endpoint   原始路径
+     * @param providerId Provider 标识
+     * @return 规范化路径
+     */
+    public static String normalizeTransferEndpoint(String endpoint, String providerId) {
+        String resolved =
+                StringUtils.hasText(endpoint) ? endpoint.trim() : defaultTransferNotifyEndpoint(providerId);
+        return normalizePath(resolved);
+    }
+
+    private static String normalizePath(String resolved) {
         if (!resolved.startsWith("/")) {
             resolved = "/" + resolved;
         }

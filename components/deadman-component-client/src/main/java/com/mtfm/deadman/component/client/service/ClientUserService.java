@@ -7,17 +7,20 @@ import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
+import com.mtfm.deadman.component.client.dto.UpdateClientUserProfileRequest;
 import com.mtfm.deadman.component.client.entity.ClientUserAccount;
 import com.mtfm.deadman.component.client.entity.ClientUserBase;
 import com.mtfm.deadman.component.client.mapper.ClientUserBaseMapper;
 import com.mtfm.deadman.component.client.vo.ClientUserProfileVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
 /**
- * 用户端用户资料查询。
+ * 用户端用户资料查询与自助更新。
  */
 @Service
 @RequiredArgsConstructor
@@ -32,13 +35,38 @@ public class ClientUserService extends ServiceImpl<ClientUserBaseMapper, ClientU
      * @return 用户资料
      */
     public ClientUserProfileVO getProfileByUserCode(String userCode) {
-        ClientUserBase userBase = lambdaQuery().eq(ClientUserBase::getUserCode, userCode).one();
-        if (userBase == null) {
-            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        ClientUserBase userBase = requireByUserCode(userCode);
+        return toProfileVO(userBase);
+    }
+
+    /**
+     * 当前用户更新本人资料（仅 nickname、avatar；未传字段不修改）。
+     *
+     * @param userId 当前用户 ID
+     * @param request 更新请求
+     * @return 更新后的用户资料
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ClientUserProfileVO updateMyProfile(Long userId, UpdateClientUserProfileRequest request) {
+        ClientUserBase user = requireById(userId);
+        boolean changed = false;
+        if (request.nickname() != null) {
+            String nickname = request.nickname().trim();
+            if (!StringUtils.hasText(nickname)) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "昵称不能为空");
+            }
+            user.setNickname(nickname);
+            changed = true;
         }
-        String username = resolveUsername(userBase.getId());
-        return new ClientUserProfileVO(userBase.getUserCode(), username, userBase.getNickname(), userBase.getAvatar(),
-            userBase.getStatus());
+        if (request.avatar() != null) {
+            String avatar = request.avatar().trim();
+            user.setAvatar(StringUtils.hasText(avatar) ? avatar : null);
+            changed = true;
+        }
+        if (changed) {
+            updateById(user);
+        }
+        return toProfileVO(user);
     }
 
     /**
@@ -66,6 +94,20 @@ public class ClientUserService extends ServiceImpl<ClientUserBaseMapper, ClientU
         boolean enabled = userBase.getStatus() != null && userBase.getStatus() == UserStatus.ACTIVE.getValue();
         return new ClientLoginUser(userBase.getId(), userBase.getUserCode(), loginIdentifier, userBase.getNickname(),
             enabled, List.of());
+    }
+
+    private ClientUserBase requireByUserCode(String userCode) {
+        ClientUserBase userBase = lambdaQuery().eq(ClientUserBase::getUserCode, userCode).one();
+        if (userBase == null) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+        return userBase;
+    }
+
+    private ClientUserProfileVO toProfileVO(ClientUserBase userBase) {
+        String username = resolveUsername(userBase.getId());
+        return new ClientUserProfileVO(userBase.getUserCode(), username, userBase.getNickname(), userBase.getAvatar(),
+            userBase.getStatus());
     }
 
     private String resolveUsername(Long userId) {

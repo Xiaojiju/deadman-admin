@@ -221,8 +221,9 @@ CREATE TABLE IF NOT EXISTS sys_notification_recipient (
     KEY idx_sys_notification_recipient_user (user_id, read_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='站内信收件人';
 
--- pay-wechat 插件表结构见：
--- plugins/deadman-plugin-pay-wechat/src/main/resources/db/pay-wechat/schema.sql
+-- pay 扩展表结构见：
+-- extensions/deadman-extension-pay/src/main/resources/db/pay/schema.sql
+-- （含 plugin_pay_order / plugin_pay_refund / 商家转账表；增量见 migration/20260810_pay_*.sql）
 
 -- im-tencent 插件表结构见：
 -- plugins/deadman-plugin-im-tencent/src/main/resources/db/im-tencent/schema.sql

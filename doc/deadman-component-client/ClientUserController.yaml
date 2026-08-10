@@ -3,7 +3,7 @@ openapi: 3.0.3
 info:
   title: ClientUserController
   version: 1.0.0
-  description: 用户端当前用户资料（`GET /client/api/users/me`）
+  description: 用户端当前用户资料（`GET/PUT /client/api/users/me`）
 
 servers:
   - url: http://localhost:8080
@@ -27,6 +27,30 @@ paths:
                 $ref: '#/components/schemas/ResultClientUserProfileVO'
         '401':
           $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
+    put:
+      summary: 更新当前用户资料
+      description: |-
+        需要用户端 JWT。可更新昵称、头像；未传字段表示不修改。
+        `avatar` 传空串可清空头像。
+      operationId: clientUpdateMyProfile
+      tags: [用户端用户]
+      security:
+        - ClientBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientUserProfileRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultClientUserProfileVO'
+        '401':
+          $ref: '../_shared/components.yaml#/components/responses/Unauthorized'
 
 components:
   securitySchemes:
@@ -34,6 +58,20 @@ components:
       $ref: '../_shared/components.yaml#/components/securitySchemes/ClientBearerAuth'
 
   schemas:
+    UpdateClientUserProfileRequest:
+      type: object
+      description: 未传字段表示不修改
+      properties:
+        nickname:
+          type: string
+          maxLength: 64
+          description: 昵称；传空串会报错
+        avatar:
+          type: string
+          maxLength: 512
+          nullable: true
+          description: 头像 URL；传空串可清空
+
     ClientUserProfileVO:
       type: object
       properties:

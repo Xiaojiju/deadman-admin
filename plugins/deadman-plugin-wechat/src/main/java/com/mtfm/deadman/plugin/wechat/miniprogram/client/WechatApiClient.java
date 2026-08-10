@@ -1,6 +1,7 @@
 package com.mtfm.deadman.plugin.wechat.miniprogram.client;
 
 import com.mtfm.deadman.plugin.wechat.miniprogram.dto.WechatFaceCertInfo;
+import com.mtfm.deadman.plugin.wechat.miniprogram.dto.WechatUnlimitedQrCodeRequest;
 
 /**
  * 微信小程序开放接口客户端。
@@ -50,4 +51,12 @@ public interface WechatApiClient {
      * @return 核身结果码
      */
     WechatQueryVerifyInfoResult queryVerifyInfo(String verifyId, String outSeqNo, String certHash, String openid);
+
+    /**
+     * 获取不限制的小程序码（永久有效，数量不限）。
+     *
+     * @param request 小程序码参数（scene 必填）
+     * @return 小程序码图片二进制（通常为 PNG）
+     */
+    byte[] getUnlimitedQrCode(WechatUnlimitedQrCodeRequest request);
 }
