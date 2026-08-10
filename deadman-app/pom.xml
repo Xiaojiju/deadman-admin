@@ -56,10 +56,6 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-component-engineering</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-data-scope</artifactId>
         </dependency>
         <dependency>

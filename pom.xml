@@ -28,11 +28,13 @@
         <module>plugins/deadman-plugin-wechat</module>
         <module>plugins/deadman-plugin-excel</module>
         <module>extensions/deadman-extension-file</module>
+        <module>extensions/deadman-extension-crypto</module>
         <module>plugins/deadman-plugin-storage-local</module>
         <module>plugins/deadman-plugin-storage-oss</module>
-        <module>plugins/deadman-plugin-storage-cos</module>
         <module>extensions/deadman-extension-pay</module>
+        <module>extensions/deadman-extension-flow-logic</module>
         <module>plugins/deadman-plugin-pay-wechat</module>
+        <module>plugins/deadman-plugin-pay-mock</module>
         <module>extensions/deadman-extension-logistics</module>
         <module>plugins/deadman-plugin-logistics-kuaidi100</module>
         <module>plugins/deadman-plugin-im-tencent</module>
@@ -53,7 +55,6 @@
         <jjwt.version>0.12.6</jjwt.version>
         <easyexcel.version>4.0.3</easyexcel.version>
         <aliyun-oss.version>3.18.1</aliyun-oss.version>
-        <tencent-cos.version>5.6.246</tencent-cos.version>
         <wechatpay-java.version>0.2.17</wechatpay-java.version>
         <kuaidi100-sdk.version>1.1.3</kuaidi100-sdk.version>
         <spotless.version>2.44.3</spotless.version>
@@ -133,6 +134,11 @@
             </dependency>
             <dependency>
                 <groupId>com.mtfm</groupId>
+                <artifactId>deadman-extension-crypto</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
                 <artifactId>deadman-plugin-storage-local</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -143,17 +149,22 @@
             </dependency>
             <dependency>
                 <groupId>com.mtfm</groupId>
-                <artifactId>deadman-plugin-storage-cos</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.mtfm</groupId>
                 <artifactId>deadman-extension-pay</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.mtfm</groupId>
+                <artifactId>deadman-extension-flow-logic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
                 <artifactId>deadman-plugin-pay-wechat</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mtfm</groupId>
+                <artifactId>deadman-plugin-pay-mock</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -195,11 +206,6 @@
                 <groupId>com.aliyun.oss</groupId>
                 <artifactId>aliyun-sdk-oss</artifactId>
                 <version>${aliyun-oss.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.qcloud</groupId>
-                <artifactId>cos_api</artifactId>
-                <version>${tencent-cos.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.wechatpay-apiv3</groupId>
