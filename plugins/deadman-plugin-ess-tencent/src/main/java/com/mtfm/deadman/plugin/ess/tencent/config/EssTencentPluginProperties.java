@@ -46,14 +46,14 @@ public class EssTencentPluginProperties {
     private String endpoint = "ess.tencentcloudapi.com";
 
     /**
-     * 渠道版电子签 API 域名。
-     * 现网：essbasic.tencentcloudapi.com
+     * 渠道版电子签 API 域名（除 UploadFiles 外）。
+     * 联调：essbasic.test.ess.tencent.cn；现网：essbasic.tencentcloudapi.com
      */
     private String channelEndpoint = "essbasic.tencentcloudapi.com";
 
     /**
      * 文件服务域名（UploadFiles 专用）。
-     * 现网：file.ess.tencent.cn；测试：file.test.ess.tencent.cn
+     * 联调：file.test.ess.tencent.cn；现网：file.ess.tencent.cn
      */
     private String fileEndpoint = "file.ess.tencent.cn";
 
