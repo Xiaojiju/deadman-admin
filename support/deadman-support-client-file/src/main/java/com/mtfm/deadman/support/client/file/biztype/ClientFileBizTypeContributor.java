@@ -20,6 +20,6 @@ public class ClientFileBizTypeContributor implements FileBizTypeContributor {
      */
     @Override
     public Collection<String> contribute() {
-        return List.of("rent", "spare-part", "listing", "merchant-license", "avatar", "banner");
+        return List.of("rent", "spare-part", "spare-part-after-sales", "listing", "merchant-license", "avatar", "banner");
     }
 }

@@ -1,0 +1,22 @@
+# 复制为 deploy/deploy.conf 后按实际环境修改（deploy.conf 已加入 .gitignore）
+#   cp deploy/deploy.conf.example deploy/deploy.conf
+
+DEPLOY_HOST=1.14.48.236
+DEPLOY_USER=root
+DEPLOY_PORT=22
+# 可选：指定私钥。不填则走 ssh 默认配置
+# DEPLOY_SSH_KEY=${HOME}/.ssh/id_rsa
+
+# 远端安装目录
+DEPLOY_DIR=/opt/deadman
+# 应用内网端口（Nginx 反代到此端口）
+APP_PORT=8080
+# 打包 profile：prod 不含 pay-mock；dev 含 Mock 支付
+PACKAGE_PROFILE=prod
+
+# 前端静态资源（目录或 dist.zip）。不填则只部署后端
+# FRONTEND_DIST="/path/to/deadman-admin-ui/dist.zip"
+
+# 密码登录（不推荐）：先安装 sshpass，再执行
+#   export SSHPASS='your-ssh-password'
+#   ./scripts/deploy.sh

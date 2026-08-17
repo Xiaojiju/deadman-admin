@@ -11,6 +11,9 @@ public final class WechatMiniprogramConstants {
     /** 登录 Provider 路径段 */
     public static final String LOGIN_PATH_SEGMENT = "wechat-miniprogram";
 
+    /** 用 getPhoneNumber code 换取手机号（不落库）的公开接口路径 */
+    public static final String PHONE_RESOLVE_PATH = "/client/api/wechat-miniprogram/phone/resolve";
+
     private WechatMiniprogramConstants() {
     }
 }

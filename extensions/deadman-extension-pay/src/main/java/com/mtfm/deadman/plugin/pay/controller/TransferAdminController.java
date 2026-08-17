@@ -12,9 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mtfm.deadman.common.page.PageVO;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.plugin.pay.dto.transfer.CreateTransferRequest;
+import com.mtfm.deadman.plugin.pay.dto.transfer.TransferBatchPageQuery;
 import com.mtfm.deadman.plugin.pay.dto.transfer.UpdateTransferQuotaRequest;
+import com.mtfm.deadman.plugin.pay.facade.PayoutFacade;
 import com.mtfm.deadman.plugin.pay.service.TransferDispatchService;
 import com.mtfm.deadman.plugin.pay.service.TransferQuotaService;
 import com.mtfm.deadman.plugin.pay.service.TransferService;
@@ -37,6 +40,7 @@ public class TransferAdminController {
     private final TransferQuotaService transferQuotaService;
     private final TransferService transferService;
     private final TransferDispatchService transferDispatchService;
+    private final PayoutFacade payoutFacade;
 
     /**
      * 查询当前转账额度与占用。
@@ -97,7 +101,7 @@ public class TransferAdminController {
     }
 
     /**
-     * 发起商家转账（超单笔自动拆单为待转）。
+     * 发起商家转账（超单笔自动拆单为待转；强制运营账户语义，经 {@link PayoutFacade}）。
      *
      * @param request 转账请求
      * @return 批次视图
@@ -105,7 +109,19 @@ public class TransferAdminController {
     @PostMapping
     @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.pay.permission.PayPermissions).TRANSFER_CREATE)")
     public Result<TransferBatchVO> createTransfer(@Valid @RequestBody CreateTransferRequest request) {
-        return Result.ok(transferService.createTransfer(request));
+        return Result.ok(payoutFacade.createPayout(request));
+    }
+
+    /**
+     * 分页查询转账批次（不含明细）。
+     *
+     * @param query 分页与筛选
+     * @return 批次分页
+     */
+    @GetMapping("/batches")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.pay.permission.PayPermissions).TRANSFER_READ)")
+    public Result<PageVO<TransferBatchVO>> pageBatches(@Valid TransferBatchPageQuery query) {
+        return Result.ok(transferService.pageBatches(query));
     }
 
     /**
@@ -117,7 +133,7 @@ public class TransferAdminController {
     @GetMapping("/batches/{batchNo}")
     @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.pay.permission.PayPermissions).TRANSFER_READ)")
     public Result<TransferBatchVO> getBatch(@PathVariable String batchNo) {
-        return Result.ok(transferService.getBatch(batchNo));
+        return Result.ok(payoutFacade.getBatch(batchNo));
     }
 
     /**
@@ -156,6 +172,6 @@ public class TransferAdminController {
     @PostMapping("/bills/{outBillNo}/sync")
     @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.pay.permission.PayPermissions).TRANSFER_READ)")
     public Result<TransferBillVO> syncBill(@PathVariable String outBillNo) {
-        return Result.ok(transferService.syncBillFromChannel(outBillNo));
+        return Result.ok(payoutFacade.syncBillFromChannel(outBillNo));
     }
 }

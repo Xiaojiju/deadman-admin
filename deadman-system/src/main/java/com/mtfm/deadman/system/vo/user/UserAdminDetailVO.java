@@ -13,7 +13,7 @@ import java.util.List;
  * @param userCode          用户编码
  * @param username          主登录用户名
  * @param nickname          昵称
- * @param avatar            头像 URL
+ * @param avatarFileId      头像文件 ID
  * @param phone             绑定手机号
  * @param primaryDepartment 主部门
  * @param departments       所属部门列表
@@ -28,7 +28,7 @@ public record UserAdminDetailVO(
         String userCode,
         String username,
         String nickname,
-        String avatar,
+        Long avatarFileId,
         String phone,
         OrgRefVO primaryDepartment,
         List<OrgRefVO> departments,

@@ -26,6 +26,11 @@ public class WechatPayPluginProperties {
     /** 微信支付商户号 */
     private String mchId;
 
+    /**
+     * 服务商/平台商户号（收付通场景）；为空时回退 {@link #mchId}。
+     */
+    private String partnerMchid;
+
     /** APIv3 密钥 */
     private String apiV3Key;
 
@@ -35,8 +40,38 @@ public class WechatPayPluginProperties {
     /** 商户 API 私钥 PEM 文件路径 */
     private String privateKeyPath;
 
+    /**
+     * 微信支付公钥 PEM 文件路径（验签用，与 {@link #publicKeyId} 成对配置）。
+     * 配置后走公钥模式 {@code RSAPublicKeyConfig}；均未配置时回退平台证书自动更新。
+     */
+    private String publicKeyPath;
+
+    /** 微信支付公钥 ID，形如 {@code PUB_KEY_ID_...} */
+    private String publicKeyId;
+
+    /** 收付通相关扩展配置 */
+    private Ecommerce ecommerce = new Ecommerce();
+
     /** 各支付 Provider 独立绑定配置，键为 Provider 标识（如 wechat-jsapi） */
     private Map<String, WechatPayProviderBindingProperties> providers = new LinkedHashMap<>();
+
+    /**
+     * 获取平台/服务商商户号；未配置时回退普通商户号 {@link #mchId}。
+     *
+     * @return 平台商户号
+     */
+    public String getPartnerMchid() {
+        return StringUtils.hasText(partnerMchid) ? partnerMchid.trim() : mchId;
+    }
+
+    /**
+     * 解析平台/服务商商户号（与 {@link #getPartnerMchid()} 同义）。
+     *
+     * @return 平台商户号
+     */
+    public String resolvePartnerMchid() {
+        return getPartnerMchid();
+    }
 
     /**
      * 是否应使用 Mock 网关。
@@ -63,6 +98,21 @@ public class WechatPayPluginProperties {
                     "微信支付真实网关缺少 mchId/apiV3Key/merchantSerialNo/privateKeyPath，"
                             + "请补齐凭证或显式开启 deadman.plugin.pay-wechat.mock-enabled=true");
         }
+        boolean hasPublicKeyPath = StringUtils.hasText(publicKeyPath);
+        boolean hasPublicKeyId = StringUtils.hasText(publicKeyId);
+        if (hasPublicKeyPath != hasPublicKeyId) {
+            throw new IllegalStateException(
+                    "微信支付公钥模式需同时配置 publicKeyPath 与 publicKeyId");
+        }
+    }
+
+    /**
+     * 是否使用微信支付公钥验签（相对平台证书自动更新）。
+     *
+     * @return 公钥路径与公钥 ID 均已配置则为 true
+     */
+    public boolean usePublicKeyVerifier() {
+        return StringUtils.hasText(publicKeyPath) && StringUtils.hasText(publicKeyId);
     }
 
     /**
@@ -87,11 +137,14 @@ public class WechatPayPluginProperties {
         if (!StringUtils.hasText(binding.getTransferNotifyEndpoint())) {
             binding.setTransferNotifyEndpoint(defaultTransferNotifyEndpoint(providerId));
         }
+        if (!StringUtils.hasText(binding.getPayScoreNotifyEndpoint())) {
+            binding.setPayScoreNotifyEndpoint(defaultPayScoreNotifyEndpoint(providerId));
+        }
         return binding;
     }
 
     /**
-     * 列出所有已启用 Provider 的支付/退款/转账回调 endpoint。
+     * 列出所有已启用 Provider 的支付/退款/转账/支付分回调 endpoint。
      *
      * @return endpoint 路径列表
      */
@@ -103,6 +156,7 @@ public class WechatPayPluginProperties {
                 endpoints.add(normalizeEndpoint(binding.getNotifyEndpoint(), entry.getKey()));
                 endpoints.add(normalizeRefundEndpoint(binding.getRefundNotifyEndpoint(), entry.getKey()));
                 endpoints.add(normalizeTransferEndpoint(binding.getTransferNotifyEndpoint(), entry.getKey()));
+                endpoints.add(normalizePayScoreEndpoint(binding.getPayScoreNotifyEndpoint(), entry.getKey()));
             }
         }
         return endpoints;
@@ -118,6 +172,8 @@ public class WechatPayPluginProperties {
         return switch (providerId) {
             case "wechat-jsapi" -> "/client/api/pay/wechat/jsapi/notify";
             case "wechat-native" -> "/client/api/pay/wechat/native/notify";
+            case "wechat-ecommerce-combine-jsapi" ->
+                    "/client/api/pay/wechat/ecommerce-combine-jsapi/notify";
             default -> "/client/api/pay/wechat/" + providerId + "/notify";
         };
     }
@@ -132,6 +188,8 @@ public class WechatPayPluginProperties {
         return switch (providerId) {
             case "wechat-jsapi" -> "/client/api/pay/wechat/jsapi/refund/notify";
             case "wechat-native" -> "/client/api/pay/wechat/native/refund/notify";
+            case "wechat-ecommerce-combine-jsapi" ->
+                    "/client/api/pay/wechat/ecommerce-combine-jsapi/refund/notify";
             default -> "/client/api/pay/wechat/" + providerId + "/refund/notify";
         };
     }
@@ -147,6 +205,19 @@ public class WechatPayPluginProperties {
             case "wechat-jsapi" -> "/client/api/pay/wechat/jsapi/transfer/notify";
             case "wechat-native" -> "/client/api/pay/wechat/native/transfer/notify";
             default -> "/client/api/pay/wechat/" + providerId + "/transfer/notify";
+        };
+    }
+
+    /**
+     * 解析 Provider 默认支付分回调 endpoint。
+     *
+     * @param providerId Provider 标识
+     * @return endpoint 路径
+     */
+    public static String defaultPayScoreNotifyEndpoint(String providerId) {
+        return switch (providerId) {
+            case "wechat-payscore" -> "/client/api/pay/wechat/payscore/notify";
+            default -> "/client/api/pay/wechat/" + providerId + "/payscore/notify";
         };
     }
 
@@ -188,6 +259,19 @@ public class WechatPayPluginProperties {
         return normalizePath(resolved);
     }
 
+    /**
+     * 规范化支付分回调 endpoint 路径。
+     *
+     * @param endpoint   原始路径
+     * @param providerId Provider 标识
+     * @return 规范化路径
+     */
+    public static String normalizePayScoreEndpoint(String endpoint, String providerId) {
+        String resolved =
+                StringUtils.hasText(endpoint) ? endpoint.trim() : defaultPayScoreNotifyEndpoint(providerId);
+        return normalizePath(resolved);
+    }
+
     private static String normalizePath(String resolved) {
         if (!resolved.startsWith("/")) {
             resolved = "/" + resolved;
@@ -196,5 +280,18 @@ public class WechatPayPluginProperties {
             return resolved.substring(0, resolved.length() - 1);
         }
         return resolved;
+    }
+
+    /**
+     * 收付通扩展配置。
+     */
+    @Data
+    public static class Ecommerce {
+
+        /** 分账结果回调 URL */
+        private String profitSharingNotifyUrl;
+
+        /** 二级商户进件结果回调 URL */
+        private String applymentNotifyUrl;
     }
 }

@@ -14,17 +14,21 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.mtfm.deadman.common.result.Result;
+import com.mtfm.deadman.plugin.file.dto.ResolveFileUrlsRequest;
 import com.mtfm.deadman.plugin.file.service.FileService;
+import com.mtfm.deadman.plugin.file.vo.FileAccessUrlVO;
 import com.mtfm.deadman.plugin.file.vo.FileDownloadResource;
 import com.mtfm.deadman.plugin.file.vo.FileMetadataVO;
 import com.mtfm.deadman.security.LoginUser;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -67,6 +71,30 @@ public class FileController {
     @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.file.permission.FilePermissions).READ)")
     public Result<FileMetadataVO> getById(@PathVariable Long fileId) {
         return Result.ok(fileService.getById(fileId));
+    }
+
+    /**
+     * 按文件 ID 换取当前可访问 URL（签名链每次刷新；本地相对路径可按 public-base-url 绝对化）。
+     *
+     * @param fileId 文件主键
+     * @return 访问地址
+     */
+    @GetMapping("/{fileId}/url")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.file.permission.FilePermissions).READ)")
+    public Result<FileAccessUrlVO> resolveUrl(@PathVariable Long fileId) {
+        return Result.ok(fileService.resolveAccessUrl(fileId));
+    }
+
+    /**
+     * 批量按文件 ID 换取当前可访问 URL。
+     *
+     * @param request 文件 ID 列表
+     * @return 访问地址列表（与入参顺序一致）
+     */
+    @PostMapping("/urls")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.file.permission.FilePermissions).READ)")
+    public Result<List<FileAccessUrlVO>> resolveUrls(@Valid @RequestBody ResolveFileUrlsRequest request) {
+        return Result.ok(fileService.resolveAccessUrls(request.fileIds()));
     }
 
     /**

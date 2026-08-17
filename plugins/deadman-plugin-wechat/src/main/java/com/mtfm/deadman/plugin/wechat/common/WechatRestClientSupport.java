@@ -39,13 +39,21 @@ public class WechatRestClientSupport {
 
     /**
      * 发起 POST 请求并解析 JSON 响应。
+     * <p>
+     * 若 {@code requestBody} 已是 JSON 字符串，则按 UTF-8 原始字节提交，避免二次序列化。
      *
      * @param url         请求地址
-     * @param requestBody 请求体
+     * @param requestBody 请求体（JSON 字符串或可序列化对象）
      * @return JSON 节点
      */
     public JsonNode postForJson(String url, Object requestBody) {
-        String rawBody = restClient.post().uri(url).body(requestBody).retrieve().body(String.class);
+        var requestSpec = restClient.post().uri(url).contentType(MediaType.APPLICATION_JSON);
+        if (requestBody instanceof String jsonBody) {
+            requestSpec = requestSpec.body(jsonBody.getBytes(StandardCharsets.UTF_8));
+        } else {
+            requestSpec = requestSpec.body(requestBody);
+        }
+        String rawBody = requestSpec.retrieve().body(String.class);
         return parseJsonBody(rawBody);
     }
 

@@ -8,6 +8,7 @@
 |-------------|----------|------|
 | `wechat-jsapi` | 小程序 / 公众号 JSAPI | 已实现 |
 | `wechat-native` | 扫码支付 | 配置预留，Provider 待实现 |
+| `wechat-payscore` | 微信支付分 | 服务订单/授权骨架，暂不落库 |
 
 > 订单持久化、状态流转、事件发布均由 `deadman-extension-pay` 统一处理，本模块**不包含**独立订单表。
 
@@ -258,6 +259,12 @@ deadman:
           app-id: ${WECHAT_PAY_NATIVE_APP_ID}
           notify-endpoint: /client/api/pay/wechat/native/notify
           notify-url: https://api.example.com/client/api/pay/wechat/native/notify
+        wechat-payscore:
+          enabled: true
+          app-id: ${WECHAT_PAY_SCORE_APP_ID}
+          service-id: ${WECHAT_PAY_SCORE_SERVICE_ID}
+          pay-score-notify-url: https://api.example.com/client/api/pay/wechat/payscore/notify
+          pay-score-notify-endpoint: /client/api/pay/wechat/payscore/notify
 ```
 
 ### 环境变量对照

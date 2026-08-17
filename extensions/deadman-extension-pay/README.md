@@ -1,6 +1,16 @@
 # deadman-extension-pay
 
-支付**能力延伸**模块（位于 `extensions/`）。通过 `PaymentProvider` / `RefundProvider` / `TransferProvider` SPI 定义契约，由 `PayService` / `RefundService` / `TransferService` 统一负责持久化、编排与状态通知。
+支付**能力延伸**模块（位于 `extensions/`）。业务请按资金链路使用三分域门面：
+
+- `DirectPayFacade`：直连自营支付/退款（`fund_lane=DIRECT`）
+- `EcommerceTradeFacade`：收付通合单/分账/退款（`fund_lane=ECOMMERCE`）
+- `PayoutFacade`：商家转账到零钱（仅运营账户）
+- `SubMerchantFacade`：二级商户进件/绑号
+- `PayScoreFacade`：微信支付分骨架，暂不落库
+
+底层仍通过 `PaymentProvider` / `RefundProvider` / `TransferProvider` / `ProfitSharingProvider` / `SubMerchantProvider` / `PayScoreProvider` SPI 对接渠道；`PayService` 等为过渡编排层。
+
+双链路规范见 [docs/双链路资金隔离架构.md](docs/双链路资金隔离架构.md)，接入步骤见 [docs/接入指南.md](docs/接入指南.md)。
 
 > 渠道具体实现放在 `plugins/`（如 [deadman-plugin-pay-wechat](../../plugins/deadman-plugin-pay-wechat/)），只实现渠道 API 与回调解析，**不得**自行持久化支付单。
 
@@ -224,10 +234,11 @@ sequenceDiagram
 |--------|------|--------|------|
 | `enabled` | boolean | `true` | 是否启用支付插件 |
 | `default-provider` | string | `wechat-jsapi` | 默认 PaymentProvider 标识 |
-| `test-mode.enabled` | boolean | `false` | 测试模式：预下单金额覆盖为固定小额 |
-| `test-mode.fixed-amount-cents` | int | `1` | 测试模式固定金额（分），`1` 即 0.01 元 |
+| `test-mode.payment.enabled` | boolean | `false` | 支付测试：预下单金额覆盖为固定小额（可与真实微信联调） |
+| `test-mode.payment.fixed-amount-cents` | int | `1` | 支付测试固定金额（分），`1` 即 0.01 元 |
+| `test-mode.sub-merchant.enabled` | boolean | `false` | 进件测试：不调微信，进件/查单/媒体上传直接模拟通过 |
 
-> 测试模式会同时改写本地 `plugin_pay_order.amount_total` 与渠道下单金额。可退金额以支付单为准；业务订单展示金额不受影响。生产环境务必关闭。
+> 支付测试会同时改写本地 `plugin_pay_order.amount_total` 与渠道下单金额。可退金额以支付单为准；业务订单展示金额不受影响。进件测试与支付测试相互独立。生产环境务必关闭。
 
 ### 主动查单 `sync.*`
 
@@ -277,8 +288,11 @@ deadman:
       enabled: true
       default-provider: wechat-jsapi
       test-mode:
-        enabled: false
-        fixed-amount-cents: 1
+        payment:
+          enabled: false
+          fixed-amount-cents: 1
+        sub-merchant:
+          enabled: false
       abnormal-refund:
         auto-enabled: false
         default-receive-type: MERCHANT_BANK_CARD
@@ -480,6 +494,7 @@ DDL：`src/main/resources/db/pay/schema.sql`
 | POST | `/api/pay/transfer/dispatch/resume` | `pay:transfer:dispatch` | 恢复并立即派发一轮 |
 | POST | `/api/pay/transfer/dispatch/run` | `pay:transfer:dispatch` | 手动触发派发 |
 | POST | `/api/pay/transfer` | `pay:transfer:create` | 发起转账（自动拆单） |
+| GET | `/api/pay/transfer/batches` | `pay:transfer:read` | 分页查询转账批次 |
 | GET | `/api/pay/transfer/batches/{batchNo}` | `pay:transfer:read` | 查询批次与明细 |
 | POST | `/api/pay/transfer/batches/{batchNo}/stop` | `pay:transfer:dispatch` | 停止单批次 |
 | POST | `/api/pay/transfer/batches/{batchNo}/resume` | `pay:transfer:dispatch` | 恢复单批次 |

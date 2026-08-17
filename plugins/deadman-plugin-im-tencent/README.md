@@ -45,6 +45,9 @@
 ```yaml
 deadman:
   plugin:
+    file:
+      # 本地存储相对路径 /files/... 拼成绝对 URL，供 IM FaceUrl 等外部系统使用
+      public-base-url: ${DEADMAN_FILE_PUBLIC_BASE_URL:}
     im-tencent:
       enabled: true
       mock-enabled: true
@@ -52,12 +55,15 @@ deadman:
       secret-key: ${TENCENT_IM_SECRET_KEY:}
       admin-identifier: administrator
       user-sig-expire-seconds: 86400
+      # 签名 FaceUrl 刷新间隔（秒）；CDN 稳定链也可接受周期重推
+      face-url-refresh-seconds: 1800
       user-id-template: "{realm}_{subjectId}"
   support:
     client-im:
       enabled: true
 ```
 
+头像同步约定：IM 插件**不**依赖 `FileService`；由 Support（`admin-im` / `client-im`）先 `resolveAccessUrl(avatarFileId)`，再把公网绝对 URL + fileId 传入 `ImUserProfileSource`。
 ### 4. 前端
 
 详见 [ImClientAdminIntegration.md](../../doc/deadman-plugin-im-tencent/ImClientAdminIntegration.md)。摘要：

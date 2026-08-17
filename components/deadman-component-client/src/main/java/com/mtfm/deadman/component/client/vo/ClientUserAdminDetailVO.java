@@ -10,14 +10,14 @@ import java.util.List;
  * @param userCode 用户编码
  * @param username 主登录用户名
  * @param nickname 昵称
- * @param avatar 头像
+ * @param avatarFileId 头像文件 ID
  * @param phone 手机号
  * @param status 用户状态
  * @param accounts 绑定账号列表
  * @param createTime 创建时间
  * @param updateTime 更新时间
  */
-public record ClientUserAdminDetailVO(Long id, String userCode, String username, String nickname, String avatar,
+public record ClientUserAdminDetailVO(Long id, String userCode, String username, String nickname, Long avatarFileId,
     String phone, Integer status, List<ClientUserAccountBindingVO> accounts, LocalDateTime createTime,
     LocalDateTime updateTime) {
 }

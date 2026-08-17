@@ -3,7 +3,7 @@ package com.mtfm.deadman.common.spi;
 import java.util.Map;
 
 /**
- * 用户端站内信 WebSocket 推送桥接（由 app 层注入 mobile 通道实现）。
+ * 用户端站内信 WebSocket 推送桥接（由 notification 模块实现，走 {@code client-inbox} 通道）。
  */
 public interface ClientInboxPushBridge {
 

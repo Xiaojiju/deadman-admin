@@ -22,6 +22,8 @@ public class TestCacheConfig {
                 CacheNames.USER_PROFILE,
                 CacheNames.USER_AUTHORITIES,
                 "logisticsTrackQuery",
-                "logisticsCarrierDetect");
+                "logisticsCarrierDetect",
+                "engineeringMerchantShopQrCode",
+                "engineeringPromoQrCode");
     }
 }

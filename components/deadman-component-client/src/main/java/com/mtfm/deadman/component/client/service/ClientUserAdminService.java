@@ -76,7 +76,8 @@ public class ClientUserAdminService {
 
         List<ClientUserAdminSummaryVO> items = records.stream()
             .map(user -> new ClientUserAdminSummaryVO(user.getId(), user.getUserCode(), usernames.get(user.getId()),
-                user.getNickname(), user.getAvatar(), phones.get(user.getId()), user.getStatus(), user.getCreateTime()))
+                user.getNickname(), user.getAvatarFileId(), phones.get(user.getId()), user.getStatus(),
+                user.getCreateTime()))
             .toList();
         return PageVO.of(items, page.getTotal(), query);
     }
@@ -135,7 +136,7 @@ public class ClientUserAdminService {
                 account.getOauthProvider(), account.getVerified(), account.getStatus()))
             .toList();
         return new ClientUserAdminDetailVO(user.getId(), user.getUserCode(), username, user.getNickname(),
-            user.getAvatar(), phone, user.getStatus(), accounts, user.getCreateTime(), user.getUpdateTime());
+            user.getAvatarFileId(), phone, user.getStatus(), accounts, user.getCreateTime(), user.getUpdateTime());
     }
 
     private void syncAccountStatus(Long userId, Integer status) {

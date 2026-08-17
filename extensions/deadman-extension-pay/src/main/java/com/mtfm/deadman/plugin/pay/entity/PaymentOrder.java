@@ -56,6 +56,11 @@ public class PaymentOrder {
     /** 支付 Provider 标识，如 wechat-jsapi */
     private String providerId;
 
+    /**
+     * 资金链路：DIRECT（直连）/ ECOMMERCE（收付通），见 {@link com.mtfm.deadman.plugin.pay.constant.PayFundLane}。
+     */
+    private String fundLane;
+
     /** 渠道预支付 ID（如微信 prepay_id） */
     private String channelPrepayId;
 

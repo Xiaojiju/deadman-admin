@@ -70,7 +70,7 @@ public class UserOperations {
         UserBase userBase = UserBase.builder()
                 .userCode(userCode)
                 .nickname(nickname)
-                .avatar(request.avatar())
+                .avatarFileId(request.avatarFileId())
                 .status(UserStatus.ACTIVE.getValue())
                 .build();
         userBaseService.save(userBase);
@@ -113,8 +113,8 @@ public class UserOperations {
             user.setNickname(request.nickname());
             baseChanged = true;
         }
-        if (request.avatar() != null) {
-            user.setAvatar(request.avatar());
+        if (request.avatarFileId() != null) {
+            user.setAvatarFileId(request.avatarFileId());
             baseChanged = true;
         }
         if (request.status() != null) {

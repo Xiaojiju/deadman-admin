@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.pay.constant.PaymentChannelParams;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.constant.PaymentRefundStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
@@ -96,6 +97,7 @@ public class PaymentRefundOrderService {
                 .payPlatform(payOrder.getPayPlatform())
                 .payMethod(payOrder.getPayMethod())
                 .providerId(provider.providerId())
+                .subMchid(trimToNull(context.channelParam(PaymentChannelParams.SUB_MCHID)))
                 .channelTransactionId(payOrder.getChannelTransactionId())
                 .reason(context.getReason())
                 .abnormalHandled(0)
@@ -330,5 +332,12 @@ public class PaymentRefundOrderService {
         }
         Set<String> allowed = ALLOWED_TRANSITIONS.get(from);
         return allowed != null && allowed.contains(to);
+    }
+
+    private static String trimToNull(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        return value.trim();
     }
 }

@@ -16,7 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 
 /**
- * 用户端微信 OAuth 绑定注册 Provider：携带 bindToken 注册新用户并完成 openid 绑定，成功后签发 JWT。
+ * 用户端微信 OAuth 绑定注册 Provider：按 mode 分发账密建号或完善资料，成功后签发 JWT。
  */
 @Component
 @RequiredArgsConstructor
@@ -46,8 +46,17 @@ public class ClientWechatRegisterLoginProvider implements LoginProvider {
     @Override
     public Authentication createAuthenticationRequest(HttpServletRequest request) throws AuthenticationException {
         ClientWechatRegisterRequest registerRequest = parseRequest(request);
-        if (!StringUtils.hasText(registerRequest.bindToken())
-                || !StringUtils.hasText(registerRequest.username())
+        if (!StringUtils.hasText(registerRequest.bindToken())) {
+            throw new AuthenticationServiceException("绑定令牌不能为空");
+        }
+        if (registerRequest.isProfileMode()) {
+            if (!StringUtils.hasText(registerRequest.nickname())) {
+                throw new AuthenticationServiceException("昵称不能为空");
+            }
+            if (!StringUtils.hasText(registerRequest.phone())) {
+                throw new AuthenticationServiceException("手机号不能为空");
+            }
+        } else if (!StringUtils.hasText(registerRequest.username())
                 || !StringUtils.hasText(registerRequest.password())) {
             throw new AuthenticationServiceException("绑定令牌、用户名或密码不能为空");
         }
@@ -61,10 +70,25 @@ public class ClientWechatRegisterLoginProvider implements LoginProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        ClientWechatRegisterAuthenticationToken registerToken = (ClientWechatRegisterAuthenticationToken) authentication;
+        ClientWechatRegisterAuthenticationToken registerToken =
+                (ClientWechatRegisterAuthenticationToken) authentication;
         ClientWechatRegisterRequest request = registerToken.getRegisterRequest();
+        if (request.isProfileMode()) {
+            return clientWechatAuthService.registerAndBindByProfile(
+                    request.bindToken(),
+                    request.nickname(),
+                    request.avatarFileId(),
+                    request.phone(),
+                    request.inviteCode());
+        }
         return clientWechatAuthService.registerAndBind(
-                request.bindToken(), request.username(), request.password(), request.nickname(), request.avatar());
+                request.bindToken(),
+                request.username(),
+                request.password(),
+                request.nickname(),
+                request.avatarFileId(),
+                request.phone(),
+                request.inviteCode());
     }
 
     private ClientWechatRegisterRequest parseRequest(HttpServletRequest request) {

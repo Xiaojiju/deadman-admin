@@ -8,10 +8,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mtfm.deadman.common.exception.BusinessException;
+import com.mtfm.deadman.common.page.PageVO;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.dto.transfer.CreateTransferRequest;
+import com.mtfm.deadman.plugin.pay.dto.transfer.TransferBatchPageQuery;
 import com.mtfm.deadman.plugin.pay.entity.PaymentTransferBatch;
 import com.mtfm.deadman.plugin.pay.entity.PaymentTransferBill;
 import com.mtfm.deadman.plugin.pay.entity.PaymentTransferQuota;
@@ -177,6 +180,20 @@ public class TransferService {
         PaymentTransferBatch batch = paymentTransferOrderService.requireBatch(batchNo);
         List<PaymentTransferBill> bills = paymentTransferOrderService.listBillsByBatch(batchNo);
         return toBatchVo(batch, bills);
+    }
+
+    /**
+     * 分页查询转账批次；列表不含明细，明细请走 {@link #getBatch(String)}。
+     *
+     * @param query 分页与筛选
+     * @return 批次分页
+     */
+    public PageVO<TransferBatchVO> pageBatches(TransferBatchPageQuery query) {
+        Page<PaymentTransferBatch> page = paymentTransferOrderService.pageBatches(query);
+        List<TransferBatchVO> records = page.getRecords().stream()
+                .map(batch -> toBatchVo(batch, List.of()))
+                .toList();
+        return PageVO.of(records, page.getTotal(), query);
     }
 
     /**

@@ -34,8 +34,8 @@ public class ClientUserBase {
     /** 用户昵称 */
     private String nickname;
 
-    /** 头像 URL */
-    private String avatar;
+    /** 头像文件 ID */
+    private Long avatarFileId;
 
     /** 用户状态：0-禁用，1-正常 */
     private Integer status;

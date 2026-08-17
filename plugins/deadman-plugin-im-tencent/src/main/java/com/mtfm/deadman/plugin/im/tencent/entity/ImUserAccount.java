@@ -41,7 +41,10 @@ public class ImUserAccount {
     /** 昵称快照 */
     private String nickname;
 
-    /** 头像 URL 快照 */
+    /** 头像文件 ID 快照（稳定比对键，由调用方传入） */
+    private Long avatarFileId;
+
+    /** 头像 URL 快照（最近一次同步到腾讯云的 FaceUrl） */
     private String avatarUrl;
 
     /** 状态：1-正常，0-禁用 */

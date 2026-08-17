@@ -53,6 +53,17 @@ public interface RefundProvider {
     RefundQueryResult queryRefund(String outRefundNo);
 
     /**
+     * 按平台退款单号查询退款（可带渠道扩展，如收付通 {@code subMchid}）。
+     *
+     * @param outRefundNo   平台退款单号
+     * @param channelParams 渠道扩展，可空
+     * @return 查退款结果
+     */
+    default RefundQueryResult queryRefund(String outRefundNo, java.util.Map<String, String> channelParams) {
+        return queryRefund(outRefundNo);
+    }
+
+    /**
      * 发起异常退款（渠道退款状态为 ABNORMAL 时调用）。
      * <p>
      * 对应微信「发起异常退款」等接口；申请成功后状态通常回到 PROCESSING，终态仍以回调/查单为准。

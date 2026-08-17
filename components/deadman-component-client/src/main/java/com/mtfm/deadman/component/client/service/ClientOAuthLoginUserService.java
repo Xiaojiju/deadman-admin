@@ -39,7 +39,9 @@ public class ClientOAuthLoginUserService implements OAuthLoginUserService {
         } else {
             userBase = clientUserProvisioner
                 .provisionOAuthUser(new ClientUserProvisioner.ClientUserProvisionRequest(request.oauthProvider(),
-                    request.oauthSubject(), request.loginIdentifier(), request.nickname(), request.avatar()));
+                    request.oauthSubject(), request.loginIdentifier(), request.nickname(),
+                    // OAuth 头像多为微信 CDN URL，无法作为平台 fileId 落库
+                    null));
         }
 
         if (userBase.getStatus() == null || userBase.getStatus() != UserStatus.ACTIVE.getValue()) {

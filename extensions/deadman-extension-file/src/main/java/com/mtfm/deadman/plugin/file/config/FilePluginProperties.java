@@ -23,4 +23,11 @@ public class FilePluginProperties {
 
     /** 是否强制校验 bizType 已在注册表中登记 */
     private boolean bizTypeStrict = true;
+
+    /**
+     * 公网访问基址（如 {@code https://api.example.com}）。
+     * <p>本地存储返回相对路径 {@code /files/...} 时，换链会拼成绝对 URL，供 IM FaceUrl 等外部系统使用。
+     * COS/OSS 已返回 {@code https://} 时本配置不生效。
+     */
+    private String publicBaseUrl;
 }

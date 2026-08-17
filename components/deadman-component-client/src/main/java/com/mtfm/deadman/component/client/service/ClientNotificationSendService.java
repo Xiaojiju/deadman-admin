@@ -1,13 +1,19 @@
 package com.mtfm.deadman.component.client.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.enums.UserStatus;
@@ -23,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 用户端站内信广播发送服务。
+ * 用户端站内信发送服务（广播 / 定向）。
  */
 @Slf4j
 @Service
@@ -32,7 +38,7 @@ public class ClientNotificationSendService {
 
     private static final int RECIPIENT_BATCH_SIZE = 500;
 
-    /** WebSocket 消息类型：站内信通知 */
+    /** WebSocket 消息类型：站内信通知（与 notification 模块一致） */
     public static final String MESSAGE_TYPE_INBOX = "INBOX_NOTIFICATION";
 
     private final ClientNotificationMapper clientNotificationMapper;
@@ -58,13 +64,52 @@ public class ClientNotificationSendService {
                         .eq(ClientUserBase::getStatus, UserStatus.ACTIVE.getValue())
                         .select(ClientUserBase::getId))
                 .stream().map(ClientUserBase::getId).toList();
+        return sendToUsers(userIds, title, content, bizType, bizId, extra);
+    }
+
+    /**
+     * 向指定用户发送站内信（去重、过滤空 ID），并尝试 WebSocket 实时推送。
+     *
+     * @param userIds 收件人用户 ID 集合
+     * @param title   标题
+     * @param content 正文
+     * @param bizType 业务类型
+     * @param bizId   业务主键
+     * @param extra   扩展字段
+     * @return 通知主键；无有效收件人时返回 null
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Long sendToUsers(Collection<Long> userIds, String title, String content, String bizType, Long bizId,
+            Map<String, Object> extra) {
+        if (CollectionUtils.isEmpty(userIds) || !StringUtils.hasText(title) || !StringUtils.hasText(content)) {
+            return null;
+        }
+        Set<Long> distinctIds = new LinkedHashSet<>();
+        for (Long userId : userIds) {
+            if (userId != null) {
+                distinctIds.add(userId);
+            }
+        }
+        if (distinctIds.isEmpty()) {
+            return null;
+        }
+        List<Long> activeIds = clientUserBaseMapper
+                .selectList(new LambdaQueryWrapper<ClientUserBase>()
+                        .in(ClientUserBase::getId, distinctIds)
+                        .eq(ClientUserBase::getStatus, UserStatus.ACTIVE.getValue())
+                        .select(ClientUserBase::getId))
+                .stream().map(ClientUserBase::getId).filter(Objects::nonNull).toList();
+        if (activeIds.isEmpty()) {
+            return null;
+        }
 
         ClientNotification notification = ClientNotification.builder().title(title.trim()).content(content.trim())
-                .bizType(bizType).bizId(bizId).extraJson(serializeExtra(extra)).recipientCount(userIds.size()).build();
+                .bizType(bizType).bizId(bizId).extraJson(serializeExtra(extra)).recipientCount(activeIds.size())
+                .build();
         clientNotificationMapper.insert(notification);
 
-        List<ClientNotificationRecipient> recipients = new ArrayList<>(userIds.size());
-        for (Long userId : userIds) {
+        List<ClientNotificationRecipient> recipients = new ArrayList<>(activeIds.size());
+        for (Long userId : activeIds) {
             recipients.add(recipientService.buildUnread(notification.getId(), userId));
         }
         recipientService.saveBatch(recipients, RECIPIENT_BATCH_SIZE);

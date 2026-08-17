@@ -2,9 +2,11 @@ package com.mtfm.deadman.plugin.wechat.miniprogram.spi;
 
 import com.mtfm.deadman.plugin.wechat.miniprogram.dto.WechatBindPhoneRequest;
 import com.mtfm.deadman.plugin.wechat.miniprogram.vo.WechatBindPhoneVO;
+import com.mtfm.deadman.plugin.wechat.miniprogram.vo.WechatBoundPhoneVO;
+import com.mtfm.deadman.plugin.wechat.miniprogram.vo.WechatResolvedPhoneVO;
 
 /**
- * 微信手机号绑定 SPI，各用户体系模块实现后将微信手机号绑定到本体系账号。
+ * 微信手机号 SPI：换号、绑定与查询，由各用户体系桥接模块实现。
  */
 public interface WechatPhoneBindingHandler {
 
@@ -16,6 +18,14 @@ public interface WechatPhoneBindingHandler {
     String loginGroupId();
 
     /**
+     * 使用 getPhoneNumber code 向微信换取手机号（不落库，供注册页回填）。
+     *
+     * @param request 含手机号动态令牌 code
+     * @return 明文手机号
+     */
+    WechatResolvedPhoneVO resolvePhone(WechatBindPhoneRequest request);
+
+    /**
      * 绑定微信手机号到指定用户。
      *
      * @param userId  用户主键
@@ -23,4 +33,12 @@ public interface WechatPhoneBindingHandler {
      * @return 绑定结果
      */
     WechatBindPhoneVO bindPhone(Long userId, WechatBindPhoneRequest request);
+
+    /**
+     * 查询指定用户当前已绑定的手机号（脱敏）。
+     *
+     * @param userId 用户主键
+     * @return 已绑定手机号；未绑定时 {@code phone} 为 null
+     */
+    WechatBoundPhoneVO getBoundPhone(Long userId);
 }

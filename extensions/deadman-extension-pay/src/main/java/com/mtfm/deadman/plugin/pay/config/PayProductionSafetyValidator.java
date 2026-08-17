@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 生产安全校验：禁止在 prod/production 配置下启用 Mock 支付、微信 Mock 网关或支付 test-mode。
+ * 生产安全校验：禁止在 prod/production 配置下启用 Mock 支付、微信 Mock 网关或支付/进件 test-mode。
  */
 @Slf4j
 @Component
@@ -34,8 +34,11 @@ public class PayProductionSafetyValidator implements ApplicationRunner {
         if (!isProductionProfile()) {
             return;
         }
-        if (payPluginProperties.getTestMode() != null && payPluginProperties.getTestMode().isEnabled()) {
-            throw new IllegalStateException("生产环境禁止开启 deadman.plugin.pay.test-mode.enabled");
+        if (payPluginProperties.isPaymentTestModeEnabled()) {
+            throw new IllegalStateException("生产环境禁止开启 deadman.plugin.pay.test-mode.payment.enabled");
+        }
+        if (payPluginProperties.isSubMerchantTestModeEnabled()) {
+            throw new IllegalStateException("生产环境禁止开启 deadman.plugin.pay.test-mode.sub-merchant.enabled");
         }
         String defaultProvider = payPluginProperties.getDefaultProvider();
         if (StringUtils.hasText(defaultProvider) && "mock".equalsIgnoreCase(defaultProvider.trim())) {

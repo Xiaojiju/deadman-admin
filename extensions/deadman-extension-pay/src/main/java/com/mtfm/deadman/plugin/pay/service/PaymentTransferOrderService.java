@@ -12,10 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.pay.constant.PlatformFundBizScene;
 import com.mtfm.deadman.plugin.pay.constant.TransferBatchStatus;
 import com.mtfm.deadman.plugin.pay.constant.TransferBillStatus;
+import com.mtfm.deadman.plugin.pay.dto.transfer.TransferBatchPageQuery;
 import com.mtfm.deadman.plugin.pay.entity.PaymentTransferBatch;
 import com.mtfm.deadman.plugin.pay.entity.PaymentTransferBill;
 import com.mtfm.deadman.plugin.pay.entity.PaymentTransferQuota;
@@ -38,6 +41,7 @@ public class PaymentTransferOrderService {
     private final PaymentTransferBillMapper transferBillMapper;
     private final PaymentTransferQuotaMapper transferQuotaMapper;
     private final TransferQuotaService transferQuotaService;
+    private final PlatformFundLedgerService platformFundLedgerService;
 
     /**
      * 拆单落库：批次 + 全部待转明细。
@@ -140,6 +144,29 @@ public class PaymentTransferOrderService {
             throw new BusinessException(ResultCode.PAY_TRANSFER_BATCH_NOT_FOUND, "转账批次不存在：" + batchNo);
         }
         return batch;
+    }
+
+    /**
+     * 分页查询转账批次。
+     *
+     * @param query 分页与筛选
+     * @return 批次分页
+     */
+    public Page<PaymentTransferBatch> pageBatches(TransferBatchPageQuery query) {
+        LambdaQueryWrapper<PaymentTransferBatch> wrapper = new LambdaQueryWrapper<PaymentTransferBatch>()
+                .eq(StringUtils.hasText(query.getBatchNo()), PaymentTransferBatch::getBatchNo, trim(query.getBatchNo()))
+                .eq(StringUtils.hasText(query.getBizOrderNo()), PaymentTransferBatch::getBizOrderNo,
+                        trim(query.getBizOrderNo()))
+                .eq(StringUtils.hasText(query.getStatus()), PaymentTransferBatch::getStatus, trim(query.getStatus()))
+                .eq(StringUtils.hasText(query.getOpenid()), PaymentTransferBatch::getOpenid, trim(query.getOpenid()))
+                .eq(StringUtils.hasText(query.getProviderId()), PaymentTransferBatch::getProviderId,
+                        trim(query.getProviderId()))
+                .ge(query.getCreateTimeFrom() != null, PaymentTransferBatch::getCreateTime, query.getCreateTimeFrom())
+                .le(query.getCreateTimeTo() != null, PaymentTransferBatch::getCreateTime, query.getCreateTimeTo())
+                .orderByDesc(PaymentTransferBatch::getCreateTime)
+                .orderByDesc(PaymentTransferBatch::getId);
+        return transferBatchMapper.selectPage(
+                new Page<>(query.resolvedCurrent(), query.resolvedSize()), wrapper);
     }
 
     /**
@@ -298,6 +325,7 @@ public class PaymentTransferOrderService {
                     ResultCode.PAY_TRANSFER_AMOUNT_MISMATCH,
                     "转账金额与本地不一致：" + outBillNo);
         }
+        String previousStatus = bill.getStatus();
         if (TransferBillStatus.isTerminal(bill.getStatus()) && bill.getStatus().equals(normalized)) {
             return false;
         }
@@ -341,6 +369,20 @@ public class PaymentTransferOrderService {
         }
         transferBillMapper.updateById(bill);
         refreshBatchAggregates(bill.getBatchNo());
+        if (TransferBillStatus.SUCCESS.equals(normalized)
+                && !TransferBillStatus.SUCCESS.equals(previousStatus)
+                && bill.getAmountCents() != null
+                && bill.getAmountCents() > 0) {
+            // 运营账户出账：与业务侧 platform_partner_fund_flow 并存，幂等键按明细单号
+            platformFundLedgerService.record(
+                    PlatformFundBizScene.PAYOUT_TO_WALLET,
+                    bill.getAmountCents(),
+                    bill.getPayPlatform(),
+                    bill.getBizOrderNo(),
+                    firstNonBlank(channelBillNo, bill.getChannelBillNo()),
+                    "商家转账到零钱",
+                    "pf_payout_bill:" + bill.getOutBillNo());
+        }
         return true;
     }
 
@@ -481,6 +523,17 @@ public class PaymentTransferOrderService {
             case "CANCELLED", "CANCELED", "CANCELING", "CANCELLING" -> TransferBillStatus.CANCELLED;
             default -> throw new BusinessException(ResultCode.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "未知转账状态：" + status);
         };
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        if (StringUtils.hasText(first)) {
+            return first.trim();
+        }
+        return StringUtils.hasText(second) ? second.trim() : null;
+    }
+
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
     }
 
     private static String truncate(String value, int max) {

@@ -1,6 +1,7 @@
 package com.mtfm.deadman.plugin.im.tencent.service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 import org.springframework.stereotype.Service;
@@ -19,15 +20,19 @@ import com.mtfm.deadman.plugin.im.tencent.mapper.ImUserAccountMapper;
 import com.mtfm.deadman.plugin.im.tencent.spi.ImSubject;
 import com.mtfm.deadman.plugin.im.tencent.spi.ImUserProfileSource;
 import com.mtfm.deadman.plugin.im.tencent.spi.ImUserRealmBridge;
+import com.mtfm.deadman.plugin.im.tencent.util.ImFaceUrlSupport;
 import com.mtfm.deadman.plugin.im.tencent.util.ImUserIdFormatter;
 import com.mtfm.deadman.plugin.im.tencent.vo.ImCredentialVO;
 import com.mtfm.deadman.plugin.im.tencent.vo.ImUserLookupVO;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * IM 编排服务：账号映射、资料同步与 UserSig 签发。
+ * <p>不依赖文件插件；头像 URL 由 Support 调用方换链后通过 {@link ImUserProfileSource} 传入。
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ImService {
@@ -115,13 +120,15 @@ public class ImService {
                 .eq(ImUserAccount::getRealmId, subject.realmId())
                 .eq(ImUserAccount::getSubjectId, subject.subjectId()));
         String imUserId = imUserIdFormatter.format(subject.realmId(), subject.subjectId());
+        String faceUrl = ImFaceUrlSupport.normalizeOrNull(profile.avatarUrl());
         if (account == null) {
             account = ImUserAccount.builder()
                     .realmId(subject.realmId())
                     .subjectId(subject.subjectId())
                     .imUserId(imUserId)
                     .nickname(profile.nickname())
-                    .avatarUrl(profile.avatarUrl())
+                    .avatarFileId(profile.avatarFileId())
+                    .avatarUrl(faceUrl)
                     .status(ImUserAccountStatus.ACTIVE)
                     .build();
             imUserAccountMapper.insert(account);
@@ -134,26 +141,59 @@ public class ImService {
     }
 
     private void syncIfNeeded(ImUserAccount account, ImUserProfileSource profile) {
-        if (!needsSync(account, profile)) {
+        String faceUrl = ImFaceUrlSupport.normalizeOrNull(profile.avatarUrl());
+        if (!needsSync(account, profile, faceUrl)) {
             return;
         }
-        tencentImApiGateway.importAccount(account.getImUserId(), profile.nickname(), profile.avatarUrl());
+        if (profile.avatarFileId() != null && faceUrl == null) {
+            log.warn("IM 头像 fileId={} 未解析为公网绝对 URL，跳过 FaceUrl 写入：imUserId={}",
+                    profile.avatarFileId(), account.getImUserId());
+        }
+        tencentImApiGateway.importAccount(account.getImUserId(), profile.nickname(), faceUrl);
         ImUserAccount update = ImUserAccount.builder()
                 .id(account.getId())
                 .nickname(profile.nickname())
-                .avatarUrl(profile.avatarUrl())
+                .avatarFileId(profile.avatarFileId())
+                .avatarUrl(faceUrl)
                 .status(ImUserAccountStatus.ACTIVE)
                 .lastSyncTime(LocalDateTime.now())
                 .build();
         imUserAccountMapper.updateById(update);
+        account.setNickname(profile.nickname());
+        account.setAvatarFileId(profile.avatarFileId());
+        account.setAvatarUrl(faceUrl);
+        account.setLastSyncTime(update.getLastSyncTime());
     }
 
-    private boolean needsSync(ImUserAccount account, ImUserProfileSource profile) {
+    private boolean needsSync(ImUserAccount account, ImUserProfileSource profile, String faceUrl) {
         if (account.getLastSyncTime() == null) {
             return true;
         }
-        return !Objects.equals(account.getNickname(), profile.nickname())
-                || !Objects.equals(account.getAvatarUrl(), profile.avatarUrl());
+        if (!Objects.equals(account.getNickname(), profile.nickname())) {
+            return true;
+        }
+        // 以 fileId 为稳定键，避免签名 URL 每次变化导致无意义比对失败
+        if (!Objects.equals(account.getAvatarFileId(), profile.avatarFileId())) {
+            return true;
+        }
+        // 历史快照非公网地址，现已有可用 FaceUrl → 补推
+        if (faceUrl != null && !ImFaceUrlSupport.isAbsoluteHttpUrl(account.getAvatarUrl())) {
+            return true;
+        }
+        // 签名链过期前按间隔刷新 FaceUrl
+        if (faceUrl != null && isFaceUrlRefreshDue(account.getLastSyncTime())) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isFaceUrlRefreshDue(LocalDateTime lastSyncTime) {
+        long refreshSeconds = properties.getFaceUrlRefreshSeconds();
+        if (refreshSeconds <= 0) {
+            return false;
+        }
+        long elapsed = ChronoUnit.SECONDS.between(lastSyncTime, LocalDateTime.now());
+        return elapsed >= refreshSeconds;
     }
 
     private static void validateSubject(ImSubject subject) {

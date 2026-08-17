@@ -77,7 +77,13 @@ public class DefaultWechatApiClient implements WechatApiClient {
     public WechatPhoneInfo getPhoneNumber(String phoneCode) {
         String accessToken = getAccessToken();
         String url = properties.getApiBaseUrl() + "/wxa/business/getuserphonenumber?access_token=" + accessToken;
-        JsonNode body = restClientSupport.postForJson(url, Map.of("code", phoneCode));
+        String requestBody;
+        try {
+            requestBody = jsonMapper.writeValueAsString(Map.of("code", phoneCode));
+        } catch (Exception ex) {
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "组装获取手机号请求体失败");
+        }
+        JsonNode body = restClientSupport.postForJson(url, requestBody);
         restClientSupport.assertWechatSuccess(body, "获取微信手机号失败");
         JsonNode phoneInfo = body.get("phone_info");
         if (phoneInfo == null || phoneInfo.isNull()) {

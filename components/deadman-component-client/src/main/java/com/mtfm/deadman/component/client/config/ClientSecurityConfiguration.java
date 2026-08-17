@@ -58,6 +58,8 @@ public class ClientSecurityConfiguration {
         http.authorizeHttpRequests(auth -> {
             auth.requestMatchers(HttpMethod.POST, authBase + "/register").permitAll();
             auth.requestMatchers(HttpMethod.POST, ClientAuthConstants.REFRESH_TOKEN_PATH).permitAll();
+            // 微信小程序 getPhoneNumber 换号回填（support-client-wechat，匿名可访问）
+            auth.requestMatchers(HttpMethod.POST, "/client/api/wechat-miniprogram/phone/resolve").permitAll();
             RealmSecurityFilterChainSupport.permitProviderLoginEndpoints(auth, loginProviderGroupManager,
                 ClientAuthConstants.LOGIN_GROUP_ID, clientGroup);
             auth.requestMatchers("/error").permitAll();

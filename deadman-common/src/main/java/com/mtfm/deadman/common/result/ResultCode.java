@@ -75,6 +75,7 @@ public enum ResultCode {
     PAY_ABNORMAL_REFUND_FAILED(14113, "异常退款申请失败"),
     PAY_ABNORMAL_REFUND_NOT_ALLOWED(14114, "当前退款单不可发起异常退款"),
     WECHAT_PAY_TRANSFER_FAILED(14007, "微信商家转账失败"),
+    WECHAT_PAY_SCORE_FAILED(14008, "微信支付分调用失败"),
     PAY_TRANSFER_PROVIDER_NOT_FOUND(14115, "转账 Provider 不存在"),
     PAY_TRANSFER_BATCH_NOT_FOUND(14116, "转账批次不存在"),
     PAY_TRANSFER_BILL_NOT_FOUND(14117, "转账单不存在"),
@@ -90,6 +91,13 @@ public enum ResultCode {
     PAY_TRANSFER_IDEMPOTENT_CONFLICT(14127, "转账业务单号已存在但关键参数不一致"),
     PAY_AMOUNT_MISMATCH(14128, "支付金额与本地不一致"),
     PAY_REFUND_AMOUNT_MISMATCH(14129, "退款金额或支付单号与本地不一致"),
+    PAY_FUND_LANE_MISMATCH(14130, "支付资金链路与门面不匹配"),
+    PAY_FUND_ACCOUNT_MISMATCH(14131, "资金账户与业务场景不匹配"),
+    PAY_SUB_MERCHANT_PROVIDER_NOT_FOUND(14132, "二级商户 Provider 不存在"),
+    PAY_SUB_MERCHANT_APPLY_FAILED(14133, "二级商户进件失败"),
+    PAY_MEDIA_UPLOAD_FAILED(14134, "支付渠道媒体文件上传失败"),
+    PAY_SCORE_PROVIDER_NOT_FOUND(14135, "支付分 Provider 不存在"),
+    PAY_SCORE_NOTIFY_PARSE_FAILED(14136, "支付分回调解析失败"),
 
     CRYPTO_CONFIG_INVALID(14401, "加解密配置无效"),
     CRYPTO_KEY_NOT_FOUND(14402, "加解密密钥不存在"),
@@ -113,7 +121,12 @@ public enum ResultCode {
     IM_REALM_UNKNOWN(14302, "IM 用户域未注册"),
     IM_USER_DISABLED(14303, "IM 用户已禁用"),
     IM_ACCOUNT_SYNC_FAILED(14304, "IM 账号同步失败"),
-    IM_USER_NOT_FOUND(14305, "IM 用户映射不存在");
+    IM_USER_NOT_FOUND(14305, "IM 用户映射不存在"),
+
+    ESS_CONFIG_INVALID(14501, "电子签插件配置无效"),
+    ESS_API_FAILED(14502, "电子签 API 调用失败"),
+    ESS_UPLOAD_FAILED(14503, "电子签文件上传失败"),
+    ESS_CALLBACK_INVALID(14504, "电子签回调验签或解密失败");
 
     private final int code;
     private final String message;

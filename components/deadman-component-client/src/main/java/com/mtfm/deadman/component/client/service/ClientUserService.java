@@ -6,6 +6,7 @@ import com.mtfm.deadman.common.enums.AccountType;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.common.validation.PhoneNumber;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 import com.mtfm.deadman.component.client.dto.UpdateClientUserProfileRequest;
 import com.mtfm.deadman.component.client.entity.ClientUserAccount;
@@ -40,7 +41,7 @@ public class ClientUserService extends ServiceImpl<ClientUserBaseMapper, ClientU
     }
 
     /**
-     * 当前用户更新本人资料（仅 nickname、avatar；未传字段不修改）。
+     * 当前用户更新本人资料（nickname / avatarFileId / phone；未传字段不修改）。
      *
      * @param userId 当前用户 ID
      * @param request 更新请求
@@ -58,10 +59,16 @@ public class ClientUserService extends ServiceImpl<ClientUserBaseMapper, ClientU
             user.setNickname(nickname);
             changed = true;
         }
-        if (request.avatar() != null) {
-            String avatar = request.avatar().trim();
-            user.setAvatar(StringUtils.hasText(avatar) ? avatar : null);
+        if (request.avatarFileId() != null) {
+            user.setAvatarFileId(request.avatarFileId());
             changed = true;
+        }
+        if (request.phone() != null) {
+            String phone = request.phone().trim();
+            if (!StringUtils.hasText(phone)) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "手机号不能为空");
+            }
+            clientUserAccountService.bindOrUpdatePhone(userId, phone);
         }
         if (changed) {
             updateById(user);
@@ -106,8 +113,9 @@ public class ClientUserService extends ServiceImpl<ClientUserBaseMapper, ClientU
 
     private ClientUserProfileVO toProfileVO(ClientUserBase userBase) {
         String username = resolveUsername(userBase.getId());
-        return new ClientUserProfileVO(userBase.getUserCode(), username, userBase.getNickname(), userBase.getAvatar(),
-            userBase.getStatus());
+        String phone = PhoneNumber.mask(clientUserAccountService.findPhoneByUserId(userBase.getId()));
+        return new ClientUserProfileVO(userBase.getUserCode(), username, userBase.getNickname(),
+            userBase.getAvatarFileId(), phone, userBase.getStatus());
     }
 
     private String resolveUsername(Long userId) {

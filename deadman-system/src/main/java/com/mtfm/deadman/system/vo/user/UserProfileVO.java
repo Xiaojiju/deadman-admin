@@ -25,8 +25,8 @@ public class UserProfileVO {
     private String username;
     /** 用户昵称 */
     private String nickname;
-    /** 头像 URL */
-    private String avatar;
+    /** 头像文件 ID（system 模块不依赖文件插件，URL 由上层按需解析） */
+    private Long avatarFileId;
     /** 绑定手机号 */
     private String phone;
     /** 主部门 */

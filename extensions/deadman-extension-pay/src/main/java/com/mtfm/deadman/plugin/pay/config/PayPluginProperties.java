@@ -21,9 +21,12 @@ public class PayPluginProperties {
     private String defaultProvider = "wechat-jsapi";
 
     /**
-     * 测试模式：用于沙箱/联调，可将实际发起支付的金额固定为小额（默认 1 分 = 0.01 元）。
-     * <p>
-     * 生产环境务必保持 {@code enabled=false}。
+     * 测试模式（联调）：支付金额覆盖与二级商户进件模拟相互独立。
+     * <ul>
+     *   <li>{@code payment}：走真实微信时可覆盖预下单金额为固定小额</li>
+     *   <li>{@code sub-merchant}：进件/媒体上传不调微信，直接模拟通过</li>
+     * </ul>
+     * 生产环境务必保持两者均为 {@code enabled=false}。
      */
     @NestedConfigurationProperty
     private TestMode testMode = new TestMode();
@@ -53,19 +56,74 @@ public class PayPluginProperties {
     private TransferSync transferSync = new TransferSync();
 
     /**
-     * 支付测试模式配置。
+     * 是否启用支付测试模式（覆盖预下单金额）。
+     *
+     * @return 启用则 true
+     */
+    public boolean isPaymentTestModeEnabled() {
+        return testMode != null && testMode.getPayment() != null && testMode.getPayment().isEnabled();
+    }
+
+    /**
+     * 支付测试模式下的固定金额（分）。
+     *
+     * @return 固定金额，未配置时默认 1
+     */
+    public int resolvePaymentTestFixedAmountCents() {
+        if (testMode == null || testMode.getPayment() == null) {
+            return 1;
+        }
+        return testMode.getPayment().getFixedAmountCents();
+    }
+
+    /**
+     * 是否启用二级商户进件测试模式（不调渠道，直接模拟通过）。
+     *
+     * @return 启用则 true
+     */
+    public boolean isSubMerchantTestModeEnabled() {
+        return testMode != null && testMode.getSubMerchant() != null && testMode.getSubMerchant().isEnabled();
+    }
+
+    /**
+     * 测试模式总配置：支付与进件分开关。
      */
     @Data
     public static class TestMode {
 
-        /** 是否启用测试模式（启用后预下单金额将被覆盖） */
+        /** 支付测试（金额覆盖） */
+        @NestedConfigurationProperty
+        private PaymentTestMode payment = new PaymentTestMode();
+
+        /** 二级商户进件测试（模拟通过） */
+        @NestedConfigurationProperty
+        private SubMerchantTestMode subMerchant = new SubMerchantTestMode();
+    }
+
+    /**
+     * 支付测试模式：预下单金额覆盖为固定小额（可与真实微信渠道联调）。
+     */
+    @Data
+    public static class PaymentTestMode {
+
+        /** 是否启用支付金额覆盖 */
         private boolean enabled = false;
 
         /**
-         * 测试模式下固定支付金额（分）。
+         * 固定支付金额（分）。
          * 默认 1 分，即 0.01 元。
          */
         private int fixedAmountCents = 1;
+    }
+
+    /**
+     * 二级商户进件测试模式：不访问微信，进件/查单/媒体上传直接模拟通过。
+     */
+    @Data
+    public static class SubMerchantTestMode {
+
+        /** 是否启用进件模拟（直接返回通过） */
+        private boolean enabled = false;
     }
 
     /**

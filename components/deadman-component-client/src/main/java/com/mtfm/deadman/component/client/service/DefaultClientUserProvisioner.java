@@ -40,7 +40,8 @@ public class DefaultClientUserProvisioner implements ClientUserProvisioner {
         String userCode = ClientUserCodeGenerator.generate(clientComponentProperties.getUser().getUserCodePrefix());
         ClientUserBase userBase = ClientUserBase.builder().userCode(userCode)
             .nickname(StringUtils.hasText(request.nickname()) ? request.nickname() : request.provider() + "用户")
-            .avatar(request.avatar()).status(UserStatus.ACTIVE.getValue()).build();
+            // 微信等 OAuth 仅有 CDN 外链时 avatarFileId 为 null，不把外链伪造成文件 ID
+            .avatarFileId(request.avatarFileId()).status(UserStatus.ACTIVE.getValue()).build();
         clientUserService.save(userBase);
 
         ClientUserAccount account =

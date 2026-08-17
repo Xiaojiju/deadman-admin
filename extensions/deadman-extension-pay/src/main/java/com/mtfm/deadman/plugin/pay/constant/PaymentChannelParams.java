@@ -8,6 +8,9 @@ public final class PaymentChannelParams {
     /** 微信 JSAPI 付款人 openid */
     public static final String OPENID = "openid";
 
+    /** 二级商户号（收付通退款等） */
+    public static final String SUB_MCHID = "subMchid";
+
     private PaymentChannelParams() {
     }
 }

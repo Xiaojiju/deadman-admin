@@ -49,6 +49,26 @@ public class ClientUserPasswordService extends ServiceImpl<ClientUserPasswordMap
     }
 
     /**
+     * 修改密码：校验原密码后重新随机选取编码器并递增 password_version。
+     *
+     * @param userId 用户 ID
+     * @param oldPassword 原密码
+     * @param newPassword 新密码
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        if (!matches(userId, oldPassword)) {
+            throw new BusinessException(ResultCode.PASSWORD_MISMATCH, "原密码错误");
+        }
+        ClientUserPassword stored = getByUserId(userId);
+        PasswordEncoderRegistry.EncodedPassword encoded = passwordEncoderRegistry.encodeWithRandomEncoder(newPassword);
+        stored.setPasswordHash(encoded.hash());
+        stored.setEncoderId(encoded.encoderId());
+        stored.setPasswordVersion(stored.getPasswordVersion() + 1);
+        updateById(stored);
+    }
+
+    /**
      * 按用户 ID 查询密码记录。
      *
      * @param userId 用户 ID

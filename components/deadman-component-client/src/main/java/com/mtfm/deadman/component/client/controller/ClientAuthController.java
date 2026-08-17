@@ -1,18 +1,24 @@
 package com.mtfm.deadman.component.client.controller;
 
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
+import com.mtfm.deadman.component.client.auth.ClientLoginUser;
+import com.mtfm.deadman.component.client.dto.ClientChangePasswordRequest;
 import com.mtfm.deadman.component.client.dto.ClientRegisterRequest;
 import com.mtfm.deadman.component.client.service.ClientAuthCredentialsService;
 import com.mtfm.deadman.security.vo.auth.RegisterResultVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 用户端认证接口：注册。
+ * 用户端认证接口：注册、修改密码。
  * <p>
  * 登录由各 {@link com.mtfm.deadman.component.client.spi.ClientLoginProvider} 的独立 Filter 处理。
  */
@@ -32,5 +38,20 @@ public class ClientAuthController {
     @PostMapping("/register")
     public Result<RegisterResultVO> register(@Valid @RequestBody ClientRegisterRequest request) {
         return Result.ok(clientAuthCredentialsService.register(request));
+    }
+
+    /**
+     * 修改当前用户密码。
+     *
+     * @param loginUser 当前登录用户
+     * @param request 原密码与新密码
+     * @return 空结果
+     */
+    @PutMapping("/password")
+    @RequireAuth(AuthRealm.CLIENT)
+    public Result<Void> changePassword(@AuthenticationPrincipal ClientLoginUser loginUser,
+        @Valid @RequestBody ClientChangePasswordRequest request) {
+        clientAuthCredentialsService.changePassword(loginUser.getUserId(), request);
+        return Result.ok();
     }
 }

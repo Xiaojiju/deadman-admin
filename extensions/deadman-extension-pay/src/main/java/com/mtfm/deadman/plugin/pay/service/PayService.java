@@ -21,8 +21,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 支付统一门面，编排「预下单 → 写入订单 → 回调 → 事件通知 → 状态变更」完整流程。
+ * 支付统一编排服务（过渡期保留）。
  * <p>
+ * 业务请优先使用 {@link com.mtfm.deadman.plugin.pay.facade.DirectPayFacade} /
+ * {@link com.mtfm.deadman.plugin.pay.facade.EcommerceTradeFacade}，勿混用资金链路。
  * 渠道 HTTP 均在事务外调用；本地落库由短事务完成（状态与事件同事务）。
  */
 @Slf4j
@@ -47,20 +49,21 @@ public class PayService {
     }
 
     /**
-     * 指定 Provider 创建预下单：短事务落单 → 渠道外呼 → 短事务回写。
+     * 指定 Provider 与资金链路预下单：短事务落单 → 渠道外呼 → 短事务回写。
      * <p>
-     * 若 Provider {@link PaymentProvider#autoCompleteAfterPrepay()} 为 true（如 Mock），
-     * 预下单后立即按查单结果完成支付并发布状态变更事件，无需真实回调。
+     * 业务请优先使用 {@code DirectPayFacade} / {@code EcommerceTradeFacade}，勿直接混用链路。
      *
      * @param context    预下单上下文
      * @param providerId 支付 Provider 标识，为空时使用默认
+     * @param fundLane   {@link com.mtfm.deadman.plugin.pay.constant.PayFundLane}
      * @return 预下单结果
      */
-    public PaymentPrepayResult createPrepay(PaymentPrepayContext context, String providerId) {
+    public PaymentPrepayResult createPrepay(PaymentPrepayContext context, String providerId, String fundLane) {
         PaymentPrepayContext effectiveContext = applyTestModeAmount(context);
         PaymentProvider provider = paymentProviderManager.require(providerId);
         String outTradeNo = paymentOutTradeNoSupplier.generate(effectiveContext, provider);
-        PaymentOrder order = paymentOrderService.createPendingOrder(outTradeNo, effectiveContext, provider);
+        PaymentOrder order =
+                paymentOrderService.createPendingOrder(outTradeNo, effectiveContext, provider, fundLane);
         PaymentPrepayResult result = provider.createPrepay(effectiveContext, outTradeNo);
         paymentOrderService.updatePrepayResult(order, result.prepayId(), result.channelExtra());
         if (provider.autoCompleteAfterPrepay()) {
@@ -76,7 +79,23 @@ public class PayService {
     }
 
     /**
-     * 测试模式下将预下单金额覆盖为固定小额（默认 1 分 / 0.01 元），本地支付单与渠道金额一致。
+     * 指定 Provider 创建预下单（兼容：按是否合单推断资金链路）。
+     *
+     * @param context    预下单上下文
+     * @param providerId 支付 Provider 标识，为空时使用默认
+     * @return 预下单结果
+     * @deprecated 请改用带 fundLane 的重载或门面
+     */
+    @Deprecated
+    public PaymentPrepayResult createPrepay(PaymentPrepayContext context, String providerId) {
+        String lane = context != null && context.isCombinePay()
+                ? com.mtfm.deadman.plugin.pay.constant.PayFundLane.ECOMMERCE
+                : com.mtfm.deadman.plugin.pay.constant.PayFundLane.DIRECT;
+        return createPrepay(context, providerId, lane);
+    }
+
+    /**
+     * 支付测试模式下将预下单金额覆盖为固定小额（默认 1 分 / 0.01 元），本地支付单与渠道金额一致。
      *
      * @param context 原始预下单上下文
      * @return 可能被改写金额后的上下文
@@ -85,13 +104,12 @@ public class PayService {
         if (context == null) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "预下单上下文不能为空");
         }
-        PayPluginProperties.TestMode testMode = payPluginProperties.getTestMode();
-        if (testMode == null || !testMode.isEnabled()) {
+        if (!payPluginProperties.isPaymentTestModeEnabled()) {
             return context;
         }
-        int fixedAmountCents = testMode.getFixedAmountCents();
+        int fixedAmountCents = payPluginProperties.resolvePaymentTestFixedAmountCents();
         if (fixedAmountCents <= 0) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "测试模式固定支付金额必须大于 0 分");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "支付测试模式固定金额必须大于 0 分");
         }
         if (context.getAmountTotal() == fixedAmountCents) {
             return context;
@@ -108,6 +126,7 @@ public class PayService {
                 .amountTotal(fixedAmountCents)
                 .payerUserId(context.getPayerUserId())
                 .channelParams(context.getChannelParams())
+                .subOrders(context.getSubOrders())
                 .build();
     }
 

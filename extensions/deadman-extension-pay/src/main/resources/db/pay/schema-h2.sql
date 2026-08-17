@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS plugin_pay_order (
     pay_platform            VARCHAR(32)   NOT NULL,
     pay_method              VARCHAR(32)   NOT NULL,
     provider_id             VARCHAR(64)   NOT NULL,
+    fund_lane               VARCHAR(32)   NOT NULL DEFAULT 'DIRECT',
     channel_prepay_id       VARCHAR(128),
     channel_transaction_id  VARCHAR(64),
     channel_extra           VARCHAR(1024),
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS plugin_pay_refund (
     pay_platform            VARCHAR(32)   NOT NULL,
     pay_method              VARCHAR(32)   NOT NULL,
     provider_id             VARCHAR(64)   NOT NULL,
+    sub_mchid               VARCHAR(32),
     channel_refund_id       VARCHAR(64),
     channel_transaction_id  VARCHAR(64),
     reason                  VARCHAR(128),
@@ -124,3 +126,39 @@ INSERT INTO plugin_pay_transfer_quota (
     daily_limit_cents, monthly_limit_cents, dispatch_enabled, is_deleted, version
 ) SELECT 1, 'NON_INDIVIDUAL', 20000, 200000, 5000000, 3000000000, 1, 0, 0
 WHERE NOT EXISTS (SELECT 1 FROM plugin_pay_transfer_quota WHERE id = 1);
+
+CREATE TABLE IF NOT EXISTS plugin_pay_basic_account_flow (
+    id                      BIGINT        NOT NULL,
+    flow_no                 VARCHAR(64)   NOT NULL,
+    biz_scene               VARCHAR(64)   NOT NULL,
+    direction               VARCHAR(8)    NOT NULL,
+    amount_cents            BIGINT        NOT NULL,
+    pay_platform            VARCHAR(32),
+    biz_order_no            VARCHAR(64),
+    channel_ref_no          VARCHAR(128),
+    remark                  VARCHAR(512),
+    idempotent_key          VARCHAR(128)  NOT NULL,
+    create_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_plugin_pay_basic_flow_no UNIQUE (flow_no),
+    CONSTRAINT uk_plugin_pay_basic_idempotent UNIQUE (idempotent_key)
+);
+
+CREATE TABLE IF NOT EXISTS plugin_pay_operate_account_flow (
+    id                      BIGINT        NOT NULL,
+    flow_no                 VARCHAR(64)   NOT NULL,
+    biz_scene               VARCHAR(64)   NOT NULL,
+    direction               VARCHAR(8)    NOT NULL,
+    amount_cents            BIGINT        NOT NULL,
+    pay_platform            VARCHAR(32),
+    biz_order_no            VARCHAR(64),
+    channel_ref_no          VARCHAR(128),
+    remark                  VARCHAR(512),
+    idempotent_key          VARCHAR(128)  NOT NULL,
+    create_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_plugin_pay_operate_flow_no UNIQUE (flow_no),
+    CONSTRAINT uk_plugin_pay_operate_idempotent UNIQUE (idempotent_key)
+);

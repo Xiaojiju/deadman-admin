@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
 @Service
 public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMapper, ClientUserAccount> {
 
+    /** 微信小程序 OAuth 提供商标识 */
+    private static final String WECHAT_MINIPROGRAM_PROVIDER = "wechat-miniprogram";
+
     /**
      * 按用户名查询账号。
      *
@@ -85,6 +88,41 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
     }
 
     /**
+     * 按手机号模糊匹配用户 ID。
+     *
+     * @param phoneKeyword 手机号关键词
+     * @return 匹配到的用户 ID，无匹配时为空列表
+     */
+    public List<Long> findUserIdsByPhoneLike(String phoneKeyword) {
+        if (!StringUtils.hasText(phoneKeyword)) {
+            return List.of();
+        }
+        return list(new LambdaQueryWrapper<ClientUserAccount>()
+            .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode())
+            .like(ClientUserAccount::getAccountIdentifier, phoneKeyword.trim())).stream()
+            .map(ClientUserAccount::getUserId)
+            .distinct()
+            .toList();
+    }
+
+    /**
+     * 批量加载用户绑定的微信小程序 openid。
+     *
+     * @param userIds 用户 ID 列表
+     * @return 用户 ID 到 openid 的映射；未绑定的用户不出现在结果中
+     */
+    public Map<Long, String> loadMiniprogramOpenidsByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return list(new LambdaQueryWrapper<ClientUserAccount>().in(ClientUserAccount::getUserId, userIds)
+            .eq(ClientUserAccount::getAccountType, AccountType.OAUTH.getCode())
+            .eq(ClientUserAccount::getOauthProvider, WECHAT_MINIPROGRAM_PROVIDER)).stream()
+            .filter(account -> StringUtils.hasText(account.getOauthSubject()))
+            .collect(Collectors.toMap(ClientUserAccount::getUserId, ClientUserAccount::getOauthSubject, (a, b) -> a));
+    }
+
+    /**
      * 判断手机号是否已被其他用户占用。
      *
      * @param phone 手机号
@@ -136,7 +174,7 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
     public Optional<String> findMiniprogramOpenid(Long userId) {
         ClientUserAccount account = getOne(new LambdaQueryWrapper<ClientUserAccount>()
             .eq(ClientUserAccount::getUserId, userId).eq(ClientUserAccount::getAccountType, AccountType.OAUTH.getCode())
-            .eq(ClientUserAccount::getOauthProvider, "wechat-miniprogram"));
+            .eq(ClientUserAccount::getOauthProvider, WECHAT_MINIPROGRAM_PROVIDER));
         if (account == null || !StringUtils.hasText(account.getOauthSubject())) {
             return Optional.empty();
         }

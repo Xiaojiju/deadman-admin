@@ -3,10 +3,14 @@ package com.mtfm.deadman.plugin.pay.service;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
+import java.util.Map;
+
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.constant.AbnormalRefundReceiveType;
+import com.mtfm.deadman.plugin.pay.constant.PaymentChannelParams;
 import com.mtfm.deadman.plugin.pay.constant.PaymentRefundStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
 import com.mtfm.deadman.plugin.pay.entity.PaymentRefundOrder;
@@ -105,7 +109,8 @@ public class RefundService {
                 result.rawPayload());
 
         if (provider.autoCompleteAfterRefund()) {
-            RefundQueryResult queryResult = provider.queryRefund(outRefundNo);
+            RefundQueryResult queryResult =
+                    provider.queryRefund(outRefundNo, channelParamsOf(refundOrder));
             applyChannelRefundResult(
                     queryResult.outRefundNo(),
                     queryResult.outTradeNo(),
@@ -162,7 +167,7 @@ public class RefundService {
             return toSnapshot(refundOrder);
         }
         RefundProvider provider = refundProviderManager.require(refundOrder.getProviderId());
-        RefundQueryResult queryResult = provider.queryRefund(outRefundNo);
+        RefundQueryResult queryResult = provider.queryRefund(outRefundNo, channelParamsOf(refundOrder));
         if (queryResult.targetStatus().equals(refundOrder.getStatus())) {
             return toSnapshot(refundOrder);
         }
@@ -308,8 +313,7 @@ public class RefundService {
      * @return 实际用于渠道退款的金额
      */
     private int resolveRefundAmountForTestMode(PaymentOrder payOrder, int amountRefund) {
-        PayPluginProperties.TestMode testMode = payPluginProperties.getTestMode();
-        if (testMode == null || !testMode.isEnabled()) {
+        if (!payPluginProperties.isPaymentTestModeEnabled()) {
             return amountRefund;
         }
         int refunded = payOrder.getAmountRefunded() == null ? 0 : payOrder.getAmountRefunded();
@@ -334,7 +338,8 @@ public class RefundService {
      */
     private void tryRecoverAfterCreateFailure(String outRefundNo, RefundProvider provider) {
         try {
-            RefundQueryResult queryResult = provider.queryRefund(outRefundNo);
+            PaymentRefundOrder refundOrder = paymentRefundOrderService.requireByOutRefundNo(outRefundNo);
+            RefundQueryResult queryResult = provider.queryRefund(outRefundNo, channelParamsOf(refundOrder));
             applyChannelRefundResult(
                     queryResult.outRefundNo(),
                     queryResult.outTradeNo(),
@@ -400,6 +405,13 @@ public class RefundService {
                     : AbnormalRefundReceiveType.MERCHANT_BANK_CARD;
         }
         return channelAccount;
+    }
+
+    private static Map<String, String> channelParamsOf(PaymentRefundOrder refundOrder) {
+        if (refundOrder == null || !StringUtils.hasText(refundOrder.getSubMchid())) {
+            return Collections.emptyMap();
+        }
+        return Map.of(PaymentChannelParams.SUB_MCHID, refundOrder.getSubMchid().trim());
     }
 
     private static RefundOrderSnapshot toSnapshot(PaymentRefundOrder order) {

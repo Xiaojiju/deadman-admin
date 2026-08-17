@@ -2,7 +2,7 @@
 
 文件**能力延伸**模块（位于 `extensions/`）。通过 `FileStorageProvider` SPI 定义存储契约，由 `FileService` 统一负责元数据持久化、上传下载编排与业务分类管理。
 
-> 存储后端具体实现放在 `plugins/`（如 [deadman-plugin-storage-local](../../plugins/deadman-plugin-storage-local/)、[deadman-plugin-storage-oss](../../plugins/deadman-plugin-storage-oss/)、[deadman-plugin-storage-cos](../../plugins/deadman-plugin-storage-cos/)），只实现存储 Provider，**不得**重复定义文件元数据表。
+> 存储后端具体实现放在 `plugins/`（如 [deadman-plugin-storage-local](../../plugins/deadman-plugin-storage-local/)、[deadman-plugin-storage-oss](../../plugins/deadman-plugin-storage-oss/)），只实现存储 Provider，**不得**重复定义文件元数据表。
 
 ---
 
@@ -37,10 +37,6 @@
 <dependency>
     <groupId>com.mtfm</groupId>
     <artifactId>deadman-plugin-storage-oss</artifactId>
-</dependency>
-<dependency>
-    <groupId>com.mtfm</groupId>
-    <artifactId>deadman-plugin-storage-cos</artifactId>
 </dependency>
 ```
 
@@ -85,7 +81,6 @@ flowchart TB
     subgraph 存储插件
         P1[storage-local]
         P2[storage-oss]
-        P3[storage-cos]
     end
 
     A --> REG
@@ -93,7 +88,6 @@ flowchart TB
     FS --> MGR
     MGR --> P1
     MGR --> P2
-    MGR --> P3
     FS --> DB
 ```
 
@@ -268,6 +262,5 @@ DDL：`src/main/resources/db/file/schema.sql`
 |------|------|
 | [deadman-plugin-storage-local](../../plugins/deadman-plugin-storage-local/) | 本地磁盘存储 |
 | [deadman-plugin-storage-oss](../../plugins/deadman-plugin-storage-oss/) | 阿里云 OSS 存储 |
-| [deadman-plugin-storage-cos](../../plugins/deadman-plugin-storage-cos/) | 腾讯云 COS 存储 |
 | [deadman-support-client-file](../../support/deadman-support-client-file/) | C 端文件上传桥接 |
 | [extensions/README.md](../README.md) | 能力延伸目录说明 |

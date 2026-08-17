@@ -60,7 +60,7 @@ class ImServiceTest {
     void shouldIssueCredentialAndImportAccount() {
         ImSubject subject = new ImSubject("client", "CL20260001");
         when(bridge.resolveProfileSource(subject))
-                .thenReturn(new ImUserProfileSource("测试用户", "https://cdn.example.com/a.png", true));
+                .thenReturn(new ImUserProfileSource("测试用户", "https://cdn.example.com/a.png", 1001L, true));
         when(imUserAccountMapper.selectOne(any())).thenReturn(null);
         when(imUserAccountMapper.insert(any(ImUserAccount.class))).thenAnswer(invocation -> {
             ImUserAccount account = invocation.getArgument(0);
@@ -84,7 +84,7 @@ class ImServiceTest {
         ImSubject subject = new ImSubject("client", "CL20260001");
         when(bridge.resolveCurrentSubject()).thenReturn(Optional.of(subject));
         when(bridge.resolveProfileSource(subject))
-                .thenReturn(new ImUserProfileSource("测试用户", null, true));
+                .thenReturn(new ImUserProfileSource("测试用户", null, null, true));
         when(imUserAccountMapper.selectOne(any())).thenReturn(ImUserAccount.builder()
                 .id(1L)
                 .realmId("client")

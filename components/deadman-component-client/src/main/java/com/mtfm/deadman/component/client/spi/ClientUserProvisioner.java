@@ -22,9 +22,9 @@ public interface ClientUserProvisioner {
      * @param subject OAuth 用户唯一标识
      * @param accountIdentifier 账号标识，通常与 subject 相同
      * @param nickname 昵称
-     * @param avatar 头像 URL
+     * @param avatarFileId 头像文件 ID；微信等仅提供外链 CDN URL 时须传 null，禁止把外链当作 fileId 写入
      */
     record ClientUserProvisionRequest(String provider, String subject, String accountIdentifier, String nickname,
-        String avatar) {
+        Long avatarFileId) {
     }
 }

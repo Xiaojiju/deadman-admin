@@ -59,6 +59,9 @@ public class PaymentRefundOrder {
     /** Provider 标识 */
     private String providerId;
 
+    /** 二级商户号（收付通退款查单必填） */
+    private String subMchid;
+
     /** 渠道退款单号 */
     private String channelRefundId;
 

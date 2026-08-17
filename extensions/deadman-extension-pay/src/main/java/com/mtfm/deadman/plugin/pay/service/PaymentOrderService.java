@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.pay.constant.PayFundLane;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
 import com.mtfm.deadman.plugin.pay.mapper.PaymentOrderMapper;
@@ -42,10 +43,16 @@ public class PaymentOrderService {
      * @param outTradeNo 平台支付单号
      * @param context    预下单上下文
      * @param provider   支付 Provider
+     * @param fundLane   资金链路 {@link PayFundLane}
      * @return 已持久化的支付单
      */
     @Transactional(rollbackFor = Exception.class)
-    public PaymentOrder createPendingOrder(String outTradeNo, PaymentPrepayContext context, PaymentProvider provider) {
+    public PaymentOrder createPendingOrder(
+            String outTradeNo, PaymentPrepayContext context, PaymentProvider provider, String fundLane) {
+        String lane = StringUtils.hasText(fundLane) ? fundLane.trim() : PayFundLane.DIRECT;
+        if (!PayFundLane.DIRECT.equals(lane) && !PayFundLane.ECOMMERCE.equals(lane)) {
+            throw new BusinessException(ResultCode.PAY_FUND_LANE_MISMATCH, "非法资金链路：" + lane);
+        }
         PaymentOrder order = PaymentOrder.builder()
                 .outTradeNo(outTradeNo)
                 .bizOrderNo(context.getBizOrderNo())
@@ -56,10 +63,27 @@ public class PaymentOrderService {
                 .payPlatform(provider.payPlatform())
                 .payMethod(provider.payMethod())
                 .providerId(provider.providerId())
+                .fundLane(lane)
                 .payerUserId(context.getPayerUserId())
                 .build();
         paymentOrderMapper.insert(order);
         return order;
+    }
+
+    /**
+     * 创建待支付平台单（兼容旧调用：按是否合单推断资金链路）。
+     *
+     * @param outTradeNo 平台支付单号
+     * @param context    预下单上下文
+     * @param provider   支付 Provider
+     * @return 已持久化的支付单
+     * @deprecated 请显式传入 {@link PayFundLane}，由 {@link com.mtfm.deadman.plugin.pay.facade} 门面调用
+     */
+    @Deprecated
+    @Transactional(rollbackFor = Exception.class)
+    public PaymentOrder createPendingOrder(String outTradeNo, PaymentPrepayContext context, PaymentProvider provider) {
+        String lane = context != null && context.isCombinePay() ? PayFundLane.ECOMMERCE : PayFundLane.DIRECT;
+        return createPendingOrder(outTradeNo, context, provider, lane);
     }
 
     /**

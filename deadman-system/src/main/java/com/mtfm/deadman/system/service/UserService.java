@@ -78,8 +78,8 @@ public class UserService extends ServiceImpl<UserBaseMapper, UserBase> {
             user.setNickname(request.nickname());
             changed = true;
         }
-        if (request.avatar() != null) {
-            user.setAvatar(request.avatar());
+        if (request.avatarFileId() != null) {
+            user.setAvatarFileId(request.avatarFileId());
             changed = true;
         }
         if (request.phone() != null) {
@@ -124,7 +124,7 @@ public class UserService extends ServiceImpl<UserBaseMapper, UserBase> {
                 .userCode(userBase.getUserCode())
                 .username(username)
                 .nickname(userBase.getNickname())
-                .avatar(userBase.getAvatar())
+                .avatarFileId(userBase.getAvatarFileId())
                 .phone(phone)
                 .primaryDepartment(departmentOperations.loadPrimaryDepartmentRef(userBase.getId()))
                 .departments(departmentOperations.loadDepartmentRefsByUserId(userBase.getId()))

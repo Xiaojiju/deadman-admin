@@ -21,7 +21,7 @@ import com.mtfm.deadman.plugin.websocket.spi.WebSocketPrincipalAttributes;
 import java.util.Optional;
 
 /**
- * 站内信 WebSocket 握手鉴权：query {@code token} 携带 JWT。
+ * 管理端站内信 WebSocket 握手鉴权：query {@code token} 携带 ADMIN 域 JWT。
  */
 @Slf4j
 @Component

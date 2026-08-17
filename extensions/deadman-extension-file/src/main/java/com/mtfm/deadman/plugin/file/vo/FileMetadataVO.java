@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * @param contentType      MIME 类型
  * @param sizeBytes        文件大小（字节）
  * @param providerId       存储 Provider 标识
- * @param accessUrl        可直接访问的 URL
+ * @param accessUrl        可直接访问的 URL（按存储 Provider 动态生成，签名链每次刷新）
  * @param bizType          业务分类
  * @param uploaderUserId   上传人用户 ID
  * @param createTime       创建时间

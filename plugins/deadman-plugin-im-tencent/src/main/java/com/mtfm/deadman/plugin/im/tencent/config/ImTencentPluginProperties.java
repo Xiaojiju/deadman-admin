@@ -40,6 +40,12 @@ public class ImTencentPluginProperties {
     private String apiBaseUrl = "https://console.tim.qq.com";
 
     /**
+     * FaceUrl 重新推送间隔（秒）。
+     * <p>COS/OSS 签名 URL 会过期，按此间隔在签发 credential 时刷新 FaceUrl；CDN 稳定链也会按此周期重推，成本可接受。
+     */
+    private long faceUrlRefreshSeconds = 1_800L;
+
+    /**
      * 是否应使用 Mock 网关。
      *
      * @return 是否 Mock

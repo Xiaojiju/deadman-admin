@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS client_user_base (
     id              BIGINT       NOT NULL,
     user_code       VARCHAR(32)  NOT NULL,
     nickname        VARCHAR(64),
-    avatar          VARCHAR(512),
+    avatar_file_id  BIGINT,
     status          SMALLINT     NOT NULL DEFAULT 1,
     is_deleted      SMALLINT     NOT NULL DEFAULT 0,
     create_time     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,

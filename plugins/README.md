@@ -11,7 +11,6 @@
 | [deadman-plugin-excel](#deadman-plugin-excel) | `deadman.plugin.excel` | EasyExcel 导入导出工具包 | — |
 | [deadman-plugin-storage-local](#deadman-plugin-storage-local) | `deadman.plugin.storage-local` | 本地磁盘存储 Provider（依赖 extension-file） | 见 extension-file 文档 `/files/**` |
 | [deadman-plugin-storage-oss](#deadman-plugin-storage-oss) | `deadman.plugin.storage-oss` | 阿里云 OSS 存储 Provider（依赖 extension-file） | 见 extension-file 文档 |
-| [deadman-plugin-storage-cos](#deadman-plugin-storage-cos) | `deadman.plugin.storage-cos` | 腾讯云 COS 存储 Provider（依赖 extension-file） | 见 extension-file 文档 |
 | [deadman-plugin-pay-wechat](#deadman-plugin-pay-wechat) | `deadman.plugin.pay-wechat` | 微信 JSAPI 支付 Provider 实现（依赖 extension-pay） | — |
 | [deadman-plugin-logistics-kuaidi100](#deadman-plugin-logistics-kuaidi100) | `deadman.plugin.logistics-kuaidi100` | 快递100 实时查单 Provider（依赖 extension-logistics） | — |
 | [deadman-plugin-im-tencent](#deadman-plugin-im-tencent) | `deadman.plugin.im-tencent` | 腾讯云 IM：UserSig 签发、账号同步与用户域桥接 SPI | [ImClientAdminIntegration.md](../doc/deadman-plugin-im-tencent/ImClientAdminIntegration.md) |
@@ -81,7 +80,8 @@ deadman:
 ws://{host}:{port}/ws/{channelCode}?token={jwt}
 ```
 
-管理端示例：`/ws/inbox?token=...`（实现 `WebSocketAuthenticator`，参考 `deadman-app` 中 `AdminJwtWebSocketAuthenticator`）。
+管理端站内信：`/ws/inbox?token={adminJwt}`；用户端站内信：`/ws/client-inbox?token={clientJwt}`。
+通用通道鉴权参考 `deadman-app` 中 `AdminJwtWebSocketAuthenticator` / `ClientJwtWebSocketAuthenticator`。
 
 **注册通道：**
 
@@ -150,7 +150,7 @@ wechat 插件**不依赖** client 模块。在 `deadman-app` 同时引入两者�
 |--------|------|
 | `ClientOAuthLoginUserService` | 实现 `OAuthLoginUserService`，微信登录注入 client 用户 |
 | `ClientWechatPhoneBindingHandler` | 实现 `WechatPhoneBindingHandler`，绑定手机号到 client 账号 |
-| `ClientWechatMiniprogramController` | `POST /client/api/wechat-miniprogram/phone/bind` |
+| `ClientWechatMiniprogramController` | `GET/POST /client/api/wechat-miniprogram/binding`、`GET .../phone`、`POST .../phone/bind` |
 
 桥接开关：`deadman.component.client.wechat.enabled`（默认 `true`，需 classpath 同时存在 wechat 插件）。
 
@@ -284,59 +284,6 @@ deadman:
 **业务接入（插拔无关）：**
 
 1. 业务组件 `pom.xml` 依赖 `deadman-extension-file`（及 `deadman-plugin-storage-oss`）
-2. 调用 `FileService.upload(...)` 或 `POST /api/files/upload`，传入**已注册**的 `bizType`
-3. 使用返回的 `accessUrl` / `fileCode` 写入业务表，**无需引用 common SPI**
-
-**依赖：** `deadman-extension-file`（须同时引入 extension 模块）；默认 `enabled: false`，不影响现有 local 启动
-
----
-
-## deadman-plugin-storage-cos
-
-腾讯云 COS 对象存储 Provider，为 file 插件提供 `providerId = cos` 的后端，基于 [cos-java-sdk-v5](https://github.com/tencentyun/cos-java-sdk-v5)。
-
-| 能力 | 说明 |
-|------|------|
-| Provider ID | `cos` |
-| Bucket 路由 | `bizType` → Bucket 由插件配置 `bucket-routing` 解析，与业务标签解耦 |
-| 物理定位 | 元数据 `storage_bucket` + `storage_key` 持久化，读删时还原 |
-| 公开访问 | 支持 CDN 直链与签名 URL；可按 Bucket 覆盖 `bucket-access-modes` |
-
-**bizType 与 Bucket 分离：**
-
-- `bizType`：业务分类标签，写入 `plugin_file_metadata.biz_type`，供查询审计
-- `storage_bucket`：COS 插件按路由选定，写入元数据，**不由业务方传入**
-- `storage_key`：对象 Key，规则 `{bizType}/yyyy/MM/dd/{uuid}.ext`
-
-**配置示例：**
-
-```yaml
-deadman:
-  plugin:
-    file:
-      enabled: true
-      default-provider: cos          # 切换 COS 为默认后端
-    storage-cos:
-      enabled: true
-      region: ${COS_REGION}
-      secret-id: ${COS_SECRET_ID}
-      secret-key: ${COS_SECRET_KEY}
-      default-bucket: engineering-public
-      bucket-routing:
-        rent: engineering-user-upload
-        spare-part: engineering-merchant
-        merchant-license: engineering-private
-      cdn-domains:
-        engineering-user-upload: https://cdn-user.example.com
-      bucket-access-modes:
-        engineering-private: signed
-      public-url-mode: cdn
-      signed-url-expire-seconds: 3600
-```
-
-**业务接入（插拔无关）：**
-
-1. 业务组件 `pom.xml` 依赖 `deadman-extension-file`（及 `deadman-plugin-storage-cos`）
 2. 调用 `FileService.upload(...)` 或 `POST /api/files/upload`，传入**已注册**的 `bizType`
 3. 使用返回的 `accessUrl` / `fileCode` 写入业务表，**无需引用 common SPI**
 

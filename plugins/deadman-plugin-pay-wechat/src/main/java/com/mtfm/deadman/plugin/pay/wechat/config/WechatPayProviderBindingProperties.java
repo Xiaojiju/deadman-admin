@@ -31,4 +31,13 @@ public class WechatPayProviderBindingProperties {
 
     /** 本应用接收该 Provider 商家转账回调的 endpoint 路径 */
     private String transferNotifyEndpoint = "/client/api/pay/wechat/jsapi/transfer/notify";
+
+    /** 支付分服务 ID */
+    private String serviceId;
+
+    /** 提交给微信 API 的支付分结果回调完整 URL */
+    private String payScoreNotifyUrl;
+
+    /** 本应用接收该 Provider 支付分回调的 endpoint 路径 */
+    private String payScoreNotifyEndpoint = "/client/api/pay/wechat/payscore/notify";
 }

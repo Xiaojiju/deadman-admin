@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS plugin_pay_order (
     pay_platform            VARCHAR(32)   NOT NULL COMMENT '支付平台：WECHAT/ALIPAY 等',
     pay_method              VARCHAR(32)   NOT NULL COMMENT '支付方式：JSAPI/NATIVE/APP/H5 等',
     provider_id             VARCHAR(64)   NOT NULL COMMENT '支付 Provider 标识',
+    fund_lane               VARCHAR(32)   NOT NULL DEFAULT 'DIRECT' COMMENT '资金链路：DIRECT/ECOMMERCE',
     channel_prepay_id       VARCHAR(128)           COMMENT '渠道预支付 ID',
     channel_transaction_id  VARCHAR(64)            COMMENT '渠道支付单号',
     channel_extra           VARCHAR(1024)          COMMENT '渠道扩展信息 JSON',
@@ -25,7 +26,8 @@ CREATE TABLE IF NOT EXISTS plugin_pay_order (
     KEY idx_plugin_pay_biz_order (biz_order_no, is_deleted),
     KEY idx_plugin_pay_payer_user (payer_user_id, status, is_deleted),
     KEY idx_plugin_pay_platform_method (pay_platform, pay_method, status, is_deleted),
-    KEY idx_plugin_pay_status_create (status, create_time, is_deleted)
+    KEY idx_plugin_pay_status_create (status, create_time, is_deleted),
+    KEY idx_plugin_pay_fund_lane (fund_lane, status, is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='支付平台单';
 
 CREATE TABLE IF NOT EXISTS plugin_pay_refund (
@@ -40,6 +42,7 @@ CREATE TABLE IF NOT EXISTS plugin_pay_refund (
     pay_platform            VARCHAR(32)   NOT NULL COMMENT '支付平台',
     pay_method              VARCHAR(32)   NOT NULL COMMENT '支付方式',
     provider_id             VARCHAR(64)   NOT NULL COMMENT 'Provider 标识',
+    sub_mchid               VARCHAR(32)            COMMENT '二级商户号（收付通退款查单必填）',
     channel_refund_id       VARCHAR(64)            COMMENT '渠道退款单号',
     channel_transaction_id  VARCHAR(64)            COMMENT '渠道支付单号',
     reason                  VARCHAR(128)           COMMENT '退款原因',
@@ -140,4 +143,44 @@ INSERT INTO plugin_pay_transfer_quota (
 ) VALUES (
     1, 'NON_INDIVIDUAL', 20000, 200000, 5000000, 3000000000, 1, 0, 0
 ) ON DUPLICATE KEY UPDATE update_time = CURRENT_TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS plugin_pay_basic_account_flow (
+    id                      BIGINT        NOT NULL COMMENT '主键',
+    flow_no                 VARCHAR(64)   NOT NULL COMMENT '流水号',
+    biz_scene               VARCHAR(64)   NOT NULL COMMENT '业务场景',
+    direction               VARCHAR(8)    NOT NULL COMMENT 'IN/OUT',
+    amount_cents            BIGINT        NOT NULL COMMENT '金额（分）',
+    pay_platform            VARCHAR(32)            COMMENT '支付平台：WECHAT/ALIPAY',
+    biz_order_no            VARCHAR(64)            COMMENT '关联业务单号',
+    channel_ref_no          VARCHAR(128)           COMMENT '关联渠道单号',
+    remark                  VARCHAR(512)           COMMENT '备注',
+    idempotent_key          VARCHAR(128)  NOT NULL COMMENT '幂等键',
+    create_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_plugin_pay_basic_flow_no (flow_no),
+    UNIQUE KEY uk_plugin_pay_basic_idempotent (idempotent_key),
+    KEY idx_plugin_pay_basic_scene (biz_scene, create_time),
+    KEY idx_plugin_pay_basic_biz (biz_order_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='平台基本账户资金流水';
+
+CREATE TABLE IF NOT EXISTS plugin_pay_operate_account_flow (
+    id                      BIGINT        NOT NULL COMMENT '主键',
+    flow_no                 VARCHAR(64)   NOT NULL COMMENT '流水号',
+    biz_scene               VARCHAR(64)   NOT NULL COMMENT '业务场景',
+    direction               VARCHAR(8)    NOT NULL COMMENT 'IN/OUT',
+    amount_cents            BIGINT        NOT NULL COMMENT '金额（分）',
+    pay_platform            VARCHAR(32)            COMMENT '支付平台：WECHAT/ALIPAY',
+    biz_order_no            VARCHAR(64)            COMMENT '关联业务单号',
+    channel_ref_no          VARCHAR(128)           COMMENT '关联渠道单号',
+    remark                  VARCHAR(512)           COMMENT '备注',
+    idempotent_key          VARCHAR(128)  NOT NULL COMMENT '幂等键',
+    create_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_plugin_pay_operate_flow_no (flow_no),
+    UNIQUE KEY uk_plugin_pay_operate_idempotent (idempotent_key),
+    KEY idx_plugin_pay_operate_scene (biz_scene, create_time),
+    KEY idx_plugin_pay_operate_biz (biz_order_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='平台运营账户资金流水';
 

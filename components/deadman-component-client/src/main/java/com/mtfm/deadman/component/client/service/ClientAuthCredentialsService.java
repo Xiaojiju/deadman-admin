@@ -5,12 +5,15 @@ import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.component.client.config.ClientComponentProperties;
+import com.mtfm.deadman.component.client.dto.ClientChangePasswordRequest;
 import com.mtfm.deadman.component.client.dto.ClientRegisterRequest;
 import com.mtfm.deadman.component.client.entity.ClientUserAccount;
 import com.mtfm.deadman.component.client.entity.ClientUserBase;
+import com.mtfm.deadman.component.client.event.ClientUserRegisteredEvent;
 import com.mtfm.deadman.component.client.util.ClientUserCodeGenerator;
 import com.mtfm.deadman.security.vo.auth.RegisterResultVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,6 +29,7 @@ public class ClientAuthCredentialsService {
     private final ClientUserAccountService clientUserAccountService;
     private final ClientUserPasswordService clientUserPasswordService;
     private final ClientComponentProperties clientComponentProperties;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 用户端注册（不签发令牌，需登录后获取 Access/Refresh Token）。
@@ -40,7 +44,18 @@ public class ClientAuthCredentialsService {
     }
 
     /**
-     * 创建用户端账号（用户名 + 密码），供注册与微信绑定注册复用。
+     * 用户端修改密码（校验原密码）。
+     *
+     * @param userId 用户 ID
+     * @param request 原密码与新密码
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void changePassword(Long userId, ClientChangePasswordRequest request) {
+        clientUserPasswordService.changePassword(userId, request.oldPassword(), request.newPassword());
+    }
+
+    /**
+     * 创建用户端账号（用户名 + 密码 + 可选手机号），供注册与微信绑定注册复用。
      *
      * @param request 注册请求
      * @return 新用户基础信息
@@ -54,7 +69,7 @@ public class ClientAuthCredentialsService {
         String userCode = ClientUserCodeGenerator.generate(clientComponentProperties.getUser().getUserCodePrefix());
         ClientUserBase userBase = ClientUserBase.builder().userCode(userCode)
             .nickname(request.nickname() != null ? request.nickname() : request.username())
-            .avatar(StringUtils.hasText(request.avatar()) ? request.avatar().trim() : null)
+            .avatarFileId(request.avatarFileId())
             .status(UserStatus.ACTIVE.getValue()).build();
         clientUserService.save(userBase);
 
@@ -63,7 +78,14 @@ public class ClientAuthCredentialsService {
                 .accountIdentifier(request.username()).verified(1).status(UserStatus.ACTIVE.getValue()).build();
         clientUserAccountService.save(account);
 
+        // 普通注册必填手机号；微信绑定注册可暂不传，后续通过 getPhoneNumber 绑定
+        if (StringUtils.hasText(request.phone())) {
+            clientUserAccountService.bindOrUpdatePhone(userBase.getId(), request.phone().trim());
+        }
+
         clientUserPasswordService.createPassword(userBase.getId(), request.password());
+        eventPublisher.publishEvent(new ClientUserRegisteredEvent(userBase.getId(),
+            StringUtils.hasText(request.inviteCode()) ? request.inviteCode().trim() : null));
         return userBase;
     }
 }
