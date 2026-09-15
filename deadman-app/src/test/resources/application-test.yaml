@@ -45,14 +45,23 @@ deadman:
     pay-mock:
       enabled: true
     pay-wechat:
-      enabled: false
+      enabled: true
       mock-enabled: true
+      mch-id: test-mch
+      partner-mchid: test-partner-mch
+      providers:
+        wechat-jsapi:
+          enabled: true
+          app-id: test-app
+        wechat-ecommerce-combine-jsapi:
+          enabled: true
+          app-id: test-app
     logistics:
       enabled: true
       default-provider: kuaidi100
       cache:
         enabled: true
-        track-query-ttl: 5m
+        track-query-ttl: 10m
         carrier-detect-ttl: 30m
     logistics-kuaidi100:
       enabled: true
@@ -67,6 +76,14 @@ deadman:
         expiration-ms: 3600000
       user:
         user-code-prefix: CL
+    engineering:
+      enabled: true
+      ecommerce-settle:
+        partner-mchid: test-partner-mch
+        combine-app-id: test-app
+        profit-sharing-provider-id: wechat-ecommerce-profitsharing
+        platform-fee-rate-bp: 300
+        staff-withdraw-min-cents: 100
     open-auth:
       enabled: true
       jwt:

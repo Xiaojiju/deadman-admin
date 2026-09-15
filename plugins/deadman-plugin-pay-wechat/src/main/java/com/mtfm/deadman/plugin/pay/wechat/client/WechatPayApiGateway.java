@@ -13,6 +13,7 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatEcommerceRefundCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatJsapiPrepayCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatMediaUploadResult;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayNotifyParseResult;
+import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayRequestPaymentParams;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayScoreCancelCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayScoreCompleteCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayScoreCreateCommand;
@@ -41,6 +42,15 @@ public interface WechatPayApiGateway {
      * @return 预下单结果
      */
     WechatPayJsapiPrepayResult createJsapiPrepay(WechatJsapiPrepayCommand command);
+
+    /**
+     * 使用已有 prepay_id 重新签发小程序调起支付参数。
+     *
+     * @param appId    小程序 AppId
+     * @param prepayId 微信预支付 ID
+     * @return 调起支付参数
+     */
+    WechatPayRequestPaymentParams signJsapiRequestPayment(String appId, String prepayId);
 
     /**
      * 解析微信支付结果回调（验签 + 解密）。

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 当前登录用户资料接口。
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/users/me")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -33,7 +33,7 @@ public class UserController {
      * @param loginUser 登录用户
      * @return 用户资料
      */
-    @GetMapping("/me")
+    @GetMapping
     @PreAuthorize("hasAuthority('user:profile:read')")
     @RequireAuth(AuthRealm.ADMIN)
     public Result<UserProfileVO> me(@AuthenticationPrincipal LoginUser loginUser) {
@@ -47,7 +47,7 @@ public class UserController {
      * @param request   更新请求
      * @return 更新后的用户资料
      */
-    @PutMapping("/me")
+    @PutMapping
     @PreAuthorize("hasAuthority('user:profile:update')")
     @RequireAuth(AuthRealm.ADMIN)
     public Result<UserProfileVO> updateMe(

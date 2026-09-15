@@ -24,6 +24,7 @@ import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsSubscribeResult;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsTrackQueryContext;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsTrackQueryResult;
 import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillCancelResult;
+import com.mtfm.deadman.plugin.logistics.vo.LogisticsCarrierOptionVO;
 import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillOrderResult;
 
 import jakarta.validation.Valid;
@@ -51,6 +52,16 @@ public class LogisticsController {
             @RequestParam(value = "providerId", required = false) String providerId) {
         return Result.ok(logisticsService.queryTrack(
                 new LogisticsTrackQueryContext(carrierCode, trackingNo, phone), providerId));
+    }
+
+    /**
+     * 列出当前渠道已注册、可供选择的快递公司。
+     */
+    @GetMapping("/carriers")
+    @PreAuthorize("hasAuthority(T(com.mtfm.deadman.plugin.logistics.permission.LogisticsPermissions).CARRIER_LIST)")
+    public Result<List<LogisticsCarrierOptionVO>> listCarriers(
+            @RequestParam(value = "providerId", required = false) String providerId) {
+        return Result.ok(logisticsService.listCarriers(providerId));
     }
 
     /**

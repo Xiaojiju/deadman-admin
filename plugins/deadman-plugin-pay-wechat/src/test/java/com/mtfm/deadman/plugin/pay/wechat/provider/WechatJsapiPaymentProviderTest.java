@@ -110,4 +110,19 @@ class WechatJsapiPaymentProviderTest {
         assertThat(result.targetStatus()).isEqualTo("SUCCESS");
         verify(wechatPayApiGateway).queryOrderByOutTradeNo("PO20260622120000123456");
     }
+
+    @Test
+    void shouldRebuildClientInvokeParamsFromPrepayId() {
+        when(wechatPayApiGateway.signJsapiRequestPayment("test_app_id", "wx_prepay_123"))
+                .thenReturn(new WechatPayRequestPaymentParams(
+                        "1710000001", "nonce2", "prepay_id=wx_prepay_123", "RSA", "sign2"));
+
+        var params = provider.rebuildClientInvokeParams("wx_prepay_123");
+
+        assertThat(params.timeStamp()).isEqualTo("1710000001");
+        assertThat(params.nonceStr()).isEqualTo("nonce2");
+        assertThat(params.packageValue()).isEqualTo("prepay_id=wx_prepay_123");
+        assertThat(params.paySign()).isEqualTo("sign2");
+        verify(wechatPayApiGateway).signJsapiRequestPayment("test_app_id", "wx_prepay_123");
+    }
 }

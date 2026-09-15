@@ -76,6 +76,20 @@ public class MockWechatPayApiGateway implements WechatPayApiGateway {
 
     /**
      * {@inheritDoc}
+     */
+    @Override
+    public WechatPayRequestPaymentParams signJsapiRequestPayment(String appId, String prepayId) {
+        if (!StringUtils.hasText(appId) || !StringUtils.hasText(prepayId)) {
+            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "缺少 AppId 或 prepay_id，无法继续支付");
+        }
+        String timeStamp = String.valueOf(Instant.now().getEpochSecond());
+        String nonceStr = UUID.randomUUID().toString().replace("-", "");
+        String packageValue = "prepay_id=" + prepayId.trim();
+        return new WechatPayRequestPaymentParams(timeStamp, nonceStr, packageValue, "RSA", "mock_pay_sign");
+    }
+
+    /**
+     * {@inheritDoc}
      * <p>
      * Mock 模式接受简化 JSON：{@code {"out_trade_no":"...","transaction_id":"...","trade_state":"SUCCESS"}}
      */

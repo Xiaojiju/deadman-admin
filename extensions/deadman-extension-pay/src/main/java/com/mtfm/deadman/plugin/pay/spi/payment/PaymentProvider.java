@@ -1,5 +1,7 @@
 package com.mtfm.deadman.plugin.pay.spi.payment;
 
+import com.mtfm.deadman.common.exception.BusinessException;
+import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
 
 /**
@@ -50,6 +52,19 @@ public interface PaymentProvider {
      * @return 预下单结果
      */
     PaymentPrepayResult createPrepay(PaymentPrepayContext context, String outTradeNo);
+
+    /**
+     * 基于已有渠道预支付 ID 重新生成客户端调起参数（继续支付）。
+     * <p>
+     * 微信 JSAPI 的 timeStamp / paySign 会过期，但同一 {@code out_trade_no} 不能重复预下单，
+     * 因此待支付订单应复用 {@code prepay_id} 重新签名，而不是再创建支付单。
+     *
+     * @param channelPrepayId 渠道预支付 ID（如微信 prepay_id）
+     * @return 客户端调起支付参数
+     */
+    default PaymentClientInvokeParams rebuildClientInvokeParams(String channelPrepayId) {
+        throw new BusinessException(ResultCode.BAD_REQUEST, "当前支付方式不支持继续支付");
+    }
 
     /**
      * 解析渠道支付回调，返回标准化结果供上层更新支付单状态。

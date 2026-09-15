@@ -32,7 +32,7 @@ public class LogisticsPluginProperties {
         private boolean enabled = true;
 
         /** 轨迹查询缓存 TTL，短 TTL 降低渠道调用频率 */
-        private Duration trackQueryTtl = Duration.ofMinutes(5);
+        private Duration trackQueryTtl = Duration.ofMinutes(10);
 
         /** 快递公司识别缓存 TTL */
         private Duration carrierDetectTtl = Duration.ofMinutes(30);

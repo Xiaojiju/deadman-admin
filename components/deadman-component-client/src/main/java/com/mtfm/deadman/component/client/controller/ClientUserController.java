@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 用户端当前用户接口。
  */
 @RestController
-@RequestMapping("/client/api/users")
+@RequestMapping("/client/api/users/me")
 @RequiredArgsConstructor
 public class ClientUserController {
 
@@ -32,7 +32,7 @@ public class ClientUserController {
      * @param loginUser 当前登录用户
      * @return 用户资料
      */
-    @GetMapping("/me")
+    @GetMapping
     @RequireAuth(AuthRealm.CLIENT)
     public Result<ClientUserProfileVO> currentProfile(@AuthenticationPrincipal ClientLoginUser loginUser) {
         return Result.ok(clientUserService.getProfileByUserCode(loginUser.getUserCode()));
@@ -42,13 +42,13 @@ public class ClientUserController {
      * 更新当前用户本人资料（昵称、头像；未传字段不修改）。
      *
      * @param loginUser 当前登录用户
-     * @param request 更新请求
+     * @param request   更新请求
      * @return 更新后的用户资料
      */
-    @PutMapping("/me")
+    @PutMapping
     @RequireAuth(AuthRealm.CLIENT)
     public Result<ClientUserProfileVO> updateMyProfile(@AuthenticationPrincipal ClientLoginUser loginUser,
-        @Valid @RequestBody UpdateClientUserProfileRequest request) {
+            @Valid @RequestBody UpdateClientUserProfileRequest request) {
         return Result.ok(clientUserService.updateMyProfile(loginUser.getUserId(), request));
     }
 }

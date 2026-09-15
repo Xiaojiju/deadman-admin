@@ -84,6 +84,25 @@ class LogisticsServiceTest {
     }
 
     /**
+     * 应返回默认渠道已注册的快递公司选项（含展示名称）。
+     */
+    @Test
+    void listCarriers_returnsRegisteredOptions() {
+        LogisticsPluginProperties properties = new LogisticsPluginProperties();
+        properties.setDefaultProvider("stub");
+        LogisticsProviderRegistry registry =
+                new LogisticsProviderRegistry(List.of(), List.of(), List.of(), List.of(), properties);
+        LogisticsCacheSupport cacheSupport = new LogisticsCacheSupport(properties, null);
+        LogisticsSubscribePushService pushService = new LogisticsSubscribePushService(List.of());
+        LogisticsService service =
+                new LogisticsService(registry, cacheSupport, pushService, carrierCodeSupport);
+
+        assertThat(service.listCarriers(null))
+                .extracting(vo -> vo.carrierCode() + ":" + vo.carrierName())
+                .containsExactly(LogisticsCarriers.SF + ":顺丰速运", LogisticsCarriers.YTO + ":圆通速递");
+    }
+
+    /**
      * 未注册的统一编码应抛出编码未知错误。
      */
     @Test
@@ -114,7 +133,7 @@ class LogisticsServiceTest {
 
         @Override
         public Map<String, String> contribute() {
-            return Map.of(LogisticsCarriers.YTO, "yuantong");
+            return Map.of(LogisticsCarriers.YTO, "yuantong", LogisticsCarriers.SF, "shunfeng");
         }
     }
 

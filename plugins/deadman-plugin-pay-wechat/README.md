@@ -207,18 +207,26 @@ deadman-plugin-pay-wechat/
 
 配置前缀：`deadman.plugin.pay-wechat`
 
-### 商户级配置（所有 Provider 共享）
+### 商户级配置（两套账户）
+
+会员直连 JSAPI 走 **ordinary（普通商户号）**；备件收付通合单/电商退款/分账/进件走 **partner（合作伙伴/受理机构）**。两套商户号、密钥、证书必须分开配置，不能把合作伙伴商户号填进直连 JSAPI。
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
 | `enabled` | boolean | `false` | 是否启用微信支付插件 |
-| `mock-enabled` | boolean | `true` | 是否使用 Mock 网关 |
-| `mch-id` | string | — | 微信支付商户号 |
-| `api-v3-key` | string | — | APIv3 密钥 |
-| `merchant-serial-no` | string | — | 商户 API 证书序列号 |
-| `private-key-path` | string | — | 商户 API 私钥 PEM 文件路径 |
+| `mock-enabled` | boolean | `false` | 是否使用 Mock 网关（仅显式 true 才走 Mock） |
+| `ordinary.mch-id` | string | — | 普通商户号（会员/直连） |
+| `ordinary.api-v3-key` | string | — | 普通商户 APIv3 密钥 |
+| `ordinary.merchant-serial-no` | string | — | 普通商户证书序列号 |
+| `ordinary.private-key-path` | string | — | 普通商户私钥 PEM 路径 |
+| `partner.mch-id` | string | — | 合作伙伴商户号（备件收付通） |
+| `partner.api-v3-key` | string | — | 合作伙伴 APIv3 密钥 |
+| `partner.merchant-serial-no` | string | — | 合作伙伴证书序列号 |
+| `partner.private-key-path` | string | — | 合作伙伴私钥 PEM 路径 |
 
-> 当 `mock-enabled=true`，或上述商户凭证任一缺失时，自动使用 Mock 网关。
+顶层 `mch-id` / `api-v3-key` 等仍可作为 ordinary 回退；仅配置顶层 `partner-mchid` 时用 ordinary 密钥替换合作伙伴商户号。未配置 `partner` 时回退 ordinary（兼容旧单套配置）。
+
+> `mock-enabled=false` 且 ordinary/partner 凭证不齐时启动失败，不再静默降级 Mock。
 
 ### Provider 级配置 `providers.<providerId>.*`
 
@@ -244,10 +252,16 @@ deadman:
     pay-wechat:
       enabled: true
       mock-enabled: false
-      mch-id: ${WECHAT_PAY_MCH_ID}
-      api-v3-key: ${WECHAT_PAY_API_V3_KEY}
-      merchant-serial-no: ${WECHAT_PAY_SERIAL_NO}
-      private-key-path: ${WECHAT_PAY_PRIVATE_KEY_PATH}
+      ordinary:
+        mch-id: ${WECHAT_PAY_ORDINARY_MCH_ID}
+        api-v3-key: ${WECHAT_PAY_ORDINARY_API_V3_KEY}
+        merchant-serial-no: ${WECHAT_PAY_ORDINARY_SERIAL_NO}
+        private-key-path: ${WECHAT_PAY_ORDINARY_PRIVATE_KEY_PATH}
+      partner:
+        mch-id: ${WECHAT_PAY_PARTNER_MCH_ID}
+        api-v3-key: ${WECHAT_PAY_PARTNER_API_V3_KEY}
+        merchant-serial-no: ${WECHAT_PAY_PARTNER_SERIAL_NO}
+        private-key-path: ${WECHAT_PAY_PARTNER_PRIVATE_KEY_PATH}
       providers:
         wechat-jsapi:
           enabled: true
@@ -273,10 +287,15 @@ deadman:
 |----------|------|
 | `DEADMAN_PLUGIN_PAY_WECHAT_ENABLED` | 插件总开关 |
 | `DEADMAN_PLUGIN_PAY_WECHAT_MOCK_ENABLED` | Mock 开关 |
-| `WECHAT_PAY_MCH_ID` | 商户号 |
-| `WECHAT_PAY_API_V3_KEY` | APIv3 密钥 |
-| `WECHAT_PAY_SERIAL_NO` | 证书序列号 |
-| `WECHAT_PAY_PRIVATE_KEY_PATH` | 私钥路径 |
+| `WECHAT_PAY_ORDINARY_MCH_ID` | 普通商户号（会员） |
+| `WECHAT_PAY_ORDINARY_API_V3_KEY` | 普通商户 APIv3 密钥 |
+| `WECHAT_PAY_ORDINARY_SERIAL_NO` | 普通商户证书序列号 |
+| `WECHAT_PAY_ORDINARY_PRIVATE_KEY_PATH` | 普通商户私钥路径 |
+| `WECHAT_PAY_PARTNER_MCH_ID` | 合作伙伴商户号（备件） |
+| `WECHAT_PAY_PARTNER_API_V3_KEY` | 合作伙伴 APIv3 密钥 |
+| `WECHAT_PAY_PARTNER_SERIAL_NO` | 合作伙伴证书序列号 |
+| `WECHAT_PAY_PARTNER_PRIVATE_KEY_PATH` | 合作伙伴私钥路径 |
+| `WECHAT_PAY_MCH_ID` | 旧配置：未填 ordinary 时回退；也可作为 partner 回退 |
 | `DEADMAN_PLUGIN_PAY_WECHAT_JSAPI_ENABLED` | JSAPI Provider 开关 |
 | `WECHAT_PAY_JSAPI_APP_ID` | JSAPI AppId |
 | `WECHAT_PAY_JSAPI_NOTIFY_URL` | JSAPI 回调 URL（提交给微信） |

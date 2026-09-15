@@ -1,5 +1,10 @@
 package com.mtfm.deadman.plugin.logistics.spi.carrier;
 
+import java.util.Locale;
+import java.util.Map;
+
+import org.springframework.util.StringUtils;
+
 /**
  * 平台统一快递公司编码常量。
  * <p>
@@ -39,6 +44,37 @@ public final class LogisticsCarriers {
     /** 宅急送 */
     public static final String ZJS = "ZJS";
 
+    private static final Map<String, String> DISPLAY_NAMES = Map.ofEntries(
+            Map.entry(YTO, "圆通速递"),
+            Map.entry(SF, "顺丰速运"),
+            Map.entry(STO, "申通快递"),
+            Map.entry(ZTO, "中通快递"),
+            Map.entry(YD, "韵达速递"),
+            Map.entry(JD, "京东物流"),
+            Map.entry(EMS, "中国邮政 EMS"),
+            Map.entry(JTSD, "极兔速递"),
+            Map.entry(DBL, "德邦快递"),
+            Map.entry(HTKY, "百世快递"),
+            Map.entry(YZPY, "邮政快递包裹"),
+            Map.entry(YZBK, "邮政标准快递"),
+            Map.entry(UC, "优速快递"),
+            Map.entry(HHTT, "天天快递"),
+            Map.entry(ZJS, "宅急送"));
+
     private LogisticsCarriers() {
+    }
+
+    /**
+     * 按平台统一编码解析展示名称。
+     *
+     * @param unifiedCode 平台统一编码
+     * @return 中文名称；未知编码时返回规范化后的编码本身
+     */
+    public static String displayName(String unifiedCode) {
+        if (!StringUtils.hasText(unifiedCode)) {
+            return unifiedCode;
+        }
+        String normalized = unifiedCode.trim().toUpperCase(Locale.ROOT);
+        return DISPLAY_NAMES.getOrDefault(normalized, normalized);
     }
 }

@@ -272,6 +272,21 @@ public class FileService {
     }
 
     /**
+     * 读取文件全部字节（服务端渲染/转发使用）。
+     *
+     * @param fileId 文件主键
+     * @return 文件字节
+     */
+    public byte[] readBytes(Long fileId) {
+        FileDownloadResource resource = openDownload(fileId);
+        try (InputStream inputStream = resource.getInputStream()) {
+            return inputStream.readAllBytes();
+        } catch (IOException ex) {
+            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "读取文件失败");
+        }
+    }
+
+    /**
      * 打开文件流用于下载。
      *
      * @param fileId 文件主键

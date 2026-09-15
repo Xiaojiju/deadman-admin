@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS user_base (
     id              BIGINT       NOT NULL COMMENT '用户主键，雪花算法生成',
     user_code       VARCHAR(32)  NOT NULL COMMENT '对外用户编码，非主键，用于对外身份标识',
     nickname        VARCHAR(64)           COMMENT '用户昵称',
-    avatar          VARCHAR(512)          COMMENT '头像 URL',
+    avatar_file_id  BIGINT                COMMENT '头像文件 ID',
     status          SMALLINT     NOT NULL DEFAULT 1 COMMENT '用户状态：0-禁用，1-正常',
     is_deleted      SMALLINT     NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
     create_time     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

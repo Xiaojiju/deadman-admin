@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.ess.tencent.event.EssFlowCallbackEvent;
+import com.mtfm.deadman.plugin.ess.tencent.event.EssOrgAuthCallbackEvent;
 import com.mtfm.deadman.plugin.ess.tencent.support.EssUserDataSupport;
 
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,17 @@ public class EssCallbackDispatchService {
             return;
         }
         EssFlowCallbackEvent event = parseEvent(plain);
+        if (isOrgAuthCallback(event.msgType())) {
+            EssOrgAuthCallbackEvent orgEvent = parseOrgAuthEvent(plain, event);
+            if (!StringUtils.hasText(orgEvent.proxyOrganizationOpenId())) {
+                log.debug("电子签子客认证回调缺少 ProxyOrganizationOpenId，忽略: msgType={}", event.msgType());
+                return;
+            }
+            log.info("发布电子签子客认证回调: orgOpenId={}, openSuccess={}",
+                    orgEvent.proxyOrganizationOpenId(), orgEvent.openSuccess());
+            eventPublisher.publishEvent(orgEvent);
+            return;
+        }
         if (!StringUtils.hasText(event.flowId())) {
             log.debug("电子签回调缺少 FlowId，忽略: msgType={}", event.msgType());
             return;
@@ -127,5 +139,47 @@ public class EssCallbackDispatchService {
         }
         String text = node.asString();
         return StringUtils.hasText(text) ? text : null;
+    }
+
+    /**
+     * 是否为子客企业开通/认证类回调。
+     *
+     * @param msgType 回调消息类型
+     * @return 是子客认证回调时为 true
+     */
+    private static boolean isOrgAuthCallback(String msgType) {
+        return "OrgOpenTsignBiz".equalsIgnoreCase(msgType);
+    }
+
+    /**
+     * 解析子客企业认证回调事件。
+     *
+     * @param plain 明文 JSON
+     * @param base  已解析的流程回调公共字段
+     * @return 子客认证事件
+     */
+    private EssOrgAuthCallbackEvent parseOrgAuthEvent(String plain, EssFlowCallbackEvent base) {
+        try {
+            JsonNode root = JSON_MAPPER.readTree(plain);
+            JsonNode dataNode = resolveDataNode(root);
+            String orgOpenId = firstText(dataNode, root, "ProxyOrganizationOpenId");
+            String openSuccessRaw = firstText(dataNode, root, "OpenSuccess");
+            boolean openSuccess = parseOpenSuccess(openSuccessRaw);
+            return new EssOrgAuthCallbackEvent(orgOpenId, openSuccess, plain);
+        } catch (BusinessException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new BusinessException(ResultCode.ESS_CALLBACK_INVALID, "电子签子客认证回调解析失败", ex);
+        }
+    }
+
+    private static boolean parseOpenSuccess(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return false;
+        }
+        String normalized = raw.trim();
+        return "true".equalsIgnoreCase(normalized)
+            || "1".equals(normalized)
+            || "success".equalsIgnoreCase(normalized);
     }
 }

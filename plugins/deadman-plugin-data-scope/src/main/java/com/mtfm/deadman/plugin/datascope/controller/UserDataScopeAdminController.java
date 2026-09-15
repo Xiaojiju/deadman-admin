@@ -21,7 +21,7 @@ import java.util.List;
  * 用户数据权限独立管理接口（与角色解耦）。
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/users/{userId}/data-scope")
 @RequiredArgsConstructor
 public class UserDataScopeAdminController {
 
@@ -34,7 +34,7 @@ public class UserDataScopeAdminController {
      * @param userId 用户 ID
      * @return 数据权限配置
      */
-    @GetMapping("/{userId}/data-scope")
+    @GetMapping
     @PreAuthorize("hasAuthority('user:list:read')")
     public Result<DataScopeVO> getDataScope(@PathVariable Long userId) {
         userBridge.requireExists(userId);
@@ -48,7 +48,7 @@ public class UserDataScopeAdminController {
      * @param request 数据范围请求
      * @return 更新后的数据权限配置
      */
-    @PutMapping("/{userId}/data-scope")
+    @PutMapping
     @PreAuthorize("hasAuthority('user:update')")
     public Result<DataScopeVO> assignDataScope(
             @PathVariable Long userId, @Valid @RequestBody AssignUserDataScopeRequest request) {

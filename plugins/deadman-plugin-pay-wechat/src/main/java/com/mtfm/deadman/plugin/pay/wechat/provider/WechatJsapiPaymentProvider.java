@@ -96,6 +96,18 @@ public class WechatJsapiPaymentProvider implements PaymentProvider {
      * {@inheritDoc}
      */
     @Override
+    public PaymentClientInvokeParams rebuildClientInvokeParams(String channelPrepayId) {
+        if (!StringUtils.hasText(channelPrepayId)) {
+            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "缺少预支付单号，无法继续支付");
+        }
+        String appId = requireAppId(requireBinding());
+        return toClientInvokeParams(wechatPayApiGateway.signJsapiRequestPayment(appId, channelPrepayId.trim()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public PaymentNotifyResult parseNotify(ChannelNotifyContext context) {
         WechatPayNotifyParseResult parsed = wechatPayApiGateway.parseNotify(context);
         return toNotifyResult(parsed, context.rawBody());

@@ -33,6 +33,7 @@ import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillCancelResul
 import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.waybill.LogisticsWaybillOrderResult;
 import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsTrackProvider;
+import com.mtfm.deadman.plugin.logistics.vo.LogisticsCarrierOptionVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,6 +52,19 @@ public class LogisticsService {
     private final LogisticsCacheSupport logisticsCacheSupport;
     private final LogisticsSubscribePushService logisticsSubscribePushService;
     private final LogisticsCarrierCodeSupport logisticsCarrierCodeSupport;
+
+    /**
+     * 列出指定渠道已注册的快递公司（统一编码 + 展示名称）。
+     *
+     * @param providerId Provider 标识，为空时使用默认渠道
+     * @return 快递公司选项列表
+     */
+    public List<LogisticsCarrierOptionVO> listCarriers(String providerId) {
+        String resolvedProviderId = StringUtils.hasText(providerId)
+                ? providerId
+                : logisticsProviderRegistry.getDefaultProviderId();
+        return logisticsCarrierCodeSupport.listCarrierOptions(resolvedProviderId);
+    }
 
     /**
      * 实时查询快递轨迹（带 Redis 短 TTL 缓存）。

@@ -14,6 +14,7 @@ public final class LogisticsPermissions {
     public static final String GROUP_CODE = "logistics";
 
     public static final String TRACK_QUERY = "logistics:track:query";
+    public static final String CARRIER_LIST = "logistics:carrier:list";
     public static final String CARRIER_DETECT = "logistics:carrier:detect";
     public static final String TRACK_SUBSCRIBE = "logistics:track:subscribe";
     public static final String WAYBILL_CREATE = "logistics:waybill:create";
@@ -39,6 +40,7 @@ public final class LogisticsPermissions {
                 "物流能力",
                 List.of(
                         new PermissionItemDescriptor(TRACK_QUERY, "查询快递轨迹"),
+                        new PermissionItemDescriptor(CARRIER_LIST, "列出可选快递公司"),
                         new PermissionItemDescriptor(CARRIER_DETECT, "智能识别快递公司"),
                         new PermissionItemDescriptor(TRACK_SUBSCRIBE, "订阅轨迹推送"),
                         new PermissionItemDescriptor(WAYBILL_CREATE, "电子面单下单"),

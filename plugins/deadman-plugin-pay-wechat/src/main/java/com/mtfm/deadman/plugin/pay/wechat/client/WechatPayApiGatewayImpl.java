@@ -1,10 +1,7 @@
 package com.mtfm.deadman.plugin.pay.wechat.client;
 
-import java.security.KeyFactory;
 import java.security.MessageDigest;
-import java.security.PrivateKey;
 import java.security.Signature;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -42,6 +39,7 @@ import com.mtfm.deadman.plugin.pay.wechat.client.model.PayScoreServiceOrderReque
 import com.mtfm.deadman.plugin.pay.wechat.client.model.PayScoreServiceOrderResponse;
 import com.mtfm.deadman.plugin.pay.wechat.client.model.TransferBillRequest;
 import com.mtfm.deadman.plugin.pay.wechat.client.model.TransferBillResponse;
+import com.mtfm.deadman.plugin.pay.wechat.config.WechatPayAccountProperties;
 import com.mtfm.deadman.plugin.pay.wechat.config.WechatPayPluginProperties;
 import com.mtfm.deadman.plugin.pay.wechat.constant.WechatPayNotifyHeaders;
 import com.mtfm.deadman.plugin.pay.wechat.util.WechatPayChannelErrorClassifier;
@@ -77,11 +75,6 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatRefundParseResult;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferBillNotification;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferParseResult;
-import com.wechat.pay.java.core.Config;
-import com.wechat.pay.java.core.RSAAutoCertificateConfig;
-import com.wechat.pay.java.core.RSAPublicKeyConfig;
-import com.wechat.pay.java.core.http.DefaultHttpClientBuilder;
-import com.wechat.pay.java.core.http.HttpClient;
 import com.wechat.pay.java.core.http.HttpHeaders;
 import com.wechat.pay.java.core.http.HttpMethod;
 import com.wechat.pay.java.core.http.HttpRequest;
@@ -89,11 +82,8 @@ import com.wechat.pay.java.core.http.HttpResponse;
 import com.wechat.pay.java.core.http.JsonRequestBody;
 import com.wechat.pay.java.core.http.MediaType;
 import com.wechat.pay.java.core.http.UrlEncoder;
-import com.wechat.pay.java.core.notification.NotificationConfig;
-import com.wechat.pay.java.core.notification.NotificationParser;
 import com.wechat.pay.java.core.notification.RequestParam;
 import com.wechat.pay.java.core.util.GsonUtil;
-import com.wechat.pay.java.service.ecommerceprofitsharing.EcommerceProfitSharingService;
 import com.wechat.pay.java.service.ecommerceprofitsharing.model.AddReceiverRequest;
 import com.wechat.pay.java.service.ecommerceprofitsharing.model.CreateOrderReceiver;
 import com.wechat.pay.java.service.ecommerceprofitsharing.model.CreateOrderRequest;
@@ -104,21 +94,17 @@ import com.wechat.pay.java.service.ecommerceprofitsharing.model.FinishOrderReque
 import com.wechat.pay.java.service.ecommerceprofitsharing.model.FinishOrderResponse;
 import com.wechat.pay.java.service.ecommerceprofitsharing.model.QueryOrderRequest;
 import com.wechat.pay.java.service.ecommerceprofitsharing.model.QueryOrderResponse;
-import com.wechat.pay.java.service.ecommercerefund.EcommerceRefundService;
 import com.wechat.pay.java.service.ecommercerefund.model.CreateRefundRequest;
 import com.wechat.pay.java.service.ecommercerefund.model.QueryRefundByOutRefundNoRequest;
 import com.wechat.pay.java.service.ecommercerefund.model.Refund4Create;
 import com.wechat.pay.java.service.ecommercerefund.model.RefundReqAmount;
-import com.wechat.pay.java.service.file.FileUploadService;
 import com.wechat.pay.java.service.file.model.FileUploadResponse;
-import com.wechat.pay.java.service.payments.jsapi.JsapiService;
 import com.wechat.pay.java.service.payments.jsapi.model.Amount;
 import com.wechat.pay.java.service.payments.jsapi.model.Payer;
 import com.wechat.pay.java.service.payments.jsapi.model.PrepayRequest;
 import com.wechat.pay.java.service.payments.jsapi.model.PrepayResponse;
 import com.wechat.pay.java.service.payments.jsapi.model.QueryOrderByOutTradeNoRequest;
 import com.wechat.pay.java.service.payments.model.Transaction;
-import com.wechat.pay.java.service.refund.RefundService;
 import com.wechat.pay.java.service.refund.model.AmountReq;
 import com.wechat.pay.java.service.refund.model.CreateRequest;
 import com.wechat.pay.java.service.refund.model.QueryByOutRefundNoRequest;
@@ -174,16 +160,10 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             "https://api.mch.weixin.qq.com/v3/payscore/permissions/openid/%s/terminate";
 
     private final WechatPayPluginProperties properties;
-    private final Config config;
-    private final JsapiService jsapiService;
-    private final RefundService refundService;
-    private final EcommerceProfitSharingService ecommerceProfitSharingService;
-    private final EcommerceRefundService ecommerceRefundService;
-    private final FileUploadService fileUploadService;
-    private final HttpClient httpClient;
-    private final NotificationParser notificationParser;
-    /** 构造期缓存的商户私钥，避免每次预下单读盘 */
-    private final PrivateKey merchantPrivateKey;
+    /** 普通直连商户运行时（会员 JSAPI / 直连退款 / 转账 / 支付分） */
+    private final WechatPayMerchantClient ordinary;
+    /** 合作伙伴运行时（备件收付通合单 / 电商退款 / 分账 / 进件） */
+    private final WechatPayMerchantClient partner;
 
     /**
      * 构造真实微信支付网关。
@@ -192,21 +172,17 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
      */
     public WechatPayApiGatewayImpl(WechatPayPluginProperties properties) {
         this.properties = properties;
-        this.config = buildConfig(properties);
-        this.jsapiService = new JsapiService.Builder().config(config).build();
-        this.refundService = new RefundService.Builder().config(config).build();
-        this.ecommerceProfitSharingService = new EcommerceProfitSharingService.Builder().config(config).build();
-        this.ecommerceRefundService = new EcommerceRefundService.Builder().config(config).build();
-        this.httpClient = new DefaultHttpClientBuilder().config(config).build();
-        this.fileUploadService = new FileUploadService.Builder().httpClient(httpClient).build();
-        this.notificationParser = new NotificationParser((NotificationConfig) config);
-        try {
-            this.merchantPrivateKey = loadPrivateKey(properties.getPrivateKeyPath());
-        } catch (RuntimeException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "加载商户私钥失败");
-        }
+        WechatPayAccountProperties ordinaryAccount = properties.resolveOrdinaryAccount();
+        WechatPayAccountProperties partnerAccount = properties.resolvePartnerAccount();
+        this.ordinary = WechatPayMerchantClient.create(ordinaryAccount);
+        this.partner = ordinaryAccount.sameMerchantIdentity(partnerAccount)
+                ? this.ordinary
+                : WechatPayMerchantClient.create(partnerAccount);
+        log.info(
+                "微信支付网关已初始化：ordinaryMchId={}, partnerMchId={}, sharedClient={}",
+                ordinaryAccount.getMchId(),
+                partnerAccount.getMchId(),
+                this.ordinary == this.partner);
     }
 
     /**
@@ -216,7 +192,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
     public WechatPayJsapiPrepayResult createJsapiPrepay(WechatJsapiPrepayCommand command) {
         PrepayRequest request = new PrepayRequest();
         request.setAppid(command.appId());
-        request.setMchid(properties.getMchId());
+        request.setMchid(ordinary.account().getMchId());
         request.setDescription(command.description());
         request.setOutTradeNo(command.outTradeNo());
         request.setNotifyUrl(command.notifyUrl());
@@ -228,14 +204,25 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         payer.setOpenid(command.openid());
         request.setPayer(payer);
         try {
-            PrepayResponse response = jsapiService.prepay(request);
+            PrepayResponse response = ordinary.jsapiService().prepay(request);
             String prepayId = response.getPrepayId();
-            WechatPayRequestPaymentParams params = signRequestPayment(command.appId(), prepayId);
+            WechatPayRequestPaymentParams params = signRequestPayment(ordinary, command.appId(), prepayId);
             return new WechatPayJsapiPrepayResult(prepayId, params);
         } catch (RuntimeException ex) {
             log.warn("微信预下单失败：outTradeNo={}", command.outTradeNo(), ex);
             throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "微信预下单失败");
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public WechatPayRequestPaymentParams signJsapiRequestPayment(String appId, String prepayId) {
+        if (!StringUtils.hasText(appId) || !StringUtils.hasText(prepayId)) {
+            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "缺少 AppId 或 prepay_id，无法继续支付");
+        }
+        return signRequestPayment(ordinary, appId.trim(), prepayId.trim());
     }
 
     /**
@@ -251,7 +238,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .body(context.rawBody())
                 .build();
         try {
-            Transaction transaction = notificationParser.parse(requestParam, Transaction.class);
+            Transaction transaction = ordinary.notificationParser().parse(requestParam, Transaction.class);
             return toParseResult(transaction);
         } catch (RuntimeException ex) {
             log.warn("微信支付回调验签或解密失败", ex);
@@ -265,10 +252,10 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
     @Override
     public WechatPayNotifyParseResult queryOrderByOutTradeNo(String outTradeNo) {
         QueryOrderByOutTradeNoRequest request = new QueryOrderByOutTradeNoRequest();
-        request.setMchid(properties.getMchId());
+        request.setMchid(ordinary.account().getMchId());
         request.setOutTradeNo(outTradeNo);
         try {
-            Transaction transaction = jsapiService.queryOrderByOutTradeNo(request);
+            Transaction transaction = ordinary.jsapiService().queryOrderByOutTradeNo(request);
             return toParseResult(transaction);
         } catch (RuntimeException ex) {
             log.warn("微信查单失败：outTradeNo={}", outTradeNo, ex);
@@ -300,7 +287,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         amount.setCurrency(StringUtils.hasText(command.currency()) ? command.currency() : "CNY");
         request.setAmount(amount);
         try {
-            Refund refund = refundService.create(request);
+            Refund refund = ordinary.refundService().create(request);
             return toRefundParseResult(refund);
         } catch (com.wechat.pay.java.core.exception.ServiceException ex) {
             if (WechatPayChannelErrorClassifier.isClearReject(ex)) {
@@ -339,7 +326,8 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .body(context.rawBody())
                 .build();
         try {
-            RefundNotification notification = notificationParser.parse(requestParam, RefundNotification.class);
+            RefundNotification notification =
+                    ordinary.notificationParser().parse(requestParam, RefundNotification.class);
             return toRefundNotifyParseResult(notification);
         } catch (RuntimeException ex) {
             log.warn("微信退款回调验签或解密失败", ex);
@@ -355,7 +343,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         QueryByOutRefundNoRequest request = new QueryByOutRefundNoRequest();
         request.setOutRefundNo(outRefundNo);
         try {
-            Refund refund = refundService.queryByOutRefundNo(request);
+            Refund refund = ordinary.refundService().queryByOutRefundNo(request);
             return toRefundParseResult(refund);
         } catch (RuntimeException ex) {
             log.warn("微信查退款失败：outRefundNo={}", outRefundNo, ex);
@@ -376,7 +364,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         request.setSubMchid(subMchid.trim());
         try {
             com.wechat.pay.java.service.ecommercerefund.model.Refund refund =
-                    ecommerceRefundService.queryRefundByOutRefundNo(request);
+                    partner.ecommerceRefundService().queryRefundByOutRefundNo(request);
             return toEcommerceRefundParseResult(refund);
         } catch (RuntimeException ex) {
             log.warn("微信收付通查退款失败：outRefundNo={}, subMchid={}", outRefundNo, subMchid, ex);
@@ -398,7 +386,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .build();
         try {
             WechatEcommerceRefundNotification notification =
-                    notificationParser.parse(requestParam, WechatEcommerceRefundNotification.class);
+                    partner.notificationParser().parse(requestParam, WechatEcommerceRefundNotification.class);
             return toEcommerceRefundNotifyParseResult(notification);
         } catch (RuntimeException ex) {
             log.warn("微信收付通退款回调验签或解密失败", ex);
@@ -429,7 +417,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         String url = String.format(
                 ABNORMAL_REFUND_URL_TEMPLATE, UrlEncoder.urlEncode(command.channelRefundId().trim()));
         try {
-            HttpResponse<Refund> response = postJson(url, body, Refund.class);
+            HttpResponse<Refund> response = postJson(ordinary, url, body, Refund.class);
             return toRefundParseResult(response.getServiceResponse());
         } catch (com.wechat.pay.java.core.exception.ServiceException ex) {
             if (WechatPayChannelErrorClassifier.isClearReject(ex)) {
@@ -480,7 +468,8 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             body.setNotifyUrl(command.notifyUrl());
         }
         try {
-            HttpResponse<TransferBillResponse> response = postJson(TRANSFER_BILL_URL, body, TransferBillResponse.class);
+            HttpResponse<TransferBillResponse> response =
+                    postJson(ordinary, TRANSFER_BILL_URL, body, TransferBillResponse.class);
             return toTransferParseResult(response.getServiceResponse());
         } catch (com.wechat.pay.java.core.exception.ServiceException ex) {
             if (WechatPayChannelErrorClassifier.isClearReject(ex)) {
@@ -519,7 +508,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .body(context.rawBody())
                 .build();
         try {
-            WechatTransferBillNotification notification = notificationParser.parse(requestParam,
+            WechatTransferBillNotification notification = ordinary.notificationParser().parse(requestParam,
                     WechatTransferBillNotification.class);
             return new WechatTransferParseResult(
                     notification.getOutBillNo(),
@@ -548,7 +537,8 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .headers(headers)
                 .build();
         try {
-            HttpResponse<TransferBillResponse> response = httpClient.execute(httpRequest, TransferBillResponse.class);
+            HttpResponse<TransferBillResponse> response =
+                    ordinary.httpClient().execute(httpRequest, TransferBillResponse.class);
             return toTransferParseResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信商家转账查单失败：outBillNo={}", outBillNo, ex);
@@ -598,14 +588,14 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             body.setSceneInfo(sceneInfo);
         }
         try {
-            HttpResponse<CombinePrepayResponse> response = postJson(COMBINE_JSAPI_URL, body,
+            HttpResponse<CombinePrepayResponse> response = postJson(partner, COMBINE_JSAPI_URL, body,
                     CombinePrepayResponse.class);
             CombinePrepayResponse resp = response.getServiceResponse();
             String prepayId = resp == null ? null : resp.getPrepayId();
             if (!StringUtils.hasText(prepayId)) {
                 throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "收付通合单预下单未返回 prepay_id");
             }
-            WechatPayRequestPaymentParams params = signRequestPayment(command.combineAppid(), prepayId);
+            WechatPayRequestPaymentParams params = signRequestPayment(partner, command.combineAppid(), prepayId);
             return new WechatEcommerceCombinePrepayResult(prepayId, params);
         } catch (BusinessException ex) {
             throw ex;
@@ -629,7 +619,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .headers(headers)
                 .build();
         try {
-            HttpResponse<CombineOrderNotification> response = httpClient.execute(httpRequest,
+            HttpResponse<CombineOrderNotification> response = partner.httpClient().execute(httpRequest,
                     CombineOrderNotification.class);
             return toCombineParseResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
@@ -651,7 +641,8 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .body(context.rawBody())
                 .build();
         try {
-            CombineOrderNotification decrypted = notificationParser.parse(requestParam, CombineOrderNotification.class);
+            CombineOrderNotification decrypted =
+                    partner.notificationParser().parse(requestParam, CombineOrderNotification.class);
             return toCombineParseResult(decrypted);
         } catch (RuntimeException ex) {
             log.warn("收付通合单支付回调验签或解密失败", ex);
@@ -686,7 +677,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             request.setNotifyUrl(properties.getEcommerce().getProfitSharingNotifyUrl());
         }
         try {
-            CreateOrderResponse response = ecommerceProfitSharingService.createOrder(request);
+            CreateOrderResponse response = partner.ecommerceProfitSharingService().createOrder(request);
             return toProfitSharingCreateResult(response);
         } catch (RuntimeException ex) {
             log.warn("收付通请求分账失败：outOrderNo={}", command.outOrderNo(), ex);
@@ -705,7 +696,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         request.setTransactionId(transactionId);
         request.setOutOrderNo(outOrderNo);
         try {
-            QueryOrderResponse resp = ecommerceProfitSharingService.queryOrder(request);
+            QueryOrderResponse resp = partner.ecommerceProfitSharingService().queryOrder(request);
             return new WechatProfitSharingQueryResult(
                     resp.getSubMchid(),
                     resp.getTransactionId(),
@@ -730,7 +721,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         request.setOutOrderNo(command.outOrderNo());
         request.setDescription(command.description());
         try {
-            FinishOrderResponse response = ecommerceProfitSharingService.finishOrder(request);
+            FinishOrderResponse response = partner.ecommerceProfitSharingService().finishOrder(request);
             return new WechatProfitSharingCreateResult(
                     response.getSubMchid(),
                     response.getTransactionId(),
@@ -761,7 +752,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         request.setAmount((long) command.amount());
         request.setDescription(command.description());
         try {
-            CreateReturnOrderResponse resp = ecommerceProfitSharingService.createReturnOrder(request);
+            CreateReturnOrderResponse resp = partner.ecommerceProfitSharingService().createReturnOrder(request);
             Integer amount = resp.getAmount() == null ? null : resp.getAmount().intValue();
             return new WechatProfitSharingReturnResult(
                     resp.getSubMchid(),
@@ -788,7 +779,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         request.setAccount(command.account());
         request.setRelationType(command.relationType());
         try {
-            ecommerceProfitSharingService.addReceiver(request);
+            partner.ecommerceProfitSharingService().addReceiver(request);
         } catch (RuntimeException ex) {
             log.warn("收付通添加分账接收方失败：account={}", command.account(), ex);
             throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "收付通添加分账接收方失败");
@@ -855,7 +846,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             body.setNotifyUrl(properties.getEcommerce().getApplymentNotifyUrl());
         }
         try {
-            HttpResponse<EcommerceApplymentResponse> response = postJson(ECOMMERCE_APPLYMENTS_URL, body,
+            HttpResponse<EcommerceApplymentResponse> response = postJson(partner, ECOMMERCE_APPLYMENTS_URL, body,
                     EcommerceApplymentResponse.class);
             return toApplymentResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
@@ -878,7 +869,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .headers(headers)
                 .build();
         try {
-            HttpResponse<EcommerceApplymentResponse> response = httpClient.execute(httpRequest,
+            HttpResponse<EcommerceApplymentResponse> response = partner.httpClient().execute(httpRequest,
                     EcommerceApplymentResponse.class);
             return toApplymentResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
@@ -903,7 +894,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         String meta = "{\"filename\":\"" + escapeJson(normalizedName) + "\",\"sha256\":\"" + sha256 + "\"}";
         try {
             FileUploadResponse response =
-                    fileUploadService.uploadImage(MERCHANT_MEDIA_UPLOAD_URL, meta, normalizedName, content);
+                    partner.fileUploadService().uploadImage(MERCHANT_MEDIA_UPLOAD_URL, meta, normalizedName, content);
             if (response == null || !StringUtils.hasText(response.getMediaId())) {
                 throw new BusinessException(ResultCode.PAY_MEDIA_UPLOAD_FAILED, "微信媒体上传未返回 media_id");
             }
@@ -975,7 +966,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         amount.setCurrency("CNY");
         request.setAmount(amount);
         try {
-            Refund4Create resp = ecommerceRefundService.createRefund(request);
+            Refund4Create resp = partner.ecommerceRefundService().createRefund(request);
             Integer refund = null;
             if (resp.getAmount() != null && resp.getAmount().getRefund() != null) {
                 refund = resp.getAmount().getRefund().intValue();
@@ -1050,7 +1041,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         }
         try {
             HttpResponse<PayScoreServiceOrderResponse> response =
-                    postJson(PAY_SCORE_SERVICE_ORDER_URL, body, PayScoreServiceOrderResponse.class);
+                    postJson(ordinary, PAY_SCORE_SERVICE_ORDER_URL, body, PayScoreServiceOrderResponse.class);
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分创建服务订单失败：outOrderNo={}", cmd.outOrderNo(), ex);
@@ -1080,7 +1071,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .build();
         try {
             HttpResponse<PayScoreServiceOrderResponse> response =
-                    httpClient.execute(httpRequest, PayScoreServiceOrderResponse.class);
+                    ordinary.httpClient().execute(httpRequest, PayScoreServiceOrderResponse.class);
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分查询服务订单失败：outOrderNo={}", outOrderNo, ex);
@@ -1101,7 +1092,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 PAY_SCORE_SERVICE_ORDER_CANCEL_URL_TEMPLATE, UrlEncoder.urlEncode(cmd.outOrderNo()));
         try {
             HttpResponse<PayScoreServiceOrderResponse> response =
-                    postJson(url, body, PayScoreServiceOrderResponse.class);
+                    postJson(ordinary, url, body, PayScoreServiceOrderResponse.class);
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分取消服务订单失败：outOrderNo={}", cmd.outOrderNo(), ex);
@@ -1133,7 +1124,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 PAY_SCORE_SERVICE_ORDER_COMPLETE_URL_TEMPLATE, UrlEncoder.urlEncode(cmd.outOrderNo()));
         try {
             HttpResponse<PayScoreServiceOrderResponse> response =
-                    postJson(url, body, PayScoreServiceOrderResponse.class);
+                    postJson(ordinary, url, body, PayScoreServiceOrderResponse.class);
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分完结服务订单失败：outOrderNo={}", cmd.outOrderNo(), ex);
@@ -1155,7 +1146,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         }
         try {
             HttpResponse<PayScorePermissionResponse> response =
-                    postJson(PAY_SCORE_PERMISSIONS_URL, body, PayScorePermissionResponse.class);
+                    postJson(ordinary, PAY_SCORE_PERMISSIONS_URL, body, PayScorePermissionResponse.class);
             return requirePayScorePermissionResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分创建授权失败：serviceId={}", cmd.serviceId(), ex);
@@ -1183,7 +1174,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .build();
         try {
             HttpResponse<PayScorePermissionResponse> response =
-                    httpClient.execute(httpRequest, PayScorePermissionResponse.class);
+                    ordinary.httpClient().execute(httpRequest, PayScorePermissionResponse.class);
             return requirePayScorePermissionResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分查询授权失败：openid={}", openid, ex);
@@ -1204,7 +1195,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         String url =
                 String.format(PAY_SCORE_PERMISSION_TERMINATE_URL_TEMPLATE, UrlEncoder.urlEncode(openid));
         try {
-            postJson(url, body, PayScorePermissionResponse.class);
+            postJson(ordinary, url, body, PayScorePermissionResponse.class);
         } catch (RuntimeException ex) {
             log.warn("微信支付分解除授权失败：openid={}", openid, ex);
             throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分解除授权失败", ex);
@@ -1225,7 +1216,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 .build();
         try {
             WechatPayScoreNotification notification =
-                    notificationParser.parse(requestParam, WechatPayScoreNotification.class);
+                    ordinary.notificationParser().parse(requestParam, WechatPayScoreNotification.class);
             return new WechatPayScoreParseResult(
                     notification.getOutOrderNo(),
                     notification.getOrderId(),
@@ -1241,14 +1232,15 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         }
     }
 
-    private <T> HttpResponse<T> postJson(String url, Object body, Class<T> responseType) {
+    private <T> HttpResponse<T> postJson(
+            WechatPayMerchantClient client, String url, Object body, Class<T> responseType) {
         HttpRequest httpRequest = new HttpRequest.Builder()
                 .httpMethod(HttpMethod.POST)
                 .url(url)
                 .headers(jsonHeaders())
                 .body(new JsonRequestBody.Builder().body(GsonUtil.toJson(body)).build())
                 .build();
-        return httpClient.execute(httpRequest, responseType);
+        return client.httpClient().execute(httpRequest, responseType);
     }
 
     private static HttpHeaders jsonHeaders() {
@@ -1445,14 +1437,15 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 notification.getUserReceivedAccount());
     }
 
-    private WechatPayRequestPaymentParams signRequestPayment(String appId, String prepayId) {
+    private WechatPayRequestPaymentParams signRequestPayment(
+            WechatPayMerchantClient client, String appId, String prepayId) {
         String timeStamp = String.valueOf(Instant.now().getEpochSecond());
         String nonceStr = UUID.randomUUID().toString().replace("-", "");
         String packageValue = "prepay_id=" + prepayId;
         String message = appId + "\n" + timeStamp + "\n" + nonceStr + "\n" + packageValue + "\n";
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initSign(merchantPrivateKey);
+            signature.initSign(client.merchantPrivateKey());
             signature.update(message.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             String paySign = Base64.getEncoder().encodeToString(signature.sign());
             return new WechatPayRequestPaymentParams(timeStamp, nonceStr, packageValue, "RSA", paySign);
@@ -1461,38 +1454,5 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         } catch (Exception ex) {
             throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "生成支付签名失败");
         }
-    }
-
-    private static Config buildConfig(WechatPayPluginProperties properties) {
-        if (properties.usePublicKeyVerifier()) {
-            return new RSAPublicKeyConfig.Builder()
-                    .merchantId(properties.getMchId())
-                    .privateKeyFromPath(properties.getPrivateKeyPath())
-                    .merchantSerialNumber(properties.getMerchantSerialNo())
-                    .publicKeyFromPath(properties.getPublicKeyPath())
-                    .publicKeyId(properties.getPublicKeyId())
-                    .apiV3Key(properties.getApiV3Key())
-                    .build();
-        }
-        return new RSAAutoCertificateConfig.Builder()
-                .merchantId(properties.getMchId())
-                .privateKeyFromPath(properties.getPrivateKeyPath())
-                .merchantSerialNumber(properties.getMerchantSerialNo())
-                .apiV3Key(properties.getApiV3Key())
-                .build();
-    }
-
-    private static PrivateKey loadPrivateKey(String privateKeyPath) throws Exception {
-        if (!StringUtils.hasText(privateKeyPath)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "商户私钥路径未配置");
-        }
-        java.nio.file.Path path = java.nio.file.Path.of(privateKeyPath);
-        String pem = java.nio.file.Files.readString(path);
-        String normalized = pem.replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s", "");
-        byte[] keyBytes = Base64.getDecoder().decode(normalized);
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-        return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 }

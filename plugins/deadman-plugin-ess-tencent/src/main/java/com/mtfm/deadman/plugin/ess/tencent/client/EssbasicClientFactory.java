@@ -26,12 +26,31 @@ public class EssbasicClientFactory {
      * @return EssbasicClient
      */
     public EssbasicClient createApiClient() {
+        return createClient(properties.resolveChannelEndpoint());
+    }
+
+    /**
+     * 创建渠道版文件服务客户端（UploadFiles 专用）。
+     *
+     * @return EssbasicClient
+     */
+    public EssbasicClient createFileClient() {
+        return createClient(properties.getFileEndpoint());
+    }
+
+    /**
+     * 按指定 endpoint 构造渠道版客户端。
+     *
+     * @param endpoint 服务域名
+     * @return EssbasicClient
+     */
+    private EssbasicClient createClient(String endpoint) {
         properties.requireChannelConfig();
         Credential credential = new Credential(properties.getSecretId(), properties.getSecretKey());
         HttpProfile httpProfile = new HttpProfile();
         httpProfile.setConnTimeout(properties.getConnTimeoutSeconds());
         httpProfile.setReqMethod("POST");
-        httpProfile.setEndpoint(properties.resolveChannelEndpoint());
+        httpProfile.setEndpoint(endpoint);
 
         ClientProfile clientProfile = new ClientProfile();
         clientProfile.setSignMethod("TC3-HMAC-SHA256");

@@ -11,6 +11,9 @@ public final class EssBizTypes {
     /** 工程信息线上签约服务费订单 */
     public static final String SIGN_ORDER = "SIGN_ORDER";
 
+    /** 平台保险签约订单 */
+    public static final String INSURANCE_SIGN_ORDER = "INSURANCE_SIGN_ORDER";
+
     private EssBizTypes() {
     }
 }

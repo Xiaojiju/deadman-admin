@@ -10,7 +10,8 @@ package com.mtfm.deadman.plugin.ess.tencent.dto.channel;
  * @param organizationOpenId 企业 OpenId（企业签署方必填）
  * @param openId 个人 OpenId（个人签署方可选）
  * @param organizationName 企业名称（企业签署方可选）
- * @param approverSignTypes 签署类型数组；含 1 表示静默签（企业章）
+ * @param approverSignTypes 签署类型数组；含 1 表示静默签（已弃用，手动盖章传 null）
+ * @param signComponents 文件发起时的签署控件（企业章/个人签名）
  */
 public record EssChannelApproverCommand(
         String recipientId,
@@ -20,5 +21,6 @@ public record EssChannelApproverCommand(
         String organizationOpenId,
         String openId,
         String organizationName,
-        Long[] approverSignTypes) {
+        Long[] approverSignTypes,
+        java.util.List<com.mtfm.deadman.plugin.ess.tencent.dto.EssSignComponentCommand> signComponents) {
 }

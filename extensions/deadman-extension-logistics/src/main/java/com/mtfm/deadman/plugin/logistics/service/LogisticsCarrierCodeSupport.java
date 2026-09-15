@@ -7,6 +7,8 @@ import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.plugin.logistics.manager.LogisticsCarrierCodeRegistry;
 import com.mtfm.deadman.plugin.logistics.spi.carrier.LogisticsCarrierDetectResult;
+import com.mtfm.deadman.plugin.logistics.spi.carrier.LogisticsCarriers;
+import com.mtfm.deadman.plugin.logistics.vo.LogisticsCarrierOptionVO;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipCancelContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipOrderContext;
 import com.mtfm.deadman.plugin.logistics.spi.ship.LogisticsConsumerShipPriceContext;
@@ -29,6 +31,18 @@ import lombok.RequiredArgsConstructor;
 public class LogisticsCarrierCodeSupport {
 
     private final LogisticsCarrierCodeRegistry logisticsCarrierCodeRegistry;
+
+    /**
+     * 列出指定 Provider 已注册的快递公司选项。
+     *
+     * @param providerId Provider 标识
+     * @return 统一编码与展示名称列表
+     */
+    public List<LogisticsCarrierOptionVO> listCarrierOptions(String providerId) {
+        return logisticsCarrierCodeRegistry.listUnifiedCodes(providerId).stream()
+                .map(code -> new LogisticsCarrierOptionVO(code, LogisticsCarriers.displayName(code)))
+                .toList();
+    }
 
     /**
      * 将查单上下文中的统一编码转换为厂商编码。

@@ -13,6 +13,15 @@
     <name>deadman-app</name>
     <description>可组装启动模块</description>
 
+    <!--
+        打包环境由 Maven profile 决定（dev 默认激活；显式 -Pprod 时自动关闭 dev），默认跳过测试：
+        ./mvnw -pl deadman-app -am -Pdev package -DskipTests
+        ./mvnw -pl deadman-app -am -Pprod package -DskipTests
+    -->
+    <properties>
+        <packaging.env>dev</packaging.env>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.mtfm</groupId>
@@ -76,37 +85,18 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-extension-pay</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-pay-wechat</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-pay-mock</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
             <artifactId>deadman-support-client-file</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-im-tencent</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-support-client-im</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-support-admin-im</artifactId>
+            <artifactId>deadman-extension-logistics</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- scope=test：任意 profile 打包都会编译测试，但不进入可执行 jar -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -129,7 +119,30 @@
         </dependency>
     </dependencies>
 
+    <!-- ./mvnw -pl deadman-app -am -Pdev package -DskipTests -->
+    <!-- ./mvnw -pl deadman-app -am -Pprod package -DskipTests -->
+    <profiles>
+        <!-- 开发环境：包含 Mock 支付，便于本地联调 -->
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <packaging.env>dev</packaging.env>
+            </properties>
+        </profile>
+        <!-- 生产环境：不打包 pay-mock -->
+        <profile>
+            <id>prod</id>
+            <properties>
+                <packaging.env>prod</packaging.env>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
+        <finalName>${project.artifactId}-${project.version}-${packaging.env}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

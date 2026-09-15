@@ -99,6 +99,20 @@ public class MockPaymentProvider implements PaymentProvider {
 
     /**
      * {@inheritDoc}
+     */
+    @Override
+    public PaymentClientInvokeParams rebuildClientInvokeParams(String channelPrepayId) {
+        if (!StringUtils.hasText(channelPrepayId)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "缺少预支付单号，无法继续支付");
+        }
+        String timeStamp = String.valueOf(Instant.now().getEpochSecond());
+        String nonceStr = UUID.randomUUID().toString().replace("-", "");
+        return new PaymentClientInvokeParams(
+                timeStamp, nonceStr, "prepay_id=" + channelPrepayId.trim(), "MOCK", "mock_pay_sign");
+    }
+
+    /**
+     * {@inheritDoc}
      * <p>
      * 接受简化 JSON：{@code {"out_trade_no":"...","transaction_id":"...","status":"SUCCESS"}}
      */

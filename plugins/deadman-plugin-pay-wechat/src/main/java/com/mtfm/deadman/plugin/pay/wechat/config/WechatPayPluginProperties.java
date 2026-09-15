@@ -23,31 +23,45 @@ public class WechatPayPluginProperties {
     /** 是否使用 Mock 网关（仅显式开启时生效；生产务必为 false） */
     private boolean mockEnabled = false;
 
-    /** 微信支付商户号 */
+    /**
+     * 普通直连商户号（兼容旧配置；未填 {@link #ordinary} 时作为 ordinary 回退）。
+     */
     private String mchId;
 
     /**
-     * 服务商/平台商户号（收付通场景）；为空时回退 {@link #mchId}。
+     * 合作伙伴/平台商户号（兼容旧配置；未填 {@link #partner} 时用同一套密钥替换商户号）。
      */
     private String partnerMchid;
 
-    /** APIv3 密钥 */
+    /** APIv3 密钥（兼容旧配置，回退到 ordinary） */
     private String apiV3Key;
 
-    /** 商户 API 证书序列号 */
+    /** 商户 API 证书序列号（兼容旧配置，回退到 ordinary） */
     private String merchantSerialNo;
 
-    /** 商户 API 私钥 PEM 文件路径 */
+    /** 商户 API 私钥 PEM 文件路径（兼容旧配置，回退到 ordinary） */
     private String privateKeyPath;
 
     /**
-     * 微信支付公钥 PEM 文件路径（验签用，与 {@link #publicKeyId} 成对配置）。
+     * 微信支付公钥 PEM 文件路径（兼容旧配置，回退到 ordinary）。
      * 配置后走公钥模式 {@code RSAPublicKeyConfig}；均未配置时回退平台证书自动更新。
      */
     private String publicKeyPath;
 
-    /** 微信支付公钥 ID，形如 {@code PUB_KEY_ID_...} */
+    /** 微信支付公钥 ID（兼容旧配置，回退到 ordinary），形如 {@code PUB_KEY_ID_...} */
     private String publicKeyId;
+
+    /**
+     * 普通直连商户凭证。会员 JSAPI、直连退款、商家转账、支付分使用该账户。
+     * 未填字段回退顶层 {@code mch-id} / {@code api-v3-key} 等旧配置。
+     */
+    private WechatPayAccountProperties ordinary = new WechatPayAccountProperties();
+
+    /**
+     * 合作伙伴/受理机构凭证。备件收付通合单、电商退款、分账、进件使用该账户。
+     * 未配置时回退普通商户；仅配置了顶层 {@code partner-mchid} 时用 ordinary 密钥替换商户号。
+     */
+    private WechatPayAccountProperties partner = new WechatPayAccountProperties();
 
     /** 收付通相关扩展配置 */
     private Ecommerce ecommerce = new Ecommerce();
@@ -56,21 +70,64 @@ public class WechatPayPluginProperties {
     private Map<String, WechatPayProviderBindingProperties> providers = new LinkedHashMap<>();
 
     /**
-     * 获取平台/服务商商户号；未配置时回退普通商户号 {@link #mchId}。
+     * 解析普通直连商户号（会员 JSAPI）；未填嵌套 ordinary 时回退顶层 {@link #mchId}。
+     *
+     * @return 普通商户号
+     */
+    public String getMchId() {
+        return resolveOrdinaryAccount().getMchId();
+    }
+
+    /**
+     * 获取平台/服务商商户号；未配置时回退普通商户号。
      *
      * @return 平台商户号
      */
     public String getPartnerMchid() {
-        return StringUtils.hasText(partnerMchid) ? partnerMchid.trim() : mchId;
+        return resolvePartnerMchid();
     }
 
     /**
-     * 解析平台/服务商商户号（与 {@link #getPartnerMchid()} 同义）。
+     * 解析合作伙伴/平台商户号（备件收付通合单 {@code combine_mchid}）。
      *
      * @return 平台商户号
      */
     public String resolvePartnerMchid() {
-        return getPartnerMchid();
+        return resolvePartnerAccount().resolvePartnerMchid();
+    }
+
+    /**
+     * 解析普通直连商户凭证（会员支付）。
+     *
+     * @return ordinary 账户，空字段已用顶层旧配置回填
+     */
+    public WechatPayAccountProperties resolveOrdinaryAccount() {
+        WechatPayAccountProperties resolved =
+                ordinary == null ? new WechatPayAccountProperties() : ordinary.copy();
+        resolved.fillBlanksFrom(rootAsAccount());
+        return resolved;
+    }
+
+    /**
+     * 解析合作伙伴凭证（备件收付通）。
+     * <p>
+     * 已显式配置 {@link #partner} 时不借用 ordinary 密钥；未配置时回退 ordinary，
+     * 若仅配置了顶层 {@link #partnerMchid} 则用 ordinary 密钥替换商户号。
+     *
+     * @return partner 账户
+     */
+    public WechatPayAccountProperties resolvePartnerAccount() {
+        WechatPayAccountProperties resolved =
+                partner == null ? new WechatPayAccountProperties() : partner.copy();
+        if (resolved.hasAnyCredential()) {
+            return resolved;
+        }
+        WechatPayAccountProperties fallback = resolveOrdinaryAccount().copy();
+        if (StringUtils.hasText(this.partnerMchid)) {
+            fallback.setMchId(this.partnerMchid.trim());
+            fallback.setPartnerMchid(this.partnerMchid.trim());
+        }
+        return fallback;
     }
 
     /**
@@ -90,29 +147,40 @@ public class WechatPayPluginProperties {
      * @throws IllegalStateException 凭证缺失
      */
     public void requireRealGatewayCredentials() {
-        if (!StringUtils.hasText(mchId)
-                || !StringUtils.hasText(apiV3Key)
-                || !StringUtils.hasText(merchantSerialNo)
-                || !StringUtils.hasText(privateKeyPath)) {
+        try {
+            resolveOrdinaryAccount().requireComplete("ordinary");
+            resolvePartnerAccount().requireComplete("partner");
+        } catch (IllegalStateException ex) {
             throw new IllegalStateException(
-                    "微信支付真实网关缺少 mchId/apiV3Key/merchantSerialNo/privateKeyPath，"
-                            + "请补齐凭证或显式开启 deadman.plugin.pay-wechat.mock-enabled=true");
-        }
-        boolean hasPublicKeyPath = StringUtils.hasText(publicKeyPath);
-        boolean hasPublicKeyId = StringUtils.hasText(publicKeyId);
-        if (hasPublicKeyPath != hasPublicKeyId) {
-            throw new IllegalStateException(
-                    "微信支付公钥模式需同时配置 publicKeyPath 与 publicKeyId");
+                    ex.getMessage() + "，请补齐凭证或显式开启 deadman.plugin.pay-wechat.mock-enabled=true",
+                    ex);
         }
     }
 
     /**
-     * 是否使用微信支付公钥验签（相对平台证书自动更新）。
+     * 普通商户是否使用微信支付公钥验签（相对平台证书自动更新）。
      *
      * @return 公钥路径与公钥 ID 均已配置则为 true
      */
     public boolean usePublicKeyVerifier() {
-        return StringUtils.hasText(publicKeyPath) && StringUtils.hasText(publicKeyId);
+        return resolveOrdinaryAccount().usePublicKeyVerifier();
+    }
+
+    /**
+     * 将顶层旧配置映射为一套账户凭证（仅内部回退使用）。
+     *
+     * @return 顶层字段组成的账户
+     */
+    private WechatPayAccountProperties rootAsAccount() {
+        WechatPayAccountProperties root = new WechatPayAccountProperties();
+        root.setMchId(this.mchId);
+        root.setPartnerMchid(this.partnerMchid);
+        root.setApiV3Key(this.apiV3Key);
+        root.setMerchantSerialNo(this.merchantSerialNo);
+        root.setPrivateKeyPath(this.privateKeyPath);
+        root.setPublicKeyPath(this.publicKeyPath);
+        root.setPublicKeyId(this.publicKeyId);
+        return root;
     }
 
     /**

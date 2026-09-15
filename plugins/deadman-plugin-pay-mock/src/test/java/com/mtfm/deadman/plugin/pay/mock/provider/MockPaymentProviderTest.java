@@ -68,6 +68,17 @@ class MockPaymentProviderTest {
     }
 
     @Test
+    void shouldRebuildClientInvokeParamsFromPrepayId() {
+        var params = provider.rebuildClientInvokeParams("mock_prepay_existing");
+
+        assertThat(params.packageValue()).isEqualTo("prepay_id=mock_prepay_existing");
+        assertThat(params.signType()).isEqualTo("MOCK");
+        assertThat(params.paySign()).isEqualTo("mock_pay_sign");
+        assertThat(params.timeStamp()).isNotBlank();
+        assertThat(params.nonceStr()).isNotBlank();
+    }
+
+    @Test
     void shouldQueryOrderAsSuccess() {
         PaymentQueryResult result = provider.queryOrder("PO20260723120000123456");
 

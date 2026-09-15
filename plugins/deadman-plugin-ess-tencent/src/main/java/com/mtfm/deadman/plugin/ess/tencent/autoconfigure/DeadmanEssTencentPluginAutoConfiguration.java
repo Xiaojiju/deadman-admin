@@ -63,7 +63,8 @@ public class DeadmanEssTencentPluginAutoConfiguration {
      * @return 渠道版 API 网关
      */
     @Bean
-    TencentEssbasicApiGateway tencentEssbasicApiGateway(EssbasicClientFactory essbasicClientFactory) {
-        return new TencentEssbasicApiGatewayImpl(essbasicClientFactory);
+    TencentEssbasicApiGateway tencentEssbasicApiGateway(
+            EssbasicClientFactory essbasicClientFactory, EssTencentPluginProperties properties) {
+        return new TencentEssbasicApiGatewayImpl(essbasicClientFactory, properties);
     }
 }
