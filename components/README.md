@@ -9,6 +9,7 @@
 | 模块 | 配置前缀 | API 前缀 | 说明 | OpenAPI |
 |------|----------|----------|------|---------|
 | [deadman-component-client](#deadman-component-client) | `deadman.component.client` | `/client/api` | 用户端独立 JWT、注册登录、管理端操作用户 | [doc/deadman-component-client/](../doc/deadman-component-client/) |
+| deadman-component-wgb | `deadman.component.wgb` | `/client/api/wgb`、`/api/wgb` | 用户资料、换绑手机号、实名与企业认证接入。登录验证码在短信插件与 `deadman-support-client-sms` | [doc/deadman-component-wgb/](../doc/deadman-component-wgb/) |
 | deadman-component-open-auth | `deadman.component.open-auth` | `/api/open-apps`、`/open-api/oauth` | 开放应用管理与 OAuth Token 兑换 | [doc/deadman-component-open-auth/](../doc/deadman-component-open-auth/) |
 
 ## 插拔方式

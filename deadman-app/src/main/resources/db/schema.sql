@@ -170,6 +170,10 @@ CREATE TABLE IF NOT EXISTS sys_user_position (
 
 -- 用户端组件表结构见 deadman-component-client：
 -- components/deadman-component-client/src/main/resources/db/client/schema.sql
+-- 实名认证插件表结构见：
+-- plugins/deadman-plugin-identity/src/main/resources/db/identity/schema.sql
+-- WGB 用户扩展资料见：
+-- components/deadman-component-wgb/src/main/resources/db/wgb/schema.sql
 
 -- WebSocket 插件：消息持久化
 CREATE TABLE IF NOT EXISTS plugin_ws_message (

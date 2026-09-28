@@ -15,6 +15,9 @@
 | [deadman-plugin-logistics-kuaidi100](#deadman-plugin-logistics-kuaidi100) | `deadman.plugin.logistics-kuaidi100` | 快递100 实时查单 Provider（依赖 extension-logistics） | — |
 | [deadman-plugin-im-tencent](#deadman-plugin-im-tencent) | `deadman.plugin.im-tencent` | 腾讯云 IM：UserSig 签发、账号同步与用户域桥接 SPI | [ImClientAdminIntegration.md](../doc/deadman-plugin-im-tencent/ImClientAdminIntegration.md) |
 | [deadman-plugin-data-scope](#deadman-plugin-data-scope) | `deadman.plugin.data-scope` | 数据权限：`@DataScope` + `@DataColumn` + MyBatis-Plus SQL 拼接 | [UserDataScopeAdminController.yaml](../doc/deadman-plugin-data-scope/UserDataScopeAdminController.yaml) |
+| deadman-plugin-identity | `deadman.plugin.identity` | 可复用实名/企业认证：活体检测、人脸比对与认证记录。文案在插件内 `i18n/deadman-plugin-identity/` | 由 `deadman-component-wgb` 暴露 HTTP |
+| deadman-plugin-sms | `deadman.plugin.sms` | 可复用短信验证码：生成、限流、校验与可替换发送通道。文案在 `i18n/deadman-plugin-sms/` | 无 HTTP，由业务或 support 调用 |
+| deadman-plugin-sms-login | `deadman.plugin.sms-login` | 可复用验证码登录：按 `login-bindings` 注册 LoginProvider，用户开通由 `SmsLoginUserLoader` 桥接。文案在 `i18n/deadman-plugin-sms-login/` | `POST {组认证前缀}/login/sms`，用户端为 `/client/api/auth/login/sms` |
 
 能力延伸模块见 [extensions/](../extensions/README.md)（支付 `deadman-extension-pay`、文件 `deadman-extension-file`、物流 `deadman-extension-logistics`）。
 

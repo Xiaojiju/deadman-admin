@@ -77,6 +77,8 @@ deadman:
         user-code-prefix: ${DEADMAN_CLIENT_USER_CODE_PREFIX:CL}
       cache:
         user-profile-ttl: ${DEADMAN_CLIENT_CACHE_USER_PROFILE_TTL:30m}
+    wgb:
+      enabled: ${DEADMAN_COMPONENT_WGB_ENABLED:true}
   plugin:
     websocket:
       enabled: ${DEADMAN_PLUGIN_WEBSOCKET_ENABLED:true}
@@ -97,6 +99,29 @@ deadman:
       base-path: ${DEADMAN_PLUGIN_STORAGE_LOCAL_BASE_PATH:/data/deadman}
     data-scope:
       enabled: ${DEADMAN_PLUGIN_DATA_SCOPE_ENABLED:true}
+    sms:
+      enabled: ${DEADMAN_PLUGIN_SMS_ENABLED:true}
+      code-ttl: ${DEADMAN_PLUGIN_SMS_CODE_TTL:5m}
+      resend-interval: ${DEADMAN_PLUGIN_SMS_RESEND_INTERVAL:60s}
+      code-length: ${DEADMAN_PLUGIN_SMS_CODE_LENGTH:6}
+      log-code: ${DEADMAN_PLUGIN_SMS_LOG_CODE:true}
+    sms-login:
+      enabled: ${DEADMAN_PLUGIN_SMS_LOGIN_ENABLED:true}
+      login-bindings:
+        - group-id: client
+          login-path-segment: sms
+    identity:
+      enabled: ${DEADMAN_PLUGIN_IDENTITY_ENABLED:true}
+      real-name-enabled: ${DEADMAN_PLUGIN_IDENTITY_REAL_NAME_ENABLED:true}
+      enterprise-enabled: ${DEADMAN_PLUGIN_IDENTITY_ENTERPRISE_ENABLED:true}
+      required-on-register: ${DEADMAN_PLUGIN_IDENTITY_REQUIRED_ON_REGISTER:false}
+      match-score-threshold: ${DEADMAN_PLUGIN_IDENTITY_MATCH_SCORE:70}
+      liveness-score-threshold: ${DEADMAN_PLUGIN_IDENTITY_LIVENESS_SCORE:40}
+      tencent:
+        secret-id: ${TENCENT_IAI_SECRET_ID:}
+        secret-key: ${TENCENT_IAI_SECRET_KEY:}
+        region: ${TENCENT_IAI_REGION:ap-guangzhou}
+        face-model-version: ${TENCENT_IAI_FACE_MODEL_VERSION:3.0}
     # 本地联调默认密钥（Base64 编码的 32 字节）；生产务必用环境变量覆盖
     crypto:
       enabled: ${DEADMAN_PLUGIN_CRYPTO_ENABLED:true}

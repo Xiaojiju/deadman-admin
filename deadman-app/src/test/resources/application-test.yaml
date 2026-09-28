@@ -14,6 +14,8 @@ spring:
       schema-locations:
         - classpath:db/schema-h2.sql
         - classpath:db/client/schema-h2.sql
+        - classpath:db/identity/schema-h2.sql
+        - classpath:db/wgb/schema-h2.sql
         - classpath:db/open-auth/schema-h2.sql
         - classpath:db/engineering/schema-h2.sql
         - classpath:db/file/schema-h2.sql

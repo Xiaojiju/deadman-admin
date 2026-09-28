@@ -27,6 +27,7 @@
 | deadman-support-wechat | [AdminWechatWebAuth-Frontend.md](deadman-support-wechat/AdminWechatWebAuth-Frontend.md) | 管理端微信网页扫码 OAuth（前端对接） |
 | deadman-component-client | [ClientUserController.yaml](deadman-component-client/ClientUserController.yaml) | 用户端当前用户资料 |
 | deadman-component-client | [ClientUserAdminController.yaml](deadman-component-client/ClientUserAdminController.yaml) | 管理端操作用户端用户 |
+| deadman-component-wgb | [WgbClientController.yaml](deadman-component-wgb/WgbClientController.yaml) | 资料、换绑手机号与实名/企业认证；登录验证码见短信插件桥接 |
 | deadman-component-open-auth | [OpenAuthController.yaml](deadman-component-open-auth/OpenAuthController.yaml) | 开放应用管理与 OAuth Token 兑换 |
 | deadman-component-open-auth | [OpenAuth.md](deadman-component-open-auth/OpenAuth.md) | 开放授权对接指南（第三方/Python） |
 | deadman-support-client-open-auth | [ClientOpenAuthController.yaml](deadman-support-client-open-auth/ClientOpenAuthController.yaml) | 用户端申请 auth_code |
