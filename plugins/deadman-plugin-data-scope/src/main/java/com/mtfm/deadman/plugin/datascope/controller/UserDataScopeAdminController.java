@@ -1,12 +1,7 @@
 package com.mtfm.deadman.plugin.datascope.controller;
 
-import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.common.spi.DataScopeUserBridge;
-import com.mtfm.deadman.plugin.datascope.dto.AssignUserDataScopeRequest;
-import com.mtfm.deadman.plugin.datascope.model.DataScopeProfile;
-import com.mtfm.deadman.plugin.datascope.service.UserDataScopeProfileService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +10,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.mtfm.deadman.common.result.Result;
+import com.mtfm.deadman.common.spi.DataScopeUserBridge;
+import com.mtfm.deadman.plugin.datascope.dto.AssignUserDataScopeRequest;
+import com.mtfm.deadman.plugin.datascope.model.DataScopeProfile;
+import com.mtfm.deadman.plugin.datascope.service.UserDataScopeProfileService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 用户数据权限独立管理接口（与角色解耦）。

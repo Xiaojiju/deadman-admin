@@ -101,6 +101,23 @@ public class WechatPayAccountProperties {
     }
 
     /**
+     * 仅填补空的微信支付公钥路径与 ID（进件 Wechatpay-Serial 必须与加密公钥成对）。
+     *
+     * @param fallback 回退凭证
+     */
+    public void fillPublicKeyBlanksFrom(WechatPayAccountProperties fallback) {
+        if (fallback == null) {
+            return;
+        }
+        if (!StringUtils.hasText(publicKeyPath)) {
+            publicKeyPath = fallback.getPublicKeyPath();
+        }
+        if (!StringUtils.hasText(publicKeyId)) {
+            publicKeyId = fallback.getPublicKeyId();
+        }
+    }
+
+    /**
      * 用另一套凭证填补当前空字段（用于顶层旧配置回退到 ordinary）。
      *
      * @param fallback 回退凭证
@@ -124,12 +141,7 @@ public class WechatPayAccountProperties {
         if (!StringUtils.hasText(privateKeyPath)) {
             privateKeyPath = fallback.getPrivateKeyPath();
         }
-        if (!StringUtils.hasText(publicKeyPath)) {
-            publicKeyPath = fallback.getPublicKeyPath();
-        }
-        if (!StringUtils.hasText(publicKeyId)) {
-            publicKeyId = fallback.getPublicKeyId();
-        }
+        fillPublicKeyBlanksFrom(fallback);
     }
 
     /**

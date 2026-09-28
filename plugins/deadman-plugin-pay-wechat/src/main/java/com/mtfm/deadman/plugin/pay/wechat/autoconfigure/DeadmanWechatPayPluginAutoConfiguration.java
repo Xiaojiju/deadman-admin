@@ -18,12 +18,7 @@ import com.mtfm.deadman.plugin.pay.wechat.config.WechatPayPluginProperties;
 @AutoConfiguration
 @EnableConfigurationProperties(WechatPayPluginProperties.class)
 @ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat", name = "enabled", havingValue = "true")
-@ComponentScan(
-        basePackages = "com.mtfm.deadman.plugin.pay.wechat",
-        excludeFilters =
-                @ComponentScan.Filter(
-                        type = FilterType.REGEX,
-                        pattern = "com\\.mtfm\\.deadman\\.plugin\\.pay\\.wechat\\.autoconfigure\\..*"))
+@ComponentScan(basePackages = "com.mtfm.deadman.plugin.pay.wechat", excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.mtfm\\.deadman\\.plugin\\.pay\\.wechat\\.autoconfigure\\..*"))
 public class DeadmanWechatPayPluginAutoConfiguration {
 
     /**

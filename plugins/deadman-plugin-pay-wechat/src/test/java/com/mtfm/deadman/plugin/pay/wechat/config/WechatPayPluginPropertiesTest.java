@@ -82,6 +82,24 @@ class WechatPayPluginPropertiesTest {
     }
 
     @Test
+    void resolvePartnerShouldFillPublicKeyFromRootWithoutBorrowingOrdinaryKey() {
+        WechatPayPluginProperties properties = completeCredentials();
+        properties.setPublicKeyPath("/tmp/partner-root-pub.pem");
+        properties.setPublicKeyId("PUB_KEY_ID_011750034567");
+        properties.setOrdinary(account("ordinary-mch", "/tmp/ordinary.pem"));
+        properties.getOrdinary().setPublicKeyPath("/tmp/ordinary-pub.pem");
+        properties.getOrdinary().setPublicKeyId("PUB_KEY_ID_011747659468");
+        WechatPayAccountProperties nested = account("partner-mch", "/tmp/partner.pem");
+        properties.setPartner(nested);
+
+        WechatPayAccountProperties partner = properties.resolvePartnerAccount();
+        assertThat(partner.getMchId()).isEqualTo("partner-mch");
+        assertThat(partner.getPublicKeyPath()).isEqualTo("/tmp/partner-root-pub.pem");
+        assertThat(partner.getPublicKeyId()).isEqualTo("PUB_KEY_ID_011750034567");
+        assertThat(properties.resolveOrdinaryAccount().getPublicKeyId()).isEqualTo("PUB_KEY_ID_011747659468");
+    }
+
+    @Test
     void requireShouldFailWhenPartnerPartial() {
         WechatPayPluginProperties properties = completeCredentials();
         WechatPayAccountProperties partner = new WechatPayAccountProperties();

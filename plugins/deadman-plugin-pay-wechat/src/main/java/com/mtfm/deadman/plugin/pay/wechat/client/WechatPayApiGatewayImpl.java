@@ -75,6 +75,7 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatRefundParseResult;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferBillNotification;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferParseResult;
+import com.wechat.pay.java.core.cipher.PrivacyEncryptor;
 import com.wechat.pay.java.core.http.HttpHeaders;
 import com.wechat.pay.java.core.http.HttpMethod;
 import com.wechat.pay.java.core.http.HttpRequest;
@@ -179,9 +180,10 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 ? this.ordinary
                 : WechatPayMerchantClient.create(partnerAccount);
         log.info(
-                "微信支付网关已初始化：ordinaryMchId={}, partnerMchId={}, sharedClient={}",
+                "微信支付网关已初始化：ordinaryMchId={}, partnerMchId={}, partnerPublicKeyId={}, sharedClient={}",
                 ordinaryAccount.getMchId(),
                 partnerAccount.getMchId(),
+                partnerAccount.getPublicKeyId(),
                 this.ordinary == this.partner);
     }
 
@@ -462,7 +464,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         body.setTransferAmount(command.transferAmount());
         body.setTransferRemark(command.transferRemark());
         if (StringUtils.hasText(command.userName())) {
-            body.setUserName(command.userName());
+            body.setUserName(encryptSensitive(ordinary.encryptor(), command.userName()));
         }
         if (StringUtils.hasText(command.notifyUrl())) {
             body.setNotifyUrl(command.notifyUrl());
@@ -791,6 +793,14 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
      */
     @Override
     public WechatEcommerceApplymentResult createEcommerceApplyment(WechatEcommerceApplymentCommand command) {
+        // 官方文档：敏感字段用微信支付公钥 RSA-OAEP 加密，请求头 Wechatpay-Serial 填同一公钥 ID
+        if (!partner.account().usePublicKeyVerifier()) {
+            throw new BusinessException(
+                    ResultCode.WECHAT_PAY_CONFIG_INVALID,
+                    "收付通进件需配置合作伙伴微信支付公钥 public-key-path 与 public-key-id（Wechatpay-Serial）");
+        }
+        PrivacyEncryptor encryptor = partner.encryptor();
+        String wechatpaySerial = encryptor.getWechatpaySerial();
         EcommerceApplymentRequest body = new EcommerceApplymentRequest();
         body.setOutRequestNo(command.outRequestNo());
         body.setOrganizationType(command.organizationType());
@@ -809,8 +819,8 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         EcommerceApplymentRequest.IdCardInfo idCardInfo = new EcommerceApplymentRequest.IdCardInfo();
         idCardInfo.setIdCardCopy(command.idCardCopy());
         idCardInfo.setIdCardNational(command.idCardNational());
-        idCardInfo.setIdCardName(command.idCardName());
-        idCardInfo.setIdCardNumber(command.idCardNumber());
+        idCardInfo.setIdCardName(encryptRequiredSensitive(encryptor, "id_card_name", command.idCardName()));
+        idCardInfo.setIdCardNumber(encryptRequiredSensitive(encryptor, "id_card_number", command.idCardNumber()));
         idCardInfo.setIdCardValidTimeBegin(command.idCardValidTimeBegin());
         idCardInfo.setIdCardValidTime(command.idCardValidTime());
         body.setIdCardInfo(idCardInfo);
@@ -818,16 +828,17 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         EcommerceApplymentRequest.AccountInfo accountInfo = new EcommerceApplymentRequest.AccountInfo();
         accountInfo.setBankAccountType(command.bankAccountType());
         accountInfo.setAccountBank(command.accountBank());
-        accountInfo.setAccountName(command.accountName());
-        accountInfo.setAccountNumber(command.accountNumber());
+        accountInfo.setAccountName(encryptRequiredSensitive(encryptor, "account_name", command.accountName()));
+        accountInfo.setAccountNumber(encryptRequiredSensitive(encryptor, "account_number", command.accountNumber()));
         body.setAccountInfo(accountInfo);
 
         EcommerceApplymentRequest.ContactInfo contactInfo = new EcommerceApplymentRequest.ContactInfo();
         contactInfo.setContactType(command.contactType());
-        contactInfo.setContactName(command.contactName());
-        contactInfo.setMobilePhone(command.mobilePhone());
+        contactInfo.setContactName(encryptRequiredSensitive(encryptor, "contact_name", command.contactName()));
+        contactInfo.setMobilePhone(encryptRequiredSensitive(encryptor, "mobile_phone", command.mobilePhone()));
         if (StringUtils.hasText(command.contactIdCardNumber())) {
-            contactInfo.setContactIdCardNumber(command.contactIdCardNumber());
+            contactInfo.setContactIdCardNumber(
+                    encryptRequiredSensitive(encryptor, "contact_id_card_number", command.contactIdCardNumber()));
         }
         body.setContactInfo(contactInfo);
 
@@ -845,12 +856,21 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                 && StringUtils.hasText(properties.getEcommerce().getApplymentNotifyUrl())) {
             body.setNotifyUrl(properties.getEcommerce().getApplymentNotifyUrl());
         }
+        log.info(
+                "收付通进件敏感字段已加密：outRequestNo={}, mchId={}, wechatpaySerial={}, idCardNameLen={}, accountNameLen={}, contactNameLen={}, mobileLen={}",
+                command.outRequestNo(),
+                partner.account().getMchId(),
+                wechatpaySerial,
+                cipherLen(idCardInfo.getIdCardName()),
+                cipherLen(accountInfo.getAccountName()),
+                cipherLen(contactInfo.getContactName()),
+                cipherLen(contactInfo.getMobilePhone()));
         try {
-            HttpResponse<EcommerceApplymentResponse> response = postJson(partner, ECOMMERCE_APPLYMENTS_URL, body,
-                    EcommerceApplymentResponse.class);
+            HttpResponse<EcommerceApplymentResponse> response = postJson(
+                    partner, ECOMMERCE_APPLYMENTS_URL, body, wechatpaySerial, EcommerceApplymentResponse.class);
             return toApplymentResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
-            log.warn("收付通进件申请失败：outRequestNo={}", command.outRequestNo(), ex);
+            log.warn("收付通进件申请失败：outRequestNo={}, wechatpaySerial={}", command.outRequestNo(), wechatpaySerial, ex);
             throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "收付通进件申请失败");
         }
     }
@@ -1234,10 +1254,34 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
 
     private <T> HttpResponse<T> postJson(
             WechatPayMerchantClient client, String url, Object body, Class<T> responseType) {
+        return postJson(client, url, body, null, responseType);
+    }
+
+    /**
+     * POST JSON；进件等敏感接口传入 {@code wechatpaySerial}，与加密所用微信支付公钥 ID 一致。
+     *
+     * @param client 商户运行时
+     * @param url 请求地址
+     * @param body 请求体
+     * @param wechatpaySerial 微信支付公钥 ID 或平台证书序列号；空则仅由 SDK 按验签器填写
+     * @param responseType 响应类型
+     * @param <T> 响应泛型
+     * @return HTTP 响应
+     */
+    private <T> HttpResponse<T> postJson(
+            WechatPayMerchantClient client,
+            String url,
+            Object body,
+            String wechatpaySerial,
+            Class<T> responseType) {
+        HttpHeaders headers = jsonHeaders();
+        if (StringUtils.hasText(wechatpaySerial)) {
+            headers.addHeader("Wechatpay-Serial", wechatpaySerial);
+        }
         HttpRequest httpRequest = new HttpRequest.Builder()
                 .httpMethod(HttpMethod.POST)
                 .url(url)
-                .headers(jsonHeaders())
+                .headers(headers)
                 .body(new JsonRequestBody.Builder().body(GsonUtil.toJson(body)).build())
                 .build();
         return client.httpClient().execute(httpRequest, responseType);
@@ -1248,6 +1292,60 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         headers.addHeader("Accept", MediaType.APPLICATION_JSON.getValue());
         headers.addHeader("Content-Type", MediaType.APPLICATION_JSON.getValue());
         return headers;
+    }
+
+    /**
+     * 使用微信支付公钥（RSA-OAEP）加密进件/转账等敏感字段。
+     *
+     * @param encryptor 账户对应加密器
+     * @param plaintext 明文；空则原样返回
+     * @return Base64 密文
+     */
+    private static String encryptSensitive(PrivacyEncryptor encryptor, String plaintext) {
+        if (!StringUtils.hasText(plaintext)) {
+            return plaintext;
+        }
+        return encryptor.encrypt(plaintext.trim());
+    }
+
+    /**
+     * 加密进件必填敏感字段；空值或密文过短说明未真正加密，微信会报「是否为加密后的密文」。
+     *
+     * @param encryptor 合作伙伴账户加密器
+     * @param fieldName 文档字段名
+     * @param plaintext 明文
+     * @return Base64 密文
+     */
+    private static String encryptRequiredSensitive(PrivacyEncryptor encryptor, String fieldName, String plaintext) {
+        if (!StringUtils.hasText(plaintext)) {
+            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "进件敏感字段「" + fieldName + "」不能为空");
+        }
+        String ciphertext = encryptor.encrypt(plaintext.trim());
+        if (!looksLikeOaepCiphertext(ciphertext)) {
+            throw new BusinessException(
+                    ResultCode.WECHAT_PAY_CONFIG_INVALID, "进件敏感字段「" + fieldName + "」加密结果不是合法密文");
+        }
+        return ciphertext;
+    }
+
+    /**
+     * RSA-2048 OAEP 密文 Base64 长度约 344；明显短于该值即仍是明文。
+     *
+     * @param value 待检查字符串
+     * @return 是否像 OAEP 密文
+     */
+    private static boolean looksLikeOaepCiphertext(String value) {
+        return StringUtils.hasText(value) && value.length() >= 256;
+    }
+
+    /**
+     * 密文字符串长度，供日志确认加密已生效（不打印密文本身）。
+     *
+     * @param value 密文
+     * @return 长度
+     */
+    private static int cipherLen(String value) {
+        return value == null ? 0 : value.length();
     }
 
     private static WechatProfitSharingCreateResult toProfitSharingCreateResult(CreateOrderResponse resp) {

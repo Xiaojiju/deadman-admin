@@ -4,6 +4,7 @@ package com.mtfm.deadman.plugin.pay.wechat.client.model;
  * 收付通二级商户进件请求体（对齐微信「提交申请单」实用子集）。
  * <p>
  * 字段命名配合 SDK {@code GsonUtil} 下划线策略：{@code outRequestNo} ↔ {@code out_request_no}。
+ * 身份证姓名/号码、开户名/账号、超管姓名/手机/证件号须在网关层用微信支付公钥加密后再赋值。
  *
  * @see <a href="https://pay.weixin.qq.com/doc/v3/partner/4012713017">提交申请单</a>
  */

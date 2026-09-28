@@ -111,8 +111,9 @@ public class WechatPayPluginProperties {
     /**
      * 解析合作伙伴凭证（备件收付通）。
      * <p>
-     * 已显式配置 {@link #partner} 时不借用 ordinary 密钥；未配置时回退 ordinary，
-     * 若仅配置了顶层 {@link #partnerMchid} 则用 ordinary 密钥替换商户号。
+     * 已显式配置 {@link #partner} 时不借用 ordinary 私钥；公钥若未填，仅用顶层旧配置
+     * {@code public-key-path}/{@code public-key-id} 补齐（两套商户号的公钥不能混用 ordinary）。
+     * 未配置 partner 时回退 ordinary；仅配置了顶层 {@link #partnerMchid} 时用 ordinary 密钥替换商户号。
      *
      * @return partner 账户
      */
@@ -120,6 +121,8 @@ public class WechatPayPluginProperties {
         WechatPayAccountProperties resolved =
                 partner == null ? new WechatPayAccountProperties() : partner.copy();
         if (resolved.hasAnyCredential()) {
+            // 嵌套 partner 已配置时不借用 ordinary 私钥；公钥未填才用顶层旧配置补齐
+            resolved.fillPublicKeyBlanksFrom(rootAsAccount());
             return resolved;
         }
         WechatPayAccountProperties fallback = resolveOrdinaryAccount().copy();

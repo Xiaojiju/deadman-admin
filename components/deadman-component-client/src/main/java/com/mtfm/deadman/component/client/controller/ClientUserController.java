@@ -1,5 +1,12 @@
 package com.mtfm.deadman.component.client.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.mtfm.deadman.common.auth.AuthRealm;
 import com.mtfm.deadman.common.auth.RequireAuth;
 import com.mtfm.deadman.common.result.Result;
@@ -7,14 +14,9 @@ import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 import com.mtfm.deadman.component.client.dto.UpdateClientUserProfileRequest;
 import com.mtfm.deadman.component.client.service.ClientUserService;
 import com.mtfm.deadman.component.client.vo.ClientUserProfileVO;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 用户端当前用户接口。

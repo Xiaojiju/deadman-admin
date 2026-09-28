@@ -13,6 +13,7 @@ import com.mtfm.deadman.plugin.pay.wechat.config.WechatPayAccountProperties;
 import com.wechat.pay.java.core.Config;
 import com.wechat.pay.java.core.RSAAutoCertificateConfig;
 import com.wechat.pay.java.core.RSAPublicKeyConfig;
+import com.wechat.pay.java.core.cipher.PrivacyEncryptor;
 import com.wechat.pay.java.core.http.DefaultHttpClientBuilder;
 import com.wechat.pay.java.core.http.HttpClient;
 import com.wechat.pay.java.core.notification.NotificationConfig;
@@ -46,6 +47,8 @@ final class WechatPayMerchantClient {
     private final EcommerceRefundService ecommerceRefundService;
     /** 进件媒体上传 */
     private final FileUploadService fileUploadService;
+    /** 微信支付公钥敏感字段加密器（进件/转账姓名等） */
+    private final PrivacyEncryptor encryptor;
 
     private WechatPayMerchantClient(
             WechatPayAccountProperties account,
@@ -56,7 +59,8 @@ final class WechatPayMerchantClient {
             RefundService refundService,
             EcommerceProfitSharingService ecommerceProfitSharingService,
             EcommerceRefundService ecommerceRefundService,
-            FileUploadService fileUploadService) {
+            FileUploadService fileUploadService,
+            PrivacyEncryptor encryptor) {
         this.account = account;
         this.httpClient = httpClient;
         this.notificationParser = notificationParser;
@@ -66,6 +70,7 @@ final class WechatPayMerchantClient {
         this.ecommerceProfitSharingService = ecommerceProfitSharingService;
         this.ecommerceRefundService = ecommerceRefundService;
         this.fileUploadService = fileUploadService;
+        this.encryptor = encryptor;
     }
 
     /**
@@ -94,7 +99,8 @@ final class WechatPayMerchantClient {
                 new RefundService.Builder().config(config).build(),
                 new EcommerceProfitSharingService.Builder().config(config).build(),
                 new EcommerceRefundService.Builder().config(config).build(),
-                new FileUploadService.Builder().httpClient(httpClient).build());
+                new FileUploadService.Builder().httpClient(httpClient).build(),
+                config.createEncryptor());
     }
 
     WechatPayAccountProperties account() {
@@ -131,6 +137,15 @@ final class WechatPayMerchantClient {
 
     FileUploadService fileUploadService() {
         return fileUploadService;
+    }
+
+    /**
+     * 微信支付公钥敏感字段加密器。
+     *
+     * @return 加密器
+     */
+    PrivacyEncryptor encryptor() {
+        return encryptor;
     }
 
     private static Config buildConfig(WechatPayAccountProperties account) {

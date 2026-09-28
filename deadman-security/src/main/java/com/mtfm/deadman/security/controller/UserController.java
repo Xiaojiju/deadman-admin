@@ -1,14 +1,5 @@
 package com.mtfm.deadman.security.controller;
 
-import com.mtfm.deadman.common.auth.AuthRealm;
-import com.mtfm.deadman.common.auth.RequireAuth;
-import com.mtfm.deadman.common.result.Result;
-import com.mtfm.deadman.security.LoginUser;
-import com.mtfm.deadman.system.dto.user.UpdateUserRequest;
-import com.mtfm.deadman.system.service.UserService;
-import com.mtfm.deadman.system.vo.user.UserProfileVO;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +7,17 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.mtfm.deadman.common.auth.AuthRealm;
+import com.mtfm.deadman.common.auth.RequireAuth;
+import com.mtfm.deadman.common.result.Result;
+import com.mtfm.deadman.security.LoginUser;
+import com.mtfm.deadman.system.dto.user.UpdateUserRequest;
+import com.mtfm.deadman.system.service.UserService;
+import com.mtfm.deadman.system.vo.user.UserProfileVO;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 当前登录用户资料接口。
