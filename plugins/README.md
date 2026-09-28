@@ -230,7 +230,7 @@ deadman:
   plugin:
     storage-local:
       enabled: true
-      base-path: ${FILE_STORAGE_PATH:./data/files}
+      base-path: ${DEADMAN_PLUGIN_STORAGE_LOCAL_BASE_PATH:./data/files}
       public-url-prefix: /files
 ```
 

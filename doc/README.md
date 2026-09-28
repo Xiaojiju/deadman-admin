@@ -37,10 +37,7 @@
 | deadman-extension-file | [FileController.yaml](deadman-plugin-file/FileController.yaml) | 文件上传、下载与元数据 |
 | deadman-plugin-data-scope | [UserDataScopeAdminController.yaml](deadman-plugin-data-scope/UserDataScopeAdminController.yaml) | 用户数据范围查询与分配 |
 | deadman-plugin-im-tencent | [ImClientAdminIntegration.md](deadman-plugin-im-tencent/ImClientAdminIntegration.md) | Client / Admin 腾讯云 IM 接入（凭证签发与用户映射） |
-| deadman-component-engineering | [Engineering.md](deadman-component-engineering/Engineering.md) | 工程信息组件 API 概览（含备件订单/支付） |
-| deadman-component-engineering | [ListingImages-Frontend.md](deadman-component-engineering/ListingImages-Frontend.md) | 信息发布图片上传与 imageIds（小程序前端对接） |
-| deadman-component-engineering | [client/](deadman-component-engineering/client/README.md) | 用户端 OpenAPI（按业务分类拆分） |
-| deadman-component-engineering | [admin/](deadman-component-engineering/admin/README.md) | 管理端 OpenAPI（按业务分类拆分） |
+| 全模块 | [i18n.md](i18n.md) | 请求头 `Accept-Language` 与模块文案注册 |
 
 公共片段：[\_shared/components.yaml](_shared/components.yaml)（管理端/用户端 JWT、`Result`、`PageParam` / `PageVO`、通用 401/403）。
 
@@ -52,5 +49,6 @@
 2. 管理端接口（`/api/**`，不含 `/client/api`）使用管理端 Token：`Authorization: Bearer {adminAccessToken}`（`POST /api/auth/login` 获取，`POST /api/auth/refresh` 刷新）。
 3. 用户端接口（`/client/api/**`）使用用户端 Token：`Authorization: Bearer {clientAccessToken}`（登录接口获取，`POST /client/api/auth/refresh` 刷新）。
 4. 公开接口：`POST /api/auth/register`、`POST /api/auth/login`、`GET /api/components`、用户端注册/登录路径、`POST /open-api/oauth/token`（凭 client_secret 鉴权，非 JWT）无需 Token；本地存储直链 `GET /files/**` 无需 Token（需启用 `deadman-plugin-storage-local`）。
+5. 响应文案语言：请求头 `Accept-Language`。取值与模块如何注册文案见 [i18n.md](i18n.md)。公共参数定义见 [\_shared/components.yaml](_shared/components.yaml) 的 `AcceptLanguage`。
 
 默认服务地址：`http://localhost:8080`（见各文件 `servers`）。

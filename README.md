@@ -7,8 +7,8 @@ Deadman Switch 管理后台（Spring Boot 4 + Java 21），Maven 多模块结构
 | 类别 | 选型 |
 |------|------|
 | 运行时 | Java 21（虚拟线程） |
-| 框架 | Spring Boot 4.0.6、Spring Security、JWT 无状态 |
-| 持久化 | MyBatis-Plus 3.5.x、MySQL 8+（测试 H2 MySQL 模式） |
+| 框架 | Spring Boot 4.1.1、Spring Security、JWT 无状态 |
+| 持久化 | MyBatis-Plus 3.5.16、MySQL 8+（测试 H2 MySQL 模式） |
 | 缓存 | Redis（Spring Cache） |
 | 序列化 | Jackson 3 |
 
@@ -18,25 +18,19 @@ Deadman Switch 管理后台（Spring Boot 4 + Java 21），Maven 多模块结构
 
 ```
 deadman-admin/                          # 父 POM（依赖版本管理）
-├── deadman-common/                     # 公共：Result、异常、常量、跨模块 SPI
+├── deadman-common/                     # 公共：Result、异常、国际化、跨模块 SPI
 ├── deadman-core/                       # 基础设施：Redis、MyBatis、Jackson、组件注册表
 ├── deadman-system/                     # 管理端用户与 RBAC 领域
 ├── deadman-notification/               # 站内信与 WebSocket 收件箱推送
-├── deadman-security/                   # 认证授权、JWT、权限注册 SPI
-├── extensions/                         # 能力延伸（见 extensions/README.md）
-│   ├── deadman-extension-pay/            # 支付 SPI 与 PayService
-│   └── deadman-extension-file/          # 文件 SPI 与 FileService
-├── plugins/                            # 可插拔插件（见 plugins/README.md）
-│   ├── deadman-plugin-websocket/       # WebSocket 消息通道
-│   ├── deadman-plugin-wechat/          # 微信小程序登录与手机号
-│   ├── deadman-plugin-excel/           # EasyExcel 导入导出工具包
-│   ├── deadman-plugin-storage-local/   # 本地磁盘存储 Provider
-│   ├── deadman-plugin-storage-oss/     # 阿里云 OSS 存储 Provider
-│   └── deadman-plugin-storage-cos/     # 腾讯云 COS 存储 Provider
-├── components/                         # 可插拔业务组件（见 components/README.md）
-│   └── deadman-component-client/       # 用户端（独立 JWT，/client/api）
+├── deadman-security/                   # 认证授权、JWT、登录 Provider
+├── extensions/                         # 能力契约与门面（见 extensions/README.md）
+├── plugins/                            # 渠道与工具实现（见 plugins/README.md）
+├── components/                         # 独立业务域（见 components/README.md）
+├── support/                            # 核心与插件/组件的桥接（见 support/README.md）
 └── deadman-app/                        # 默认组装与启动入口
 ```
+
+父 POM 当前纳入构建的旁路模块：支付、文件、加解密、物流、流程引擎；WebSocket、微信、Excel、数据权限、本地/OSS 存储、微信支付、Mock 支付、快递 100、腾讯云 IM；用户端、开放授权，以及对应的 support 桥接。`deadman-app` 只引入其中一部分，以 `deadman-app/pom.xml` 为准。
 
 ### 依赖方向
 
@@ -48,7 +42,7 @@ common ← core ← system ← security ← app
 
 | 模块 | 职责 |
 |------|------|
-| **common** | 统一响应、错误码、工具、跨模块 SPI（如 `UserAuthorityCache`） |
+| **common** | 统一响应、错误码、国际化文案、跨模块 SPI（如 `UserAuthorityCache`、`MessageBasenameContributor`） |
 | **core** | 可覆盖的基础设施 Bean、组件目录 `GET /api/components` |
 | **system** | 用户/部门/职位/RBAC 表与业务，不依赖 security |
 | **security** | 登录 Provider 统一管理、JWT、`PermissionContributor` / OAuth 注入 SPI 聚合 |
@@ -98,7 +92,7 @@ common ← core ← system ← security ← app
 | `DEADMAN_BOOTSTRAP_*` / `DEADMAN_SUPER_ADMIN_*` | 首次启动引导超级管理员 |
 | `DEADMAN_COMPONENT_CLIENT_*` | 用户端组件（独立 JWT、用户编码前缀） |
 | `DEADMAN_WECHAT_MINIPROGRAM_*` | 微信小程序 AppId / Secret |
-| `FILE_STORAGE_PATH` | 本地文件存储根目录（默认 `./data/files`） |
+| `DEADMAN_PLUGIN_STORAGE_LOCAL_BASE_PATH` | 本地文件存储根目录（示例配置未设置时为 `/data/deadman`；插件代码默认 `./data/files`） |
 | `DEADMAN_PLUGIN_FILE_MAX_SIZE` | 单文件上传上限（默认 `10MB`） |
 
 ## 本地启动
@@ -107,9 +101,6 @@ common ← core ← system ← security ← app
 # 1. 创建库并初始化主库表（用户、RBAC、站内信、WebSocket 消息等）
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS deadman_admin DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 mysql -u root -p deadman_admin < deadman-app/src/main/resources/db/schema.sql
-
-# 若从旧版（user_base.department_id 单部门模型）升级，额外执行迁移脚本：
-mysql -u root -p deadman_admin < deadman-app/src/main/resources/db/migration/20260616_user_department_refactor.sql
 
 # 2. 按需初始化组件/插件表
 mysql -u root -p deadman_admin < components/deadman-component-client/src/main/resources/db/client/schema.sql
@@ -121,14 +112,14 @@ cp deadman-app/src/main/resources/application-example.yaml deadman-app/src/main/
 # 4. 配置环境变量后启动
 export DEADMAN_JWT_SECRET="your-secret-at-least-32-characters-long"
 export DB_PASSWORD="your_db_password"
-./mvnw -pl deadman-app spring-boot:run
+./mvnw -pl deadman-app -am spring-boot:run
 ```
 
 打包与运行：
 
 ```bash
-./mvnw -pl deadman-app package
-java -jar deadman-app/target/deadman-app-1.0.0.jar
+./mvnw -pl deadman-app -am -Pdev package -DskipTests
+java -jar deadman-app/target/deadman-app-1.0.0-dev.jar
 ```
 
 测试（H2，无需 MySQL/Redis）：
@@ -165,13 +156,17 @@ OAuth 类登录（如微信小程序）通过 `OAuthLoginUserService` SPI 注入
 
 公开接口（无需管理端 Token）：`POST /api/auth/register`、`POST /api/auth/login`、`GET /api/components`，以及用户端注册/登录路径。
 
+### 国际化
+
+响应文案 `Result.msg` 跟随请求头 `Accept-Language`。支持简体中文、繁体中文、藏文、英文，缺省简体中文。各模块把文案放在 `src/main/resources/i18n/<模块名>/`。调用方式与模块注册见 [doc/i18n.md](doc/i18n.md)。
+
 ### OpenAPI 文档
 
 静态 OpenAPI 3.0 YAML 位于 **[doc/](doc/README.md)**，按 Controller 拆分，可导入 Apifox / Postman。涵盖管理端、站内信、用户端组件、微信插件、文件管理等接口。
 
 ## 权限体系（RBAC）
 
-- 各模块实现 `PermissionContributor`（`deadman-security`），启动时由 `PermissionRegistry` 聚合权限目录；接口使用 `@PreAuthorize("hasAuthority('权限码')")`。
+- 各模块实现 `PermissionContributor`（`deadman-common`），启动时由 security 的 `PermissionRegistry` 聚合权限目录；接口使用 `@PreAuthorize("hasAuthority('权限码')")`。
 - 无菜单表；角色绑定权限码字符串。
 - 系统内置角色（不可删除）：
   - `SUPER_ADMIN`：拥有全部权限（不依赖 `sys_role_permission` 逐条绑定）
@@ -197,16 +192,17 @@ OAuth 类登录（如微信小程序）通过 `OAuthLoginUserService` SPI 注入
 
 ## 插件与组件速览
 
-详细说明见 [plugins/README.md](plugins/README.md)、[components/README.md](components/README.md)。
+详细说明见 [extensions/README.md](extensions/README.md)、[plugins/README.md](plugins/README.md)、[components/README.md](components/README.md)、[support/README.md](support/README.md)。
 
 | 模块 | 能力摘要 |
 |------|----------|
 | **websocket** | 多通道 WebSocket、`MessageDispatcher` 持久化与重试，表 `plugin_ws_message` |
 | **wechat** | 小程序登录（`login-bindings` 多端）、`WechatPhoneBindingHandler` SPI；与 client 桥接后提供手机号绑定 |
 | **excel** | 注入 `DeadExcelService`：POJO/Record 导入导出、`DeadExcelColumns` 自定义列 |
-| **file** | 上传下载 API、`FileStorageProvider` SPI、元数据表 `plugin_file_metadata` |
-| **storage-local** | 默认 `local` Provider，磁盘存储 + `GET /files/**` 直链 |
-| **component-client** | 独立用户表与 JWT，路径 `/client/api`；`ClientLoginProvider` + OAuth/wechat 桥接 |
+| **file** | 上传下载 API、`FileStorageProvider` SPI、元数据表 `plugin_file_metadata`。代码默认 Provider 为 `local` |
+| **storage-local** | 本地磁盘存储，公开直链 `GET /files/**` |
+| **component-client** | 独立用户表与 JWT，路径 `/client/api` |
+| **open-auth** | 开放应用管理 `/api/open-apps`，令牌兑换 `/open-api/oauth` |
 
 存储扩展：实现 `FileStorageProvider` 并注册为 Spring Bean，配置 `deadman.plugin.file.default-provider` 即可切换。
 

@@ -130,4 +130,13 @@ public enum ResultCode {
 
     private final int code;
     private final String message;
+
+    /**
+     * 国际化文案键，对应各模块资源包中的 {@code result.<枚举名>}。
+     *
+     * @return 文案键
+     */
+    public String messageKey() {
+        return "result." + name();
+    }
 }

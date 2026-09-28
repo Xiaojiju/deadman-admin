@@ -8,7 +8,7 @@ alwaysApply: true
 ## 技术栈
 
 - Java 21（虚拟线程已在 `application.yaml` 启用）
-- Spring Boot 4.0.6
+- Spring Boot 4.1.1
 - Spring Security + JWT（无状态）
 - MyBatis-Plus 3.5.x
 - MySQL 8+（生产）；集成测试使用 H2 MySQL 兼容模式
@@ -98,6 +98,7 @@ common ← core ← system ← security ← app
 - 校验：`@Valid` + `@NotBlank` / `@NotNull` / `@Size`
 - 分页参数：`current`、`size`（若新增分页接口）
 - 敏感接口必须鉴权
+- 国际化：各模块把文案放在 `src/main/resources/i18n/<模块名>/`，文件为 `messages.properties`（默认回退，与简体中文一致）、`messages_zh_CN.properties`、`messages_zh_TW.properties`、`messages_bo.properties`、`messages_en.properties`。启动时按 classpath 自动注册；目录不在该约定下时实现 `MessageBasenameContributor`。语言由请求头 `Accept-Language` 决定（`zh-CN` / `zh-TW`·`zh-HK`·`zh-Hant` / `bo` / `en`），缺省简体中文。`ResultCode` 的文案键为 `result.<枚举名>`。自定义文案用 `MessageSourceHolder.resolve`。
 
 ## 注释规范（强制）
 

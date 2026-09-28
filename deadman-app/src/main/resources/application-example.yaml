@@ -89,7 +89,7 @@ deadman:
       enabled: ${DEADMAN_PLUGIN_EXCEL_ENABLED:true}
     file:
       enabled: ${DEADMAN_PLUGIN_FILE_ENABLED:true}
-      default-provider: cos
+      default-provider: local
       max-file-size: ${DEADMAN_PLUGIN_FILE_MAX_SIZE:10MB}
       biz-type-strict: ${DEADMAN_PLUGIN_FILE_BIZ_TYPE_STRICT:true}
     storage-local:

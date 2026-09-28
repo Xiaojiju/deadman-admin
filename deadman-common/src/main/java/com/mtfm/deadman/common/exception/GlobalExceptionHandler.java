@@ -1,5 +1,6 @@
 package com.mtfm.deadman.common.exception;
 
+import com.mtfm.deadman.common.i18n.MessageSourceHolder;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.common.result.ResultCode;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<Void> handleBusinessException(BusinessException ex) {
-        return Result.of(ex.getCode(), ex.getMessage());
+        return Result.of(ex.getCode(), ex.resolveMessage());
     }
 
     /** 参数校验失败（@Valid） */
@@ -77,7 +78,9 @@ public class GlobalExceptionHandler {
         log.warn("文件上传请求格式错误: {}", ex.getMessage());
         return Result.of(
                 ResultCode.BAD_REQUEST.getCode(),
-                "请使用 multipart/form-data 上传，并包含名为 file 的文件字段");
+                MessageSourceHolder.resolve(
+                        "common.upload.multipart_invalid",
+                        "请使用 multipart/form-data 上传，并包含名为 file 的文件字段"));
     }
 
     /**
@@ -86,7 +89,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMissingParameter(MissingServletRequestParameterException ex) {
-        return Result.of(ResultCode.BAD_REQUEST.getCode(), "缺少必填参数：" + ex.getParameterName());
+        return Result.of(
+                ResultCode.BAD_REQUEST.getCode(),
+                MessageSourceHolder.resolve(
+                        "common.param.missing", "缺少必填参数：" + ex.getParameterName(), ex.getParameterName()));
     }
 
     /**

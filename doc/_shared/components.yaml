@@ -62,6 +62,24 @@ components:
         type: integer
         format: int64
       description: 文件主键 ID（`plugin_file_metadata.id`）
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      schema:
+        type: string
+        enum:
+          - zh-CN
+          - zh-TW
+          - zh-HK
+          - zh-Hant
+          - bo
+          - en
+        default: zh-CN
+      description: >
+        响应文案语言。简体中文 zh-CN / zh-Hans，繁体中文 zh-TW / zh-HK / zh-MO / zh-Hant，
+        藏文 bo / bo-CN，英文 en / en-US。未传或无法识别时为简体中文。
+        只影响 Result.msg，不改变业务码 code。详见 doc/i18n.md。
 
   schemas:
     PageParam:
@@ -113,8 +131,8 @@ components:
           example: 0
         msg:
           type: string
-          description: 响应消息
-          example: success
+          description: 响应消息，随 Accept-Language 变化。简体中文成功时为「成功」
+          example: 成功
         timestamp:
           type: integer
           format: int64
