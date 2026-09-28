@@ -7,12 +7,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.List;
 
 /**
- * 注册多模块文案源与请求语言解析。各模块只需投放 {@code i18n/<模块名>/messages*.properties}。
+ * 注册多模块文案源，并尽早绑定请求语言。各模块只需投放 {@code i18n/<模块名>/messages*.properties}。
+ * <p>
+ * 语言解析器见 {@link com.mtfm.deadman.core.autoconfigure.DeadmanLocaleResolverAutoConfiguration}，
+ * 需先于 Spring Boot 的 WebMvc 自动配置注册。
  */
 @Configuration
 public class DeadmanI18nConfiguration {
@@ -26,16 +28,6 @@ public class DeadmanI18nConfiguration {
     @Bean
     public MessageSource messageSource(List<MessageBasenameContributor> contributors) {
         return DeadmanMessageSources.create(DeadmanMessageSources.collectBasenames(contributors));
-    }
-
-    /**
-     * 供 Spring MVC 在进入控制器前解析语言。
-     *
-     * @return 基于 Accept-Language 的语言解析器
-     */
-    @Bean
-    public LocaleResolver localeResolver() {
-        return new DeadmanLocaleResolver();
     }
 
     /**
