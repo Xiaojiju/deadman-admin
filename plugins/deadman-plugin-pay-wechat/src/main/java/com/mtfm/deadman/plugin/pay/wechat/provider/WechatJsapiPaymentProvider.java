@@ -33,10 +33,7 @@ import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
  * 微信小程序 JSAPI 支付 Provider 实现，仅负责微信渠道 API 与回调解析。
  */
 @Component
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class WechatJsapiPaymentProvider implements PaymentProvider {
 

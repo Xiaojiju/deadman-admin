@@ -23,39 +23,35 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi", name = "enabled", havingValue = "true")
 public class WechatJsapiTransferNotifyController {
 
-    private final TransferService transferService;
-    private final WechatPayPluginProperties wechatPayPluginProperties;
+        private final TransferService transferService;
+        private final WechatPayPluginProperties wechatPayPluginProperties;
 
-    /**
-     * 接收微信商家转账结果回调。
-     *
-     * @param body    回调请求体原文
-     * @param request HTTP 请求
-     * @return 微信要求的应答体
-     */
-    @PostMapping(
-            "${deadman.plugin.pay-wechat.providers.wechat-jsapi.transfer-notify-endpoint:/client/api/pay/wechat/jsapi/transfer/notify}")
-    public WechatPayNotifyAck notify(@RequestBody String body, HttpServletRequest request) {
-        WechatPayProviderBindingProperties binding =
-                wechatPayPluginProperties.providerBinding(WechatPayProviderIds.WECHAT_JSAPI);
-        try {
-            transferService.handleTransferNotify(
-                    WechatJsapiTransferProvider.PROVIDER_ID,
-                    WechatPayNotifyHttpUtils.toNotifyContext(body, request));
-            return WechatPayNotifyAck.success();
-        } catch (Exception ex) {
-            log.warn(
-                    "微信 JSAPI 商家转账回调处理失败：provider={}, endpoint={}",
-                    WechatJsapiTransferProvider.PROVIDER_ID,
-                    binding.getTransferNotifyEndpoint(),
-                    ex);
-            return WechatPayNotifyAck.failure();
+        /**
+         * 接收微信商家转账结果回调。
+         *
+         * @param body    回调请求体原文
+         * @param request HTTP 请求
+         * @return 微信要求的应答体
+         */
+        @PostMapping("${deadman.plugin.pay-wechat.providers.wechat-jsapi.transfer-notify-endpoint:/client/api/pay/wechat/jsapi/transfer/notify}")
+        public WechatPayNotifyAck notify(@RequestBody String body, HttpServletRequest request) {
+                WechatPayProviderBindingProperties binding = wechatPayPluginProperties
+                                .providerBinding(WechatPayProviderIds.WECHAT_JSAPI);
+                try {
+                        transferService.handleTransferNotify(
+                                        WechatJsapiTransferProvider.PROVIDER_ID,
+                                        WechatPayNotifyHttpUtils.toNotifyContext(body, request));
+                        return WechatPayNotifyAck.success();
+                } catch (Exception ex) {
+                        log.warn(
+                                        "微信 JSAPI 商家转账回调处理失败：provider={}, endpoint={}",
+                                        WechatJsapiTransferProvider.PROVIDER_ID,
+                                        binding.getTransferNotifyEndpoint(),
+                                        ex);
+                        return WechatPayNotifyAck.failure();
+                }
         }
-    }
 }

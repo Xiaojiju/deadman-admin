@@ -34,10 +34,7 @@ import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
  * 创建/查单/回调均走电商退款 API 与资源模型；须在 channelParams 或退款单上携带 {@code subMchid}。
  */
 @Component
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class WechatEcommerceRefundProvider implements EcommerceRefundProvider {
 
@@ -103,8 +100,8 @@ public class WechatEcommerceRefundProvider implements EcommerceRefundProvider {
         if (!StringUtils.hasText(subMchid)) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "收付通查退款缺少二级商户号 subMchid");
         }
-        WechatRefundParseResult parsed =
-                wechatPayApiGateway.queryEcommerceRefundByOutRefundNo(outRefundNo, subMchid.trim());
+        WechatRefundParseResult parsed = wechatPayApiGateway.queryEcommerceRefundByOutRefundNo(outRefundNo,
+                subMchid.trim());
         return toQueryResult(parsed);
     }
 

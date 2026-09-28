@@ -39,10 +39,7 @@ import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
  * 微信收付通合单 JSAPI 支付 Provider，负责合单预下单与合单回调/查单解析。
  */
 @Component
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class WechatEcommerceCombineJsapiPaymentProvider implements PaymentProvider {
 
@@ -84,8 +81,8 @@ public class WechatEcommerceCombineJsapiPaymentProvider implements PaymentProvid
         String openid = requireOpenid(context);
         WechatPayProviderBindingProperties binding = requireBinding();
         List<WechatEcommerceCombineSubOrderCommand> subOrders = toSubOrderCommands(context);
-        WechatEcommerceCombinePrepayResult prepayResult =
-                wechatPayApiGateway.createEcommerceCombineJsapiPrepay(new WechatEcommerceCombineJsapiPrepayCommand(
+        WechatEcommerceCombinePrepayResult prepayResult = wechatPayApiGateway
+                .createEcommerceCombineJsapiPrepay(new WechatEcommerceCombineJsapiPrepayCommand(
                         requireAppId(binding),
                         wechatPayPluginProperties.resolvePartnerMchid(),
                         outTradeNo,

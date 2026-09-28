@@ -140,7 +140,8 @@ public class MockTransferProvider implements TransferProvider {
                     "TRANSFERING",
                     "SUCCESS",
                     "FAIL",
-                    "CANCELLED" -> normalized;
+                    "CANCELLED" ->
+                normalized;
             case "TRANSFERRING" -> TransferBillStatus.TRANSFERING;
             case "FAILED" -> TransferBillStatus.FAIL;
             default -> throw new BusinessException(

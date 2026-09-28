@@ -25,10 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi", name = "enabled", havingValue = "true")
 public class WechatEcommerceRefundNotifyController {
 
     private final RefundService refundService;
@@ -41,12 +38,11 @@ public class WechatEcommerceRefundNotifyController {
      * @param request HTTP 请求
      * @return 微信要求的应答体
      */
-    @PostMapping(
-            "${deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi.refund-notify-endpoint:"
-                    + "/client/api/pay/wechat/ecommerce-combine-jsapi/refund/notify}")
+    @PostMapping("${deadman.plugin.pay-wechat.providers.wechat-ecommerce-combine-jsapi.refund-notify-endpoint:"
+            + "/client/api/pay/wechat/ecommerce-combine-jsapi/refund/notify}")
     public WechatPayNotifyAck notify(@RequestBody String body, HttpServletRequest request) {
-        WechatPayProviderBindingProperties binding =
-                wechatPayPluginProperties.providerBinding(WechatPayProviderIds.WECHAT_ECOMMERCE_COMBINE_JSAPI);
+        WechatPayProviderBindingProperties binding = wechatPayPluginProperties
+                .providerBinding(WechatPayProviderIds.WECHAT_ECOMMERCE_COMBINE_JSAPI);
         try {
             refundService.handleRefundNotify(
                     WechatEcommerceRefundProvider.PROVIDER_ID,

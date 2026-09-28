@@ -25,10 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi", name = "enabled", havingValue = "true")
 public class WechatJsapiPayNotifyController {
 
     private final PayService payService;
@@ -43,8 +40,8 @@ public class WechatJsapiPayNotifyController {
      */
     @PostMapping("${deadman.plugin.pay-wechat.providers.wechat-jsapi.notify-endpoint:/client/api/pay/wechat/jsapi/notify}")
     public WechatPayNotifyAck notify(@RequestBody String body, HttpServletRequest request) {
-        WechatPayProviderBindingProperties binding =
-                wechatPayPluginProperties.providerBinding(WechatPayProviderIds.WECHAT_JSAPI);
+        WechatPayProviderBindingProperties binding = wechatPayPluginProperties
+                .providerBinding(WechatPayProviderIds.WECHAT_JSAPI);
         try {
             payService.handleNotify(
                     WechatJsapiPaymentProvider.PROVIDER_ID,

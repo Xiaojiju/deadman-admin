@@ -28,10 +28,7 @@ import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
  * 微信小程序商家转账 Provider（与 JSAPI 支付共用商户与 AppId 绑定）。
  */
 @Component
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-jsapi", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class WechatJsapiTransferProvider implements TransferProvider {
 

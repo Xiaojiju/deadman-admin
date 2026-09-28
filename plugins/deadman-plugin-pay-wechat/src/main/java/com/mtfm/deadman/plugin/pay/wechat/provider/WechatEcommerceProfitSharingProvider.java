@@ -51,8 +51,8 @@ public class WechatEcommerceProfitSharingProvider implements ProfitSharingProvid
             receivers.add(new WechatProfitSharingReceiverCommand(
                     receiver.type(), receiver.account(), receiver.amountCents(), receiver.description()));
         }
-        WechatProfitSharingCreateResult result =
-                wechatPayApiGateway.createEcommerceProfitSharing(new WechatProfitSharingCreateCommand(
+        WechatProfitSharingCreateResult result = wechatPayApiGateway
+                .createEcommerceProfitSharing(new WechatProfitSharingCreateCommand(
                         request.subMchid(),
                         request.transactionId(),
                         request.outOrderNo(),
@@ -68,8 +68,8 @@ public class WechatEcommerceProfitSharingProvider implements ProfitSharingProvid
 
     @Override
     public ProfitSharingQueryResult query(String subMchid, String transactionId, String outOrderNo) {
-        WechatProfitSharingQueryResult result =
-                wechatPayApiGateway.queryEcommerceProfitSharing(subMchid, transactionId, outOrderNo);
+        WechatProfitSharingQueryResult result = wechatPayApiGateway.queryEcommerceProfitSharing(subMchid, transactionId,
+                outOrderNo);
         return new ProfitSharingQueryResult(
                 result.subMchid(),
                 result.transactionId(),
@@ -81,8 +81,8 @@ public class WechatEcommerceProfitSharingProvider implements ProfitSharingProvid
 
     @Override
     public ProfitSharingQueryResult finish(ProfitSharingFinishRequest request) {
-        WechatProfitSharingCreateResult result =
-                wechatPayApiGateway.finishEcommerceProfitSharing(new WechatProfitSharingFinishCommand(
+        WechatProfitSharingCreateResult result = wechatPayApiGateway
+                .finishEcommerceProfitSharing(new WechatProfitSharingFinishCommand(
                         request.subMchid(), request.transactionId(), request.outOrderNo(), request.description()));
         return new ProfitSharingQueryResult(
                 result.subMchid(),
@@ -95,8 +95,8 @@ public class WechatEcommerceProfitSharingProvider implements ProfitSharingProvid
 
     @Override
     public ProfitSharingReturnResult returnOrder(ProfitSharingReturnRequest request) {
-        WechatProfitSharingReturnResult result =
-                wechatPayApiGateway.returnEcommerceProfitSharing(new WechatProfitSharingReturnCommand(
+        WechatProfitSharingReturnResult result = wechatPayApiGateway
+                .returnEcommerceProfitSharing(new WechatProfitSharingReturnCommand(
                         request.subMchid(),
                         request.channelOrderId(),
                         request.outOrderNo(),

@@ -36,10 +36,7 @@ import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
  * 微信支付分 Provider（创建/查询/取消/完结服务订单与授权）。
  */
 @Component
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-payscore",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-payscore", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class WechatPayScoreProvider implements PayScoreProvider {
 
