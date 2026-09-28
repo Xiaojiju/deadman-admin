@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
 import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderSnapshot;
@@ -12,6 +11,7 @@ import com.mtfm.deadman.plugin.pay.spi.payment.PaymentOrderStatusChangedPublishe
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 支付渠道结果短事务落库：状态回写与事件发布在同一事务内完成。
@@ -70,7 +70,7 @@ public class PaymentChannelResultApplier {
                     local.getAmountTotal(),
                     channelAmountTotal);
             throw new BusinessException(
-                    ResultCode.PAY_AMOUNT_MISMATCH, "支付金额与本地不一致：" + local.getOutTradeNo());
+                    PayErrorCodes.PAY_AMOUNT_MISMATCH, "支付金额与本地不一致：" + local.getOutTradeNo());
         }
     }
 

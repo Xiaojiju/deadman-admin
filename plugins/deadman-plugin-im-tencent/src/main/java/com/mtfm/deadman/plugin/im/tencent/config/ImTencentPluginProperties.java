@@ -4,9 +4,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 
 import lombok.Data;
+import com.mtfm.deadman.plugin.im.tencent.support.ImErrorCodes;
 
 /**
  * 腾讯云 IM 插件配置。
@@ -65,13 +65,13 @@ public class ImTencentPluginProperties {
             return;
         }
         if (sdkAppId == null || sdkAppId <= 0) {
-            throw new BusinessException(ResultCode.IM_CONFIG_INVALID, "缺少腾讯云 IM SDKAppID");
+            throw new BusinessException(ImErrorCodes.IM_CONFIG_INVALID, "缺少腾讯云 IM SDKAppID");
         }
         if (!StringUtils.hasText(secretKey)) {
-            throw new BusinessException(ResultCode.IM_CONFIG_INVALID, "缺少腾讯云 IM SecretKey");
+            throw new BusinessException(ImErrorCodes.IM_CONFIG_INVALID, "缺少腾讯云 IM SecretKey");
         }
         if (!StringUtils.hasText(adminIdentifier)) {
-            throw new BusinessException(ResultCode.IM_CONFIG_INVALID, "缺少腾讯云 IM 管理员 Identifier");
+            throw new BusinessException(ImErrorCodes.IM_CONFIG_INVALID, "缺少腾讯云 IM 管理员 Identifier");
         }
     }
 }

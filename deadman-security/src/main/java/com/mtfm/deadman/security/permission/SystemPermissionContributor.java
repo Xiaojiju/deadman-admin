@@ -15,7 +15,7 @@ import java.util.List;
 public class SystemPermissionContributor implements PermissionContributor {
 
     /**
-     * 注册 auth / user / org / role 权限组。
+     * 注册 auth / user / org / role / dict 权限组。
      *
      * @return 权限组列表
      */
@@ -64,6 +64,14 @@ public class SystemPermissionContributor implements PermissionContributor {
                                 new PermissionItemDescriptor(SystemPermissions.Role.DELETE, "删除角色"),
                                 new PermissionItemDescriptor(
                                         SystemPermissions.Role.PERMISSION_ASSIGN, "分配角色权限"),
-                                new PermissionItemDescriptor(SystemPermissions.Role.USER_ASSIGN, "分配用户角色"))));
+                                new PermissionItemDescriptor(SystemPermissions.Role.USER_ASSIGN, "分配用户角色"))),
+                new PermissionGroupDescriptor(
+                        "dict",
+                        "数据字典",
+                        List.of(
+                                new PermissionItemDescriptor(SystemPermissions.Dict.LIST_READ, "查看字典"),
+                                new PermissionItemDescriptor(SystemPermissions.Dict.CREATE, "创建字典"),
+                                new PermissionItemDescriptor(SystemPermissions.Dict.UPDATE, "更新字典"),
+                                new PermissionItemDescriptor(SystemPermissions.Dict.DELETE, "删除字典"))));
     }
 }

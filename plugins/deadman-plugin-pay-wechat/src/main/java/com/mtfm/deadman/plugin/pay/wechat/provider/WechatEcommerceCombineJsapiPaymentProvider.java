@@ -33,6 +33,7 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayNotifyParseResult;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayRequestPaymentParams;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 微信收付通合单 JSAPI 支付 Provider，负责合单预下单与合单回调/查单解析。
@@ -121,14 +122,14 @@ public class WechatEcommerceCombineJsapiPaymentProvider implements PaymentProvid
     private WechatPayProviderBindingProperties requireBinding() {
         WechatPayProviderBindingProperties binding = wechatPayPluginProperties.providerBinding(PROVIDER_ID);
         if (!binding.isEnabled()) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信收付通合单 JSAPI Provider 未启用");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信收付通合单 JSAPI Provider 未启用");
         }
         return binding;
     }
 
     private static String requireAppId(WechatPayProviderBindingProperties binding) {
         if (!StringUtils.hasText(binding.getAppId())) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信收付通合单 AppId 未配置");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信收付通合单 AppId 未配置");
         }
         return binding.getAppId().trim();
     }
@@ -136,7 +137,7 @@ public class WechatEcommerceCombineJsapiPaymentProvider implements PaymentProvid
     private static String requireOpenid(PaymentPrepayContext context) {
         String openid = context.channelParam(WechatPayChannelParams.OPENID);
         if (!StringUtils.hasText(openid)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_OPENID_REQUIRED, "缺少付款人 openid");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_OPENID_REQUIRED, "缺少付款人 openid");
         }
         return openid.trim();
     }

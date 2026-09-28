@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentRefundStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentRefundOrder;
 import com.mtfm.deadman.plugin.pay.spi.refund.RefundOrderSnapshot;
@@ -13,6 +12,7 @@ import com.mtfm.deadman.plugin.pay.spi.refund.RefundOrderStatusChangedPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 退款渠道结果短事务落库：状态回写、成功累加、事件发布在同一事务内完成。
@@ -89,7 +89,7 @@ public class RefundChannelResultApplier {
                     local.getOutTradeNo(),
                     channelOutTradeNo);
             throw new BusinessException(
-                    ResultCode.PAY_REFUND_AMOUNT_MISMATCH,
+                    PayErrorCodes.PAY_REFUND_AMOUNT_MISMATCH,
                     "退款支付单号与本地不一致：" + local.getOutRefundNo());
         }
         if (channelAmountRefund != null
@@ -101,7 +101,7 @@ public class RefundChannelResultApplier {
                     local.getAmountRefund(),
                     channelAmountRefund);
             throw new BusinessException(
-                    ResultCode.PAY_REFUND_AMOUNT_MISMATCH,
+                    PayErrorCodes.PAY_REFUND_AMOUNT_MISMATCH,
                     "退款金额与本地不一致：" + local.getOutRefundNo());
         }
     }

@@ -79,6 +79,11 @@ deadman:
         user-profile-ttl: ${DEADMAN_CLIENT_CACHE_USER_PROFILE_TTL:30m}
     wgb:
       enabled: ${DEADMAN_COMPONENT_WGB_ENABLED:true}
+      job:
+        skill-group-code: ${DEADMAN_WGB_JOB_SKILL_GROUP_CODE:SKILL}
+        position-group-code: ${DEADMAN_WGB_JOB_POSITION_GROUP_CODE:POSITION}
+      attendance:
+        judge-cron: "${DEADMAN_WGB_ATTENDANCE_JUDGE_CRON:0 * * * * ?}"
   plugin:
     websocket:
       enabled: ${DEADMAN_PLUGIN_WEBSOCKET_ENABLED:true}

@@ -76,11 +76,7 @@ class DeadmanI18nTest {
             Properties properties = loadCommonBundle(file);
             for (ResultCode code : ResultCode.values()) {
                 String value = properties.getProperty(code.messageKey());
-                if (ownedByPlugin(code)) {
-                    assertThat(value).as(file + " 插件文案不应留在 common：" + code.messageKey()).isNull();
-                } else {
-                    assertThat(value).as(file + " " + code.messageKey()).isNotBlank();
-                }
+                assertThat(value).as(file + " " + code.messageKey()).isNotBlank();
             }
             assertThat(properties.getProperty("common.param.missing")).contains("{0}");
             assertThat(properties.getProperty("common.upload.multipart_invalid")).isNotBlank();
@@ -107,19 +103,6 @@ class DeadmanI18nTest {
         LocaleContextHolder.setLocale(DeadmanLocales.SIMPLIFIED_CHINESE);
         assertThat(Result.of(ResultCode.SUCCESS).getMsg()).isEqualTo("成功");
         assertThat(MessageSourceHolder.resolve("missing.key", "回退")).isEqualTo("回退");
-    }
-
-    /**
-     * 文案已随插件或扩展模块存放，common 只保留账号、组织与通用错误。
-     *
-     * @param code 错误码
-     * @return 是否由插件或扩展模块提供文案
-     */
-    private static boolean ownedByPlugin(ResultCode code) {
-        String name = code.name();
-        return name.startsWith("WECHAT_PAY_") || name.startsWith("WECHAT_BIND_TOKEN_") || name.startsWith("FILE_")
-                || name.startsWith("PAY_") || name.startsWith("CRYPTO_") || name.startsWith("LOGISTICS_")
-                || name.startsWith("IM_") || name.startsWith("ESS_");
     }
 
     /**

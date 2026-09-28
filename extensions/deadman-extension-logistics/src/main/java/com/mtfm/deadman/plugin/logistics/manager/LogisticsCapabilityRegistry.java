@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.logistics.spi.LogisticsCapabilityProvider;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.logistics.support.LogisticsErrorCodes;
 
 /**
  * 物流领域 Provider 注册表辅助类。
@@ -47,7 +47,7 @@ final class LogisticsCapabilityRegistry<T extends LogisticsCapabilityProvider> {
         T provider = providers.get(resolved);
         if (provider == null) {
             throw new BusinessException(
-                    ResultCode.LOGISTICS_PROVIDER_NOT_FOUND, capabilityName + " Provider 不存在：" + resolved);
+                    LogisticsErrorCodes.LOGISTICS_PROVIDER_NOT_FOUND, capabilityName + " Provider 不存在：" + resolved);
         }
         return provider;
     }

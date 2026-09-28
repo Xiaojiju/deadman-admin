@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.spi.payscore.PayScoreProvider;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 支付分 Provider 管理器。
@@ -58,7 +58,7 @@ public class PayScoreProviderManager {
         String resolved = StringUtils.hasText(providerId) ? providerId.trim() : defaultProviderId;
         PayScoreProvider provider = providers.get(resolved);
         if (provider == null) {
-            throw new BusinessException(ResultCode.PAY_SCORE_PROVIDER_NOT_FOUND, "支付分 Provider 不存在：" + resolved);
+            throw new BusinessException(PayErrorCodes.PAY_SCORE_PROVIDER_NOT_FOUND, "支付分 Provider 不存在：" + resolved);
         }
         return provider;
     }

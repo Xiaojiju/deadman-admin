@@ -25,6 +25,8 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatEcommerceRefundCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatRefundParseResult;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 微信收付通合单退款 Provider，{@code providerId} 与合单支付 Provider 一致。
@@ -114,7 +116,7 @@ public class WechatEcommerceRefundProvider implements EcommerceRefundProvider {
      */
     @Override
     public RefundResult createAbnormalRefund(AbnormalRefundContext context) {
-        throw new BusinessException(ResultCode.PAY_ABNORMAL_REFUND_NOT_ALLOWED, "收付通电商退款不支持异常退款到银行卡");
+        throw new BusinessException(PayErrorCodes.PAY_ABNORMAL_REFUND_NOT_ALLOWED, "收付通电商退款不支持异常退款到银行卡");
     }
 
     /**
@@ -128,7 +130,7 @@ public class WechatEcommerceRefundProvider implements EcommerceRefundProvider {
     private WechatPayProviderBindingProperties requireBinding() {
         WechatPayProviderBindingProperties binding = wechatPayPluginProperties.providerBinding(PROVIDER_ID);
         if (!binding.isEnabled()) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信收付通合单 Provider 未启用");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信收付通合单 Provider 未启用");
         }
         return binding;
     }
@@ -178,7 +180,7 @@ public class WechatEcommerceRefundProvider implements EcommerceRefundProvider {
             case "CLOSED" -> PaymentRefundStatus.CLOSED;
             case "ABNORMAL" -> PaymentRefundStatus.ABNORMAL;
             case "PROCESSING" -> PaymentRefundStatus.PROCESSING;
-            default -> throw new BusinessException(ResultCode.PAY_REFUND_NOTIFY_PARSE_FAILED, "未知退款状态：" + status);
+            default -> throw new BusinessException(PayErrorCodes.PAY_REFUND_NOTIFY_PARSE_FAILED, "未知退款状态：" + status);
         };
     }
 }

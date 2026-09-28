@@ -20,6 +20,7 @@ import com.mtfm.deadman.plugin.file.config.FilePluginProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.file.support.FileErrorCodes;
 
 /**
  * 已注册文件业务分类注册表，上传时校验 {@code bizType} 是否已登记。
@@ -71,7 +72,7 @@ public class FileBizTypeRegistry implements ApplicationListener<ContextRefreshed
         }
         String normalized = normalizeAndValidate(bizType);
         if (!registeredBizTypes.contains(normalized)) {
-            throw new BusinessException(ResultCode.FILE_BIZ_TYPE_UNREGISTERED, "业务分类未注册: " + normalized);
+            throw new BusinessException(FileErrorCodes.FILE_BIZ_TYPE_UNREGISTERED, "业务分类未注册: " + normalized);
         }
     }
 

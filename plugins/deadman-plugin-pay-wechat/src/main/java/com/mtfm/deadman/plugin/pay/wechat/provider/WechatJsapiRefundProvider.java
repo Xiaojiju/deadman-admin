@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentRefundStatus;
 import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
 import com.mtfm.deadman.plugin.pay.spi.refund.AbnormalRefundContext;
@@ -23,6 +22,8 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatRefundCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatRefundParseResult;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 微信小程序 JSAPI 退款 Provider，仅负责微信退款 API 与回调解析。
@@ -112,7 +113,7 @@ public class WechatJsapiRefundProvider implements RefundProvider {
     private WechatPayProviderBindingProperties requireBinding() {
         WechatPayProviderBindingProperties binding = wechatPayPluginProperties.providerBinding(PROVIDER_ID);
         if (!binding.isEnabled()) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI Provider 未启用");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI Provider 未启用");
         }
         return binding;
     }
@@ -162,7 +163,7 @@ public class WechatJsapiRefundProvider implements RefundProvider {
             case "CLOSED" -> PaymentRefundStatus.CLOSED;
             case "ABNORMAL" -> PaymentRefundStatus.ABNORMAL;
             case "PROCESSING" -> PaymentRefundStatus.PROCESSING;
-            default -> throw new BusinessException(ResultCode.PAY_REFUND_NOTIFY_PARSE_FAILED, "未知退款状态：" + status);
+            default -> throw new BusinessException(PayErrorCodes.PAY_REFUND_NOTIFY_PARSE_FAILED, "未知退款状态：" + status);
         };
     }
 }

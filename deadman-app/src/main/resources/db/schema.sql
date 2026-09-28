@@ -140,6 +140,42 @@ CREATE TABLE IF NOT EXISTS sys_position (
     KEY idx_sys_position_department (department_id, is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='职位';
 
+-- 字典组。max_level 由业主按组配置，只能是 1、2 或 3
+CREATE TABLE IF NOT EXISTS sys_dict_group (
+    id              BIGINT        NOT NULL COMMENT '字典组主键',
+    group_code      VARCHAR(64)   NOT NULL COMMENT '字典组编码',
+    group_name      VARCHAR(128)  NOT NULL COMMENT '字典组名称',
+    max_level       SMALLINT      NOT NULL COMMENT '允许的最大层数：1、2 或 3',
+    remark          VARCHAR(255)           COMMENT '备注',
+    sort_order      INT           NOT NULL DEFAULT 0 COMMENT '排序号，升序',
+    status          SMALLINT      NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    is_deleted      SMALLINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
+    create_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_dict_group_code (group_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='数据字典组';
+
+-- 字典项。层级不超过所属字典组的 max_level，全局不超过 3
+CREATE TABLE IF NOT EXISTS sys_dict_item (
+    id              BIGINT        NOT NULL COMMENT '字典项主键',
+    group_id        BIGINT        NOT NULL COMMENT '字典组主键，关联 sys_dict_group.id',
+    parent_id       BIGINT                 COMMENT '上级字典项 ID，NULL 表示第 1 级',
+    item_code       VARCHAR(64)   NOT NULL COMMENT '组内唯一编码',
+    item_label      VARCHAR(128)  NOT NULL COMMENT '显示名称',
+    item_value      VARCHAR(256)           COMMENT '业务取值，可与编码不同',
+    item_level      SMALLINT      NOT NULL COMMENT '当前层级：1、2 或 3',
+    remark          VARCHAR(255)           COMMENT '备注',
+    sort_order      INT           NOT NULL DEFAULT 0 COMMENT '排序号，升序',
+    status          SMALLINT      NOT NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    is_deleted      SMALLINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除，1-已删除',
+    create_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_dict_item_code (group_id, item_code),
+    KEY idx_sys_dict_item_parent (group_id, parent_id, is_deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='数据字典项';
+
 -- 用户部门关联（一用户可绑定多个部门，is_primary 标识主部门）
 CREATE TABLE IF NOT EXISTS sys_user_department (
     id              BIGINT    NOT NULL COMMENT '关联主键',

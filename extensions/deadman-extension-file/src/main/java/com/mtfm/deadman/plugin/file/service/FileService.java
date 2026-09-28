@@ -32,6 +32,8 @@ import com.mtfm.deadman.plugin.file.vo.FileMetadataVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.file.support.FileErrorCodes;
+import com.mtfm.deadman.plugin.file.support.FileMessages;
 
 /**
  * 文件上传、下载与元数据管理服务。
@@ -62,7 +64,7 @@ public class FileService {
         }
         long maxBytes = filePluginProperties.getMaxFileSize().toBytes();
         if (file.getSize() > maxBytes) {
-            throw new BusinessException(ResultCode.FILE_TOO_LARGE);
+            throw FileMessages.of(FileErrorCodes.FILE_TOO_LARGE);
         }
         fileBizTypeRegistry.requireRegistered(bizType);
         String originalFilename = StringUtils.cleanPath(
@@ -71,7 +73,7 @@ public class FileService {
             return storeAndPersist(inputStream, originalFilename, file.getContentType(), file.getSize(), bizType,
                 providerId, uploaderUserId);
         } catch (IOException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "读取上传文件失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "读取上传文件失败");
         }
     }
 
@@ -99,7 +101,7 @@ public class FileService {
         }
         long maxBytes = filePluginProperties.getMaxFileSize().toBytes();
         if (content.length > maxBytes) {
-            throw new BusinessException(ResultCode.FILE_TOO_LARGE);
+            throw FileMessages.of(FileErrorCodes.FILE_TOO_LARGE);
         }
         fileBizTypeRegistry.requireRegistered(bizType);
         String safeName = StringUtils.cleanPath(
@@ -215,7 +217,7 @@ public class FileService {
         for (Long fileId : orderedIds) {
             FileAccessUrlVO url = found.get(fileId);
             if (url == null) {
-                throw new BusinessException(ResultCode.FILE_NOT_FOUND, "文件不存在：" + fileId);
+                throw new BusinessException(FileErrorCodes.FILE_NOT_FOUND, "文件不存在：" + fileId);
             }
             result.add(url);
         }
@@ -246,7 +248,7 @@ public class FileService {
         for (Long fileId : orderedIds) {
             FileMetadataVO meta = found.get(fileId);
             if (meta == null) {
-                throw new BusinessException(ResultCode.FILE_NOT_FOUND, "文件不存在：" + fileId);
+                throw new BusinessException(FileErrorCodes.FILE_NOT_FOUND, "文件不存在：" + fileId);
             }
             result.add(meta);
         }
@@ -282,7 +284,7 @@ public class FileService {
         try (InputStream inputStream = resource.getInputStream()) {
             return inputStream.readAllBytes();
         } catch (IOException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "读取文件失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "读取文件失败");
         }
     }
 
@@ -305,7 +307,7 @@ public class FileService {
                     .inputStream(inputStream)
                     .build();
         } catch (RuntimeException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "打开文件失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "打开文件失败");
         }
     }
 
@@ -349,7 +351,7 @@ public class FileService {
         FileMetadata metadata = fileMetadataMapper.selectOne(new LambdaQueryWrapper<FileMetadata>()
                 .eq(FileMetadata::getId, fileId));
         if (metadata == null) {
-            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+            throw FileMessages.of(FileErrorCodes.FILE_NOT_FOUND);
         }
         return metadata;
     }

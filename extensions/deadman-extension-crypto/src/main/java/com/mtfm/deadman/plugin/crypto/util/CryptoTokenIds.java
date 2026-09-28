@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.crypto.support.CryptoErrorCodes;
 
 /**
  * 密文标识段（algorithm / keyId）字符集校验。
@@ -28,12 +28,12 @@ public final class CryptoTokenIds {
      */
     public static String requireSafe(String value, String label) {
         if (!StringUtils.hasText(value)) {
-            throw new BusinessException(ResultCode.CRYPTO_PAYLOAD_INVALID, label + " 不能为空");
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_PAYLOAD_INVALID, label + " 不能为空");
         }
         String trimmed = value.trim();
         if (!SAFE_ID.matcher(trimmed).matches()) {
             throw new BusinessException(
-                    ResultCode.CRYPTO_CONFIG_INVALID,
+                    CryptoErrorCodes.CRYPTO_CONFIG_INVALID,
                     label + " 仅允许字母数字下划线与连字符：" + trimmed);
         }
         return trimmed;

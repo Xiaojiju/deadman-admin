@@ -8,7 +8,6 @@ import java.util.Base64;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.wechat.config.WechatPayAccountProperties;
 import com.wechat.pay.java.core.Config;
 import com.wechat.pay.java.core.RSAAutoCertificateConfig;
@@ -23,6 +22,7 @@ import com.wechat.pay.java.service.ecommercerefund.EcommerceRefundService;
 import com.wechat.pay.java.service.file.FileUploadService;
 import com.wechat.pay.java.service.payments.jsapi.JsapiService;
 import com.wechat.pay.java.service.refund.RefundService;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 单套微信支付商户运行时（证书、验签、HTTP、官方 SDK Service）。
@@ -88,7 +88,7 @@ final class WechatPayMerchantClient {
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "加载商户私钥失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "加载商户私钥失败");
         }
         return new WechatPayMerchantClient(
                 account,
@@ -169,7 +169,7 @@ final class WechatPayMerchantClient {
 
     private static PrivateKey loadPrivateKey(String privateKeyPath) throws Exception {
         if (!StringUtils.hasText(privateKeyPath)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "商户私钥路径未配置");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "商户私钥路径未配置");
         }
         java.nio.file.Path path = java.nio.file.Path.of(privateKeyPath);
         String pem = java.nio.file.Files.readString(path);

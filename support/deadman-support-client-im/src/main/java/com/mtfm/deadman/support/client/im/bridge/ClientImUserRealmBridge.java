@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.component.client.auth.ClientLoginUser;
 import com.mtfm.deadman.component.client.service.ClientUserService;
 import com.mtfm.deadman.component.client.vo.ClientUserProfileVO;
@@ -21,6 +20,7 @@ import com.mtfm.deadman.support.client.im.constant.ClientImRealmConstants;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.im.tencent.support.ImErrorCodes;
 
 /**
  * 用户端 IM 用户域桥接：client 用户体系 + file 换链后传入 IM（插件不直接依赖 FileService）。
@@ -63,7 +63,7 @@ public class ClientImUserRealmBridge implements ImUserRealmBridge {
     @Override
     public ImUserProfileSource resolveProfileSource(ImSubject subject) {
         if (!ClientImRealmConstants.REALM_ID.equals(subject.realmId())) {
-            throw new BusinessException(ResultCode.IM_REALM_UNKNOWN, "非 client 用户域：" + subject.realmId());
+            throw new BusinessException(ImErrorCodes.IM_REALM_UNKNOWN, "非 client 用户域：" + subject.realmId());
         }
         ClientUserProfileVO profile = clientUserService.getProfileByUserCode(subject.subjectId());
         boolean enabled = profile.status() != null && profile.status() == UserStatus.ACTIVE.getValue();

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.file.spi.FileStorageProvider;
 import com.mtfm.deadman.plugin.file.spi.FileStorageUploadContext;
 import com.mtfm.deadman.plugin.file.spi.StoredFileRef;
@@ -27,6 +26,8 @@ import com.qcloud.cos.model.ObjectMetadata;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.file.support.FileErrorCodes;
+import com.mtfm.deadman.plugin.file.support.FileMessages;
 
 /**
  * 腾讯云 COS 文件存储 Provider。
@@ -69,7 +70,7 @@ public class CosFileStorageProvider implements FileStorageProvider {
             cos.putObject(bucket, storageKey, context.getInputStream(), metadata);
         } catch (RuntimeException ex) {
             log.error("COS 文件上传失败, bucket={}, key={}", bucket, storageKey, ex);
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "COS 文件上传失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "COS 文件上传失败");
         }
         String accessUrl = buildAccessUrl(bucket, storageKey);
         return new StoredFileRef(PROVIDER_ID, storageKey, accessUrl, bucket);
@@ -87,13 +88,13 @@ public class CosFileStorageProvider implements FileStorageProvider {
             return object.getObjectContent();
         } catch (CosServiceException ex) {
             if ("NoSuchKey".equals(ex.getErrorCode())) {
-                throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+                throw FileMessages.of(FileErrorCodes.FILE_NOT_FOUND);
             }
             log.error("COS 文件读取失败, bucket={}, key={}", bucket, ref.storageKey(), ex);
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "COS 文件读取失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "COS 文件读取失败");
         } catch (RuntimeException ex) {
             log.error("COS 文件读取失败, bucket={}, key={}", bucket, ref.storageKey(), ex);
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "COS 文件读取失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "COS 文件读取失败");
         }
     }
 
@@ -108,7 +109,7 @@ public class CosFileStorageProvider implements FileStorageProvider {
             cos.deleteObject(bucket, ref.storageKey());
         } catch (RuntimeException ex) {
             log.error("COS 文件删除失败, bucket={}, key={}", bucket, ref.storageKey(), ex);
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "COS 文件删除失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "COS 文件删除失败");
         }
     }
 
@@ -149,7 +150,7 @@ public class CosFileStorageProvider implements FileStorageProvider {
             return url == null ? null : url.toString();
         } catch (RuntimeException ex) {
             log.error("COS 签名 URL 生成失败, bucket={}, key={}", bucket, storageKey, ex);
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "COS 签名 URL 生成失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "COS 签名 URL 生成失败");
         }
     }
 

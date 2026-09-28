@@ -24,6 +24,7 @@ import com.tencentcloudapi.ess.v20201111.models.CreateSchemeUrlResponse;
 import com.tencentcloudapi.ess.v20201111.models.DescribeFlowInfoResponse;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.ess.tencent.support.EssErrorCodes;
 
 /**
  * 腾讯电子签编排服务：文件发起、查询、撤销与回调解密。
@@ -128,7 +129,7 @@ public class EssSignService {
      */
     public String decryptCallbackPayload(String payload, String contentSignature) {
         if (!StringUtils.hasText(properties.getCallbackToken())) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少电子签回调 Token");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少电子签回调 Token");
         }
         EssCallbackVerifier.requireValid(payload, contentSignature, properties.getCallbackToken());
         if (!StringUtils.hasText(properties.getCallbackAesKey())) {

@@ -28,6 +28,7 @@ import com.tencentcloudapi.ess.v20201111.models.UserInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.ess.tencent.support.EssErrorCodes;
 
 /**
  * 腾讯电子签 API 网关实现，封装 ess-java-kit 主流程调用。
@@ -61,7 +62,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
 
             UploadFilesResponse response = client.UploadFiles(request);
             if (response.getFileIds() == null || response.getFileIds().length == 0) {
-                throw new BusinessException(ResultCode.ESS_UPLOAD_FAILED, "电子签上传成功但未返回 fileId");
+                throw new BusinessException(EssErrorCodes.ESS_UPLOAD_FAILED, "电子签上传成功但未返回 fileId");
             }
             return response.getFileIds()[0];
         } catch (BusinessException ex) {
@@ -69,7 +70,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
         } catch (TencentCloudSDKException ex) {
             log.error("腾讯电子签上传文件失败, fileName={}, code={}, message={}",
                 fileName, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_UPLOAD_FAILED, "电子签文件上传失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_UPLOAD_FAILED, "电子签文件上传失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -109,7 +110,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
             }
             CreateFlowByFilesResponse response = client.CreateFlowByFiles(request);
             if (!StringUtils.hasText(response.getFlowId())) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "创建签署流程成功但未返回 flowId");
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建签署流程成功但未返回 flowId");
             }
             return response.getFlowId();
         } catch (BusinessException ex) {
@@ -117,7 +118,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
         } catch (TencentCloudSDKException ex) {
             log.error("腾讯电子签创建流程失败, flowName={}, fileId={}, code={}, message={}",
                 flowName, fileId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "创建签署流程失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建签署流程失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -137,7 +138,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
         } catch (TencentCloudSDKException ex) {
             log.error("腾讯电子签获取签署链接失败, flowId={}, code={}, message={}",
                 flowId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "获取签署链接失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "获取签署链接失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -156,7 +157,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
         } catch (TencentCloudSDKException ex) {
             log.error("腾讯电子签查询流程失败, flowId={}, code={}, message={}",
                 flowId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "查询签署流程失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "查询签署流程失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -175,7 +176,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
             DescribeFileUrlsResponse response = client.DescribeFileUrls(request);
             FileUrl[] urls = response.getFileUrls();
             if (urls == null || urls.length == 0 || !StringUtils.hasText(urls[0].getUrl())) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "未获取到合同下载地址");
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "未获取到合同下载地址");
             }
             return urls[0].getUrl();
         } catch (BusinessException ex) {
@@ -183,7 +184,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
         } catch (TencentCloudSDKException ex) {
             log.error("腾讯电子签获取下载地址失败, flowId={}, code={}, message={}",
                 flowId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "获取合同下载地址失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "获取合同下载地址失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -203,7 +204,7 @@ public class TencentEssApiGatewayImpl implements TencentEssApiGateway {
         } catch (TencentCloudSDKException ex) {
             log.error("腾讯电子签撤销流程失败, flowId={}, code={}, message={}",
                 flowId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "撤销签署流程失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "撤销签署流程失败: " + ex.getMessage(), ex);
         }
     }
 

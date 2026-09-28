@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentPlatform;
 import com.mtfm.deadman.plugin.pay.constant.TransferBillStatus;
 import com.mtfm.deadman.plugin.pay.mock.config.MockPayPluginProperties;
@@ -23,6 +22,7 @@ import com.mtfm.deadman.plugin.pay.spi.transfer.TransferResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * Mock 商家转账 Provider。
@@ -97,7 +97,7 @@ public class MockTransferProvider implements TransferProvider {
         }
         if (!StringUtils.hasText(outBillNo) || !StringUtils.hasText(status)) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "Mock 转账回调缺少 out_bill_no 或 status/state");
+                    PayErrorCodes.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "Mock 转账回调缺少 out_bill_no 或 status/state");
         }
         String channelBillNo = readJsonStringField(context.rawBody(), "transfer_bill_no");
         if (!StringUtils.hasText(channelBillNo)) {
@@ -144,7 +144,7 @@ public class MockTransferProvider implements TransferProvider {
             case "TRANSFERRING" -> TransferBillStatus.TRANSFERING;
             case "FAILED" -> TransferBillStatus.FAIL;
             default -> throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "Mock 转账回调 status 无效：" + status);
+                    PayErrorCodes.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "Mock 转账回调 status 无效：" + status);
         };
     }
 

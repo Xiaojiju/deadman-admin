@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentPlatform;
 import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
 import com.mtfm.deadman.plugin.pay.spi.payscore.PayScoreCancelContext;
@@ -31,6 +30,7 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayScoreParseResult;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayScorePermissionCommand;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 微信支付分 Provider（创建/查询/取消/完结服务订单与授权）。
@@ -217,10 +217,10 @@ public class WechatPayScoreProvider implements PayScoreProvider {
     private WechatPayProviderBindingProperties requireBinding() {
         WechatPayProviderBindingProperties binding = wechatPayPluginProperties.providerBinding(PROVIDER_ID);
         if (!binding.isEnabled()) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信支付分 Provider 未启用");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信支付分 Provider 未启用");
         }
         if (!StringUtils.hasText(binding.getAppId())) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信支付分 AppId 未配置");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信支付分 AppId 未配置");
         }
         return binding;
     }
@@ -232,7 +232,7 @@ public class WechatPayScoreProvider implements PayScoreProvider {
         if (StringUtils.hasText(binding.getServiceId())) {
             return binding.getServiceId().trim();
         }
-        throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信支付分 serviceId 未配置");
+        throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信支付分 serviceId 未配置");
     }
 
     private static PayScorePermissionResult toPermissionResult(PayScorePermissionResponse response) {

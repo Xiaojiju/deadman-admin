@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentRefundStatus;
 import com.mtfm.deadman.plugin.pay.constant.PayScoreOrderState;
 import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
@@ -43,6 +42,8 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferParseResult;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * Mock 微信支付网关，用于测试环境无商户号时验收预下单、退款与回调链路。
@@ -80,7 +81,7 @@ public class MockWechatPayApiGateway implements WechatPayApiGateway {
     @Override
     public WechatPayRequestPaymentParams signJsapiRequestPayment(String appId, String prepayId) {
         if (!StringUtils.hasText(appId) || !StringUtils.hasText(prepayId)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "缺少 AppId 或 prepay_id，无法继续支付");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "缺少 AppId 或 prepay_id，无法继续支付");
         }
         String timeStamp = String.valueOf(Instant.now().getEpochSecond());
         String nonceStr = UUID.randomUUID().toString().replace("-", "");
@@ -99,7 +100,7 @@ public class MockWechatPayApiGateway implements WechatPayApiGateway {
         String transactionId = readJsonStringField(context.rawBody(), "transaction_id");
         String tradeState = readJsonStringField(context.rawBody(), "trade_state");
         if (!StringUtils.hasText(outTradeNo) || !StringUtils.hasText(tradeState)) {
-            throw new BusinessException(ResultCode.PAY_NOTIFY_PARSE_FAILED, "Mock 回调缺少 out_trade_no 或 trade_state");
+            throw new BusinessException(PayErrorCodes.PAY_NOTIFY_PARSE_FAILED, "Mock 回调缺少 out_trade_no 或 trade_state");
         }
         if (!StringUtils.hasText(transactionId)) {
             transactionId = "mock_tx_" + UUID.randomUUID().toString().replace("-", "");
@@ -161,7 +162,7 @@ public class MockWechatPayApiGateway implements WechatPayApiGateway {
         String refundStatus = readJsonStringField(context.rawBody(), "refund_status");
         if (!StringUtils.hasText(outRefundNo) || !StringUtils.hasText(refundStatus)) {
             throw new BusinessException(
-                    ResultCode.PAY_REFUND_NOTIFY_PARSE_FAILED, "Mock 退款回调缺少 out_refund_no 或 refund_status");
+                    PayErrorCodes.PAY_REFUND_NOTIFY_PARSE_FAILED, "Mock 退款回调缺少 out_refund_no 或 refund_status");
         }
         String channelRefundId = readJsonStringField(context.rawBody(), "refund_id");
         if (!StringUtils.hasText(channelRefundId)) {
@@ -287,7 +288,7 @@ public class MockWechatPayApiGateway implements WechatPayApiGateway {
         String state = readJsonStringField(context.rawBody(), "state");
         if (!StringUtils.hasText(outBillNo) || !StringUtils.hasText(state)) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "Mock 转账回调缺少 out_bill_no 或 state");
+                    PayErrorCodes.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "Mock 转账回调缺少 out_bill_no 或 state");
         }
         String channelBillNo = readJsonStringField(context.rawBody(), "transfer_bill_no");
         if (!StringUtils.hasText(channelBillNo)) {
@@ -361,7 +362,7 @@ public class MockWechatPayApiGateway implements WechatPayApiGateway {
         String tradeState = readJsonStringField(context.rawBody(), "trade_state");
         if (!StringUtils.hasText(combineOutTradeNo) || !StringUtils.hasText(tradeState)) {
             throw new BusinessException(
-                    ResultCode.PAY_NOTIFY_PARSE_FAILED, "Mock 合单回调缺少 combine_out_trade_no 或 trade_state");
+                    PayErrorCodes.PAY_NOTIFY_PARSE_FAILED, "Mock 合单回调缺少 combine_out_trade_no 或 trade_state");
         }
         String transactionId = readJsonStringField(context.rawBody(), "transaction_id");
         if (!StringUtils.hasText(transactionId)) {
@@ -630,7 +631,7 @@ public class MockWechatPayApiGateway implements WechatPayApiGateway {
         String state = readJsonStringField(context.rawBody(), "state");
         if (!StringUtils.hasText(outOrderNo) || !StringUtils.hasText(state)) {
             throw new BusinessException(
-                    ResultCode.PAY_SCORE_NOTIFY_PARSE_FAILED, "Mock 支付分回调缺少 out_order_no 或 state");
+                    PayErrorCodes.PAY_SCORE_NOTIFY_PARSE_FAILED, "Mock 支付分回调缺少 out_order_no 或 state");
         }
         String orderId = readJsonStringField(context.rawBody(), "order_id");
         if (!StringUtils.hasText(orderId)) {

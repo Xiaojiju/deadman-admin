@@ -49,6 +49,7 @@ import com.tencentcloudapi.essbasic.v20210526.models.UserInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.ess.tencent.support.EssErrorCodes;
 
 /**
  * 腾讯电子签渠道版（essbasic）API 网关实现。
@@ -90,11 +91,11 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
             CreateFlowsByTemplatesResponse response = client.CreateFlowsByTemplates(request);
             if (response.getErrorMessages() != null && response.getErrorMessages().length > 0
                     && StringUtils.hasText(response.getErrorMessages()[0])) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "创建签署流程失败: " + response.getErrorMessages()[0]);
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建签署流程失败: " + response.getErrorMessages()[0]);
             }
             if (response.getFlowIds() == null || response.getFlowIds().length == 0
                     || !StringUtils.hasText(response.getFlowIds()[0])) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "创建签署流程成功但未返回 flowId");
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建签署流程成功但未返回 flowId");
             }
             return response.getFlowIds()[0];
         } catch (BusinessException ex) {
@@ -102,7 +103,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
         } catch (TencentCloudSDKException ex) {
             log.error("渠道版电子签创建流程失败, flowName={}, templateId={}, code={}, message={}",
                     flowInfo.getFlowName(), flowInfo.getTemplateId(), ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "创建签署流程失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建签署流程失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -134,15 +135,15 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
             CreateSignUrlsResponse response = client.CreateSignUrls(request);
             if (response.getErrorMessages() != null && response.getErrorMessages().length > 0
                     && StringUtils.hasText(response.getErrorMessages()[0])) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "获取签署链接失败: " + response.getErrorMessages()[0]);
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "获取签署链接失败: " + response.getErrorMessages()[0]);
             }
             SignUrlInfo[] signUrlInfos = response.getSignUrlInfos();
             if (signUrlInfos == null || signUrlInfos.length == 0) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "获取签署链接成功但未返回 SignUrlInfo");
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "获取签署链接成功但未返回 SignUrlInfo");
             }
             String signPath = resolveSignPath(signUrlInfos[0]);
             if (!StringUtils.hasText(signPath)) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "未获取到有效签署链接");
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "未获取到有效签署链接");
             }
             return signPath;
         } catch (BusinessException ex) {
@@ -150,7 +151,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
         } catch (TencentCloudSDKException ex) {
             log.error("渠道版电子签获取签署链接失败, flowId={}, code={}, message={}",
                     flowId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "获取签署链接失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "获取签署链接失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -170,7 +171,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
         } catch (TencentCloudSDKException ex) {
             log.error("渠道版电子签撤销流程失败, flowId={}, code={}, message={}",
                     flowId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "撤销签署流程失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "撤销签署流程失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -212,7 +213,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
         } catch (TencentCloudSDKException ex) {
             log.error("创建电子签子客认证链接失败, org={}, code={}, message={}",
                     organizationName, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "创建电子签认证链接失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建电子签认证链接失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -247,7 +248,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
         } catch (TencentCloudSDKException ex) {
             log.error("查询电子签子客状态失败, orgOpenId={}, code={}, message={}",
                     organizationOpenId, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "查询电子签企业状态失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "查询电子签企业状态失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -304,7 +305,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
             UploadFilesResponse response = client.UploadFiles(request);
             if (response.getFileIds() == null || response.getFileIds().length == 0
                     || !StringUtils.hasText(response.getFileIds()[0])) {
-                throw new BusinessException(ResultCode.ESS_UPLOAD_FAILED, "电子签上传成功但未返回 fileId");
+                throw new BusinessException(EssErrorCodes.ESS_UPLOAD_FAILED, "电子签上传成功但未返回 fileId");
             }
             return response.getFileIds()[0];
         } catch (BusinessException ex) {
@@ -312,7 +313,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
         } catch (TencentCloudSDKException ex) {
             log.error("渠道版电子签上传文件失败, fileName={}, code={}, message={}",
                     fileName, ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_UPLOAD_FAILED, "电子签文件上传失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_UPLOAD_FAILED, "电子签文件上传失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -343,7 +344,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
             }
             ChannelCreateFlowByFilesResponse response = client.ChannelCreateFlowByFiles(request);
             if (!StringUtils.hasText(response.getFlowId())) {
-                throw new BusinessException(ResultCode.ESS_API_FAILED, "创建签署流程成功但未返回 flowId");
+                throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建签署流程成功但未返回 flowId");
             }
             return response.getFlowId();
         } catch (BusinessException ex) {
@@ -351,7 +352,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
         } catch (TencentCloudSDKException ex) {
             log.error("渠道版按文件发起签署失败, flowName={}, code={}, message={}",
                     command.flowName(), ex.getErrorCode(), ex.getMessage());
-            throw new BusinessException(ResultCode.ESS_API_FAILED, "创建签署流程失败: " + ex.getMessage(), ex);
+            throw new BusinessException(EssErrorCodes.ESS_API_FAILED, "创建签署流程失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -361,7 +362,7 @@ public class TencentEssbasicApiGatewayImpl implements TencentEssbasicApiGateway 
     @Override
     public Agent buildAgent(String appId, EssChannelAgentCommand agentCommand) {
         if (!StringUtils.hasText(appId)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签渠道 AppId");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签渠道 AppId");
         }
         if (agentCommand == null) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "渠道代理信息不能为空");

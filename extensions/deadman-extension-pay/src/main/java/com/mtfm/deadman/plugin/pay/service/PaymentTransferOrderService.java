@@ -28,6 +28,7 @@ import com.mtfm.deadman.plugin.pay.mapper.PaymentTransferQuotaMapper;
 import com.mtfm.deadman.plugin.pay.util.OutTransferNoGenerator;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 商家转账批次/明细持久化服务。
@@ -141,7 +142,7 @@ public class PaymentTransferOrderService {
         PaymentTransferBatch batch = transferBatchMapper.selectOne(new LambdaQueryWrapper<PaymentTransferBatch>()
                 .eq(PaymentTransferBatch::getBatchNo, batchNo));
         if (batch == null) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_BATCH_NOT_FOUND, "转账批次不存在：" + batchNo);
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_BATCH_NOT_FOUND, "转账批次不存在：" + batchNo);
         }
         return batch;
     }
@@ -179,7 +180,7 @@ public class PaymentTransferOrderService {
         PaymentTransferBill bill = transferBillMapper.selectOne(new LambdaQueryWrapper<PaymentTransferBill>()
                 .eq(PaymentTransferBill::getOutBillNo, outBillNo));
         if (bill == null) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_BILL_NOT_FOUND, "转账单不存在：" + outBillNo);
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_BILL_NOT_FOUND, "转账单不存在：" + outBillNo);
         }
         return bill;
     }
@@ -322,7 +323,7 @@ public class PaymentTransferOrderService {
                     bill.getAmountCents(),
                     amountCents);
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_AMOUNT_MISMATCH,
+                    PayErrorCodes.PAY_TRANSFER_AMOUNT_MISMATCH,
                     "转账金额与本地不一致：" + outBillNo);
         }
         String previousStatus = bill.getStatus();
@@ -337,7 +338,7 @@ public class PaymentTransferOrderService {
                     bill.getStatus(),
                     normalized);
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_STATUS_CONFLICT,
+                    PayErrorCodes.PAY_TRANSFER_STATUS_CONFLICT,
                     "转账本地终态与渠道结果冲突：" + outBillNo + " local=" + bill.getStatus()
                             + " channel=" + normalized);
         }
@@ -521,7 +522,7 @@ public class PaymentTransferOrderService {
             case "SUCCESS" -> TransferBillStatus.SUCCESS;
             case "FAIL", "FAILED" -> TransferBillStatus.FAIL;
             case "CANCELLED", "CANCELED", "CANCELING", "CANCELLING" -> TransferBillStatus.CANCELLED;
-            default -> throw new BusinessException(ResultCode.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "未知转账状态：" + status);
+            default -> throw new BusinessException(PayErrorCodes.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "未知转账状态：" + status);
         };
     }
 

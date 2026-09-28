@@ -2,8 +2,6 @@ package com.mtfm.deadman.system.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.enums.UserStatus;
-import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.system.domain.position.UserPositionOperations;
 import com.mtfm.deadman.system.dto.org.CreatePositionRequest;
 import com.mtfm.deadman.system.dto.org.UpdatePositionRequest;
@@ -14,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.mtfm.deadman.system.support.SystemErrorCodes;
+import com.mtfm.deadman.system.support.SystemMessages;
 
 /**
  * 职位管理。
@@ -63,7 +63,7 @@ public class PositionAdminService {
         if (sysPositionService.count(new LambdaQueryWrapper<SysPosition>()
                         .eq(SysPosition::getPositionCode, request.positionCode()))
                 > 0) {
-            throw new BusinessException(ResultCode.POSITION_CODE_EXISTS);
+            throw SystemMessages.of(SystemErrorCodes.POSITION_CODE_EXISTS);
         }
         if (request.departmentId() != null) {
             sysDepartmentService.requireById(request.departmentId());
@@ -118,7 +118,7 @@ public class PositionAdminService {
     public void deletePosition(Long positionId) {
         sysPositionService.requireById(positionId);
         if (userPositionOperations.hasUsersInPosition(positionId)) {
-            throw new BusinessException(ResultCode.POSITION_HAS_USERS);
+            throw SystemMessages.of(SystemErrorCodes.POSITION_HAS_USERS);
         }
         sysPositionService.removeById(positionId);
     }

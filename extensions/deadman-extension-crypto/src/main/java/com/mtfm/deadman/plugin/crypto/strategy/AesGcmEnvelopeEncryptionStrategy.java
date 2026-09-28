@@ -10,10 +10,10 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.crypto.constant.CryptoAlgorithms;
 import com.mtfm.deadman.plugin.crypto.spi.EncryptedPayload;
 import com.mtfm.deadman.plugin.crypto.spi.EncryptionStrategy;
+import com.mtfm.deadman.plugin.crypto.support.CryptoErrorCodes;
 
 /**
  * AES-256-GCM 对称信封加密策略。
@@ -67,7 +67,7 @@ public class AesGcmEnvelopeEncryptionStrategy implements EncryptionStrategy {
 
             return new EncryptedPayload(1, algorithmId(), keyId, wrappedWithIv, dataIv, ciphertext);
         } catch (GeneralSecurityException ex) {
-            throw new BusinessException(ResultCode.CRYPTO_ENCRYPT_FAILED, "AES 信封加密失败", ex);
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_ENCRYPT_FAILED, "AES 信封加密失败", ex);
         }
     }
 
@@ -79,7 +79,7 @@ public class AesGcmEnvelopeEncryptionStrategy implements EncryptionStrategy {
         try {
             byte[] wrappedWithIv = payload.wrappedDek();
             if (wrappedWithIv == null || wrappedWithIv.length <= IV_BYTES) {
-                throw new BusinessException(ResultCode.CRYPTO_PAYLOAD_INVALID, "包装 DEK 无效");
+                throw new BusinessException(CryptoErrorCodes.CRYPTO_PAYLOAD_INVALID, "包装 DEK 无效");
             }
             byte[] wrapIv = new byte[IV_BYTES];
             System.arraycopy(wrappedWithIv, 0, wrapIv, 0, IV_BYTES);
@@ -92,7 +92,7 @@ public class AesGcmEnvelopeEncryptionStrategy implements EncryptionStrategy {
         } catch (BusinessException ex) {
             throw ex;
         } catch (GeneralSecurityException ex) {
-            throw new BusinessException(ResultCode.CRYPTO_DECRYPT_FAILED, "AES 信封解密失败", ex);
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_DECRYPT_FAILED, "AES 信封解密失败", ex);
         }
     }
 

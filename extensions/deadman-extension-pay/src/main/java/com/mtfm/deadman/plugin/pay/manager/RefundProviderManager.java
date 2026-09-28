@@ -7,10 +7,10 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.spi.refund.RefundProvider;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 退款 Provider 管理器，聚合所有已注册的退款 Provider 实现。
@@ -47,11 +47,11 @@ public class RefundProviderManager {
      */
     public RefundProvider require(String providerId) {
         if (providerId == null || providerId.isBlank()) {
-            throw new BusinessException(ResultCode.PAY_REFUND_PROVIDER_NOT_FOUND, "退款 Provider 标识为空");
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_PROVIDER_NOT_FOUND, "退款 Provider 标识为空");
         }
         RefundProvider provider = providers.get(providerId);
         if (provider == null) {
-            throw new BusinessException(ResultCode.PAY_REFUND_PROVIDER_NOT_FOUND, "退款 Provider 不存在：" + providerId);
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_PROVIDER_NOT_FOUND, "退款 Provider 不存在：" + providerId);
         }
         return provider;
     }

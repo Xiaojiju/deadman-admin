@@ -3,10 +3,10 @@ package com.mtfm.deadman.plugin.logistics.kuaidi100.util;
 import com.kuaidi100.sdk.request.PrintReq;
 import com.kuaidi100.sdk.utils.SignUtils;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.logistics.kuaidi100.config.Kuaidi100LogisticsPluginProperties;
 
 import tools.jackson.databind.json.JsonMapper;
+import com.mtfm.deadman.plugin.logistics.support.LogisticsErrorCodes;
 
 /**
  * 快递100 PrintReq 构建器，统一封装 param 序列化与 printSign 签名。
@@ -50,7 +50,7 @@ public class Kuaidi100PrintRequestBuilder {
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.LOGISTICS_CONFIG_INVALID, "构建快递100 PrintReq 失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_CONFIG_INVALID, "构建快递100 PrintReq 失败：" + ex.getMessage());
         }
     }
 }

@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentMethod;
 import com.mtfm.deadman.plugin.pay.constant.PaymentPlatform;
 import com.mtfm.deadman.plugin.pay.spi.payment.PaymentChannelExtra;
@@ -28,6 +27,7 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayNotifyParseResult;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatPayRequestPaymentParams;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 微信小程序 JSAPI 支付 Provider 实现，仅负责微信渠道 API 与回调解析。
@@ -98,7 +98,7 @@ public class WechatJsapiPaymentProvider implements PaymentProvider {
     @Override
     public PaymentClientInvokeParams rebuildClientInvokeParams(String channelPrepayId) {
         if (!StringUtils.hasText(channelPrepayId)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "缺少预支付单号，无法继续支付");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "缺少预支付单号，无法继续支付");
         }
         String appId = requireAppId(requireBinding());
         return toClientInvokeParams(wechatPayApiGateway.signJsapiRequestPayment(appId, channelPrepayId.trim()));
@@ -125,14 +125,14 @@ public class WechatJsapiPaymentProvider implements PaymentProvider {
     private WechatPayProviderBindingProperties requireBinding() {
         WechatPayProviderBindingProperties binding = wechatPayPluginProperties.providerBinding(PROVIDER_ID);
         if (!binding.isEnabled()) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI Provider 未启用");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI Provider 未启用");
         }
         return binding;
     }
 
     private static String requireAppId(WechatPayProviderBindingProperties binding) {
         if (!StringUtils.hasText(binding.getAppId())) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI AppId 未配置");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI AppId 未配置");
         }
         return binding.getAppId().trim();
     }
@@ -140,7 +140,7 @@ public class WechatJsapiPaymentProvider implements PaymentProvider {
     private static String requireOpenid(PaymentPrepayContext context) {
         String openid = context.channelParam(WechatPayChannelParams.OPENID);
         if (!StringUtils.hasText(openid)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_OPENID_REQUIRED, "缺少付款人 openid");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_OPENID_REQUIRED, "缺少付款人 openid");
         }
         return openid.trim();
     }

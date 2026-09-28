@@ -7,11 +7,11 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.file.config.FilePluginProperties;
 import com.mtfm.deadman.plugin.file.spi.FileStorageProvider;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.file.support.FileErrorCodes;
 
 /**
  * 文件存储 Provider 管理器，聚合所有已注册的 Provider 实现。
@@ -62,7 +62,7 @@ public class FileStorageProviderManager {
         String resolved = providerId == null || providerId.isBlank() ? defaultProviderId : providerId;
         FileStorageProvider provider = providers.get(resolved);
         if (provider == null) {
-            throw new BusinessException(ResultCode.FILE_PROVIDER_NOT_FOUND, "文件存储 Provider 不存在：" + resolved);
+            throw new BusinessException(FileErrorCodes.FILE_PROVIDER_NOT_FOUND, "文件存储 Provider 不存在：" + resolved);
         }
         return provider;
     }

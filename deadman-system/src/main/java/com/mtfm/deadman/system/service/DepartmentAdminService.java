@@ -19,6 +19,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.mtfm.deadman.system.support.SystemErrorCodes;
+import com.mtfm.deadman.system.support.SystemMessages;
 
 /**
  * 部门管理。
@@ -79,7 +81,7 @@ public class DepartmentAdminService {
         if (sysDepartmentService.count(new LambdaQueryWrapper<SysDepartment>()
                         .eq(SysDepartment::getDeptCode, request.deptCode()))
                 > 0) {
-            throw new BusinessException(ResultCode.DEPARTMENT_CODE_EXISTS);
+            throw SystemMessages.of(SystemErrorCodes.DEPARTMENT_CODE_EXISTS);
         }
         if (request.parentId() != null) {
             sysDepartmentService.requireById(request.parentId());
@@ -140,10 +142,10 @@ public class DepartmentAdminService {
         long childCount = sysDepartmentService.count(
                 new LambdaQueryWrapper<SysDepartment>().eq(SysDepartment::getParentId, departmentId));
         if (childCount > 0) {
-            throw new BusinessException(ResultCode.DEPARTMENT_HAS_CHILDREN);
+            throw SystemMessages.of(SystemErrorCodes.DEPARTMENT_HAS_CHILDREN);
         }
         if (departmentOperations.hasUsersInDepartment(departmentId)) {
-            throw new BusinessException(ResultCode.DEPARTMENT_HAS_USERS);
+            throw SystemMessages.of(SystemErrorCodes.DEPARTMENT_HAS_USERS);
         }
         sysDepartmentService.removeById(departmentId);
     }

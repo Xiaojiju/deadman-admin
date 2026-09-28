@@ -27,6 +27,8 @@ import com.mtfm.deadman.plugin.im.tencent.vo.ImUserLookupVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.im.tencent.support.ImErrorCodes;
+import com.mtfm.deadman.plugin.im.tencent.support.ImMessages;
 
 /**
  * IM 编排服务：账号映射、资料同步与 UserSig 签发。
@@ -56,7 +58,7 @@ public class ImService {
         ImUserRealmBridge bridge = bridgeRegistry.require(subject.realmId());
         ImUserProfileSource profile = bridge.resolveProfileSource(subject);
         if (!profile.enabled()) {
-            throw new BusinessException(ResultCode.IM_USER_DISABLED);
+            throw ImMessages.of(ImErrorCodes.IM_USER_DISABLED);
         }
         ImUserAccount account = ensureAccount(subject, profile);
         syncIfNeeded(account, profile);
@@ -90,7 +92,7 @@ public class ImService {
         ImUserRealmBridge bridge = bridgeRegistry.require(subject.realmId());
         ImUserProfileSource profile = bridge.resolveProfileSource(subject);
         if (!profile.enabled()) {
-            throw new BusinessException(ResultCode.IM_USER_DISABLED);
+            throw ImMessages.of(ImErrorCodes.IM_USER_DISABLED);
         }
         ImUserAccount account = ensureAccount(subject, profile);
         syncIfNeeded(account, profile);
@@ -110,7 +112,7 @@ public class ImService {
                 .eq(ImUserAccount::getRealmId, realmId)
                 .eq(ImUserAccount::getSubjectId, subjectId));
         if (account == null) {
-            throw new BusinessException(ResultCode.IM_USER_NOT_FOUND);
+            throw ImMessages.of(ImErrorCodes.IM_USER_NOT_FOUND);
         }
         return new ImUserLookupVO(realmId, subjectId, account.getImUserId());
     }
@@ -135,7 +137,7 @@ public class ImService {
             return account;
         }
         if (!Objects.equals(account.getImUserId(), imUserId)) {
-            throw new BusinessException(ResultCode.IM_CONFIG_INVALID, "IM UserID 映射冲突，请检查 user-id-template 配置");
+            throw new BusinessException(ImErrorCodes.IM_CONFIG_INVALID, "IM UserID 映射冲突，请检查 user-id-template 配置");
         }
         return account;
     }

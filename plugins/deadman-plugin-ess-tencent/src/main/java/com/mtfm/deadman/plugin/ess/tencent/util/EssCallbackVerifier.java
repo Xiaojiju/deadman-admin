@@ -8,7 +8,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.ess.tencent.support.EssErrorCodes;
 
 /**
  * 腾讯电子签回调签名校验工具。
@@ -47,7 +47,7 @@ public final class EssCallbackVerifier {
      */
     public static void requireValid(String payload, String contentSignature, String callbackToken) {
         if (!verify(payload, contentSignature, callbackToken)) {
-            throw new BusinessException(ResultCode.ESS_CALLBACK_INVALID, "电子签回调签名校验失败");
+            throw new BusinessException(EssErrorCodes.ESS_CALLBACK_INVALID, "电子签回调签名校验失败");
         }
     }
 
@@ -69,7 +69,7 @@ public final class EssCallbackVerifier {
             }
             return sb.toString();
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.ESS_CALLBACK_INVALID, "电子签回调签名计算失败", ex);
+            throw new BusinessException(EssErrorCodes.ESS_CALLBACK_INVALID, "电子签回调签名计算失败", ex);
         }
     }
 }

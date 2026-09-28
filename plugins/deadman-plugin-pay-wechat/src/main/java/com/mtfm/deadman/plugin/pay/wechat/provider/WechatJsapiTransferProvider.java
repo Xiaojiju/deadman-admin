@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentPlatform;
 import com.mtfm.deadman.plugin.pay.constant.TransferBillStatus;
 import com.mtfm.deadman.plugin.pay.spi.common.ChannelNotifyContext;
@@ -22,6 +21,8 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferCommand;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatTransferParseResult;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 微信小程序商家转账 Provider（与 JSAPI 支付共用商户与 AppId 绑定）。
@@ -63,7 +64,7 @@ public class WechatJsapiTransferProvider implements TransferProvider {
     public TransferResult createTransfer(TransferContext context, String outBillNo) {
         WechatPayProviderBindingProperties binding = requireBinding();
         if (!StringUtils.hasText(binding.getAppId())) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI AppId 未配置");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI AppId 未配置");
         }
         WechatTransferParseResult parsed = wechatPayApiGateway.createTransfer(new WechatTransferCommand(
                 binding.getAppId(),
@@ -119,7 +120,7 @@ public class WechatJsapiTransferProvider implements TransferProvider {
     private WechatPayProviderBindingProperties requireBinding() {
         WechatPayProviderBindingProperties binding = wechatPayPluginProperties.providerBinding(PROVIDER_ID);
         if (!binding.isEnabled()) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI Provider 未启用");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "微信 JSAPI Provider 未启用");
         }
         return binding;
     }
@@ -147,7 +148,7 @@ public class WechatJsapiTransferProvider implements TransferProvider {
             case "FAIL", "FAILED" -> TransferBillStatus.FAIL;
             case "CANCELLED", "CANCELED", "CANCELING", "CANCELLING" -> TransferBillStatus.CANCELLED;
             default -> throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "未知微信转账状态：" + status);
+                    PayErrorCodes.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "未知微信转账状态：" + status);
         };
     }
 }

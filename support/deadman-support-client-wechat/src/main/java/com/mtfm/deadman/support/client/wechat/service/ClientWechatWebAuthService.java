@@ -27,6 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import com.mtfm.deadman.plugin.wechat.support.WechatErrorCodes;
 
 /**
  * 用户端微信网页扫码 OAuth 登录与绑定业务服务。
@@ -169,7 +170,7 @@ public class ClientWechatWebAuthService {
         try {
             return bindTokenStore.consume(bindToken);
         } catch (BusinessException ex) {
-            if (ex.getCode() == ResultCode.WECHAT_BIND_TOKEN_INVALID.getCode()) {
+            if (ex.getCode() == WechatErrorCodes.WECHAT_BIND_TOKEN_INVALID) {
                 throw new BadCredentialsException(ex.getMessage(), ex);
             }
             throw ex;

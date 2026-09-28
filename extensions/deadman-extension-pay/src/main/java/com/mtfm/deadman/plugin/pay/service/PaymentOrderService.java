@@ -11,7 +11,6 @@ import org.springframework.util.StringUtils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PayFundLane;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.entity.PaymentOrder;
@@ -22,6 +21,8 @@ import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.PayMessages;
 
 /**
  * 支付平台单持久化服务，统一管理各渠道支付单的创建与状态流转。
@@ -51,7 +52,7 @@ public class PaymentOrderService {
             String outTradeNo, PaymentPrepayContext context, PaymentProvider provider, String fundLane) {
         String lane = StringUtils.hasText(fundLane) ? fundLane.trim() : PayFundLane.DIRECT;
         if (!PayFundLane.DIRECT.equals(lane) && !PayFundLane.ECOMMERCE.equals(lane)) {
-            throw new BusinessException(ResultCode.PAY_FUND_LANE_MISMATCH, "非法资金链路：" + lane);
+            throw new BusinessException(PayErrorCodes.PAY_FUND_LANE_MISMATCH, "非法资金链路：" + lane);
         }
         PaymentOrder order = PaymentOrder.builder()
                 .outTradeNo(outTradeNo)
@@ -100,7 +101,7 @@ public class PaymentOrderService {
                 outTradeNo, refundAmount, PaymentOrderStatus.REFUND, txId);
         if (updated <= 0) {
             throw new BusinessException(
-                    ResultCode.PAY_REFUND_AMOUNT_INVALID,
+                    PayErrorCodes.PAY_REFUND_AMOUNT_INVALID,
                     "累加退款金额失败（支付单不存在或已超过可退总额）：" + outTradeNo);
         }
     }
@@ -132,7 +133,7 @@ public class PaymentOrderService {
         PaymentOrder order = paymentOrderMapper.selectOne(new LambdaQueryWrapper<PaymentOrder>()
                 .eq(PaymentOrder::getOutTradeNo, outTradeNo));
         if (order == null) {
-            throw new BusinessException(ResultCode.PAY_ORDER_NOT_FOUND);
+            throw PayMessages.of(PayErrorCodes.PAY_ORDER_NOT_FOUND);
         }
         return order;
     }
@@ -148,7 +149,7 @@ public class PaymentOrderService {
                 .eq(PaymentOrder::getOutTradeNo, outTradeNo)
                 .last("FOR UPDATE"));
         if (order == null) {
-            throw new BusinessException(ResultCode.PAY_ORDER_NOT_FOUND);
+            throw PayMessages.of(PayErrorCodes.PAY_ORDER_NOT_FOUND);
         }
         return order;
     }

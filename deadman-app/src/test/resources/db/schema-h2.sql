@@ -124,6 +124,39 @@ CREATE TABLE IF NOT EXISTS sys_position (
     CONSTRAINT uk_sys_position_code UNIQUE (position_code)
 );
 
+CREATE TABLE IF NOT EXISTS sys_dict_group (
+    id              BIGINT        NOT NULL,
+    group_code      VARCHAR(64)   NOT NULL,
+    group_name      VARCHAR(128)  NOT NULL,
+    max_level       SMALLINT      NOT NULL,
+    remark          VARCHAR(255),
+    sort_order      INT           NOT NULL DEFAULT 0,
+    status          SMALLINT      NOT NULL DEFAULT 1,
+    is_deleted      SMALLINT      NOT NULL DEFAULT 0,
+    create_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_sys_dict_group_code UNIQUE (group_code)
+);
+
+CREATE TABLE IF NOT EXISTS sys_dict_item (
+    id              BIGINT        NOT NULL,
+    group_id        BIGINT        NOT NULL,
+    parent_id       BIGINT,
+    item_code       VARCHAR(64)   NOT NULL,
+    item_label      VARCHAR(128)  NOT NULL,
+    item_value      VARCHAR(256),
+    item_level      SMALLINT      NOT NULL,
+    remark          VARCHAR(255),
+    sort_order      INT           NOT NULL DEFAULT 0,
+    status          SMALLINT      NOT NULL DEFAULT 1,
+    is_deleted      SMALLINT      NOT NULL DEFAULT 0,
+    create_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_sys_dict_item_code UNIQUE (group_id, item_code)
+);
+
 CREATE TABLE IF NOT EXISTS sys_user_department (
     id              BIGINT    NOT NULL,
     user_id         BIGINT    NOT NULL,

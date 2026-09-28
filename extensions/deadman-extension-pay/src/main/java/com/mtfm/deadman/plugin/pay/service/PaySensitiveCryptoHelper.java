@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.crypto.constant.CryptoModuleCodes;
 import com.mtfm.deadman.plugin.crypto.facade.CryptoFacade;
 import com.mtfm.deadman.plugin.crypto.spi.CryptoContext;
@@ -14,6 +13,7 @@ import com.mtfm.deadman.plugin.pay.constant.PayCryptoPurposes;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.crypto.support.CryptoErrorCodes;
 
 /**
  * 支付敏感字段加解密助手（如转账收款人姓名）。
@@ -66,7 +66,7 @@ public class PaySensitiveCryptoHelper {
             return facade.decrypt(stored, TRANSFER_USER_NAME_CTX);
         } catch (BusinessException ex) {
             // 兼容审查前无 purpose AAD 的密文
-            if (ex.getCode() == ResultCode.CRYPTO_DECRYPT_FAILED.getCode()) {
+            if (ex.getCode() == CryptoErrorCodes.CRYPTO_DECRYPT_FAILED) {
                 log.warn("转账姓名按带 AAD 上下文解密失败，尝试无 AAD 兼容解密");
                 return facade.decrypt(stored);
             }
@@ -83,7 +83,7 @@ public class PaySensitiveCryptoHelper {
         CryptoFacade facade = cryptoFacadeProvider.getIfAvailable();
         if (facade == null) {
             throw new BusinessException(
-                    ResultCode.CRYPTO_CONFIG_INVALID,
+                    CryptoErrorCodes.CRYPTO_CONFIG_INVALID,
                     "CryptoFacade 未装配：转账姓名禁止明文存储，请启用 deadman-extension-crypto 并配置密钥");
         }
         return facade;

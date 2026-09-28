@@ -25,6 +25,7 @@ import com.mtfm.deadman.plugin.pay.spi.refund.RefundContext;
 import com.mtfm.deadman.plugin.pay.spi.refund.RefundOrderSnapshot;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 收付通交易门面：合单支付、分账、电商退款，资金链路固定为 {@link PayFundLane#ECOMMERCE}。
@@ -170,7 +171,7 @@ public class EcommerceTradeFacade {
         }
         if (!context.isCombinePay()) {
             throw new BusinessException(
-                    ResultCode.PAY_FUND_LANE_MISMATCH, "收付通门面必须传入合单子单，直连请用 DirectPayFacade");
+                    PayErrorCodes.PAY_FUND_LANE_MISMATCH, "收付通门面必须传入合单子单，直连请用 DirectPayFacade");
         }
     }
 
@@ -179,11 +180,11 @@ public class EcommerceTradeFacade {
         String lane = order.getFundLane();
         if (!StringUtils.hasText(lane)) {
             throw new BusinessException(
-                    ResultCode.PAY_FUND_LANE_MISMATCH, "支付单缺少资金链路标记，无法按收付通退款/同步");
+                    PayErrorCodes.PAY_FUND_LANE_MISMATCH, "支付单缺少资金链路标记，无法按收付通退款/同步");
         }
         if (!expectedLane.equals(lane)) {
             throw new BusinessException(
-                    ResultCode.PAY_FUND_LANE_MISMATCH,
+                    PayErrorCodes.PAY_FUND_LANE_MISMATCH,
                     "支付单资金链路不匹配：actual=" + lane + ", expected=" + expectedLane);
         }
     }

@@ -8,7 +8,6 @@ import java.util.Map;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.crypto.config.CryptoPluginProperties;
 import com.mtfm.deadman.plugin.crypto.key.CryptoKeyRegistry;
 import com.mtfm.deadman.plugin.crypto.spi.CryptoContext;
@@ -18,6 +17,7 @@ import com.mtfm.deadman.plugin.crypto.util.CryptoAad;
 import com.mtfm.deadman.plugin.crypto.util.CryptoPayloadCodec;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.crypto.support.CryptoErrorCodes;
 
 /**
  * {@link CryptoFacade} 默认实现：按算法策略 + 密钥注册表完成加解密。
@@ -92,7 +92,7 @@ public class DefaultCryptoFacade implements CryptoFacade {
         }
         ensureEnabled();
         if (!keyRegistry.hasAnyKey()) {
-            throw new BusinessException(ResultCode.CRYPTO_KEY_NOT_FOUND, "未配置任何加解密密钥");
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_KEY_NOT_FOUND, "未配置任何加解密密钥");
         }
         CryptoContext ctx = context == null ? CryptoContext.defaults() : context;
         EncryptionStrategy strategy = requireStrategy(ctx.algorithmId());
@@ -154,7 +154,7 @@ public class DefaultCryptoFacade implements CryptoFacade {
      */
     private void ensureEnabled() {
         if (!properties.isEnabled()) {
-            throw new BusinessException(ResultCode.CRYPTO_CONFIG_INVALID, "加解密未启用");
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_CONFIG_INVALID, "加解密未启用");
         }
     }
 
@@ -167,11 +167,11 @@ public class DefaultCryptoFacade implements CryptoFacade {
     private EncryptionStrategy requireStrategy(String algorithmId) {
         String resolved = StringUtils.hasText(algorithmId) ? algorithmId.trim() : defaultAlgorithm;
         if (!StringUtils.hasText(resolved)) {
-            throw new BusinessException(ResultCode.CRYPTO_ALGORITHM_UNSUPPORTED, "未配置默认加解密算法");
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_ALGORITHM_UNSUPPORTED, "未配置默认加解密算法");
         }
         EncryptionStrategy strategy = strategies.get(resolved);
         if (strategy == null) {
-            throw new BusinessException(ResultCode.CRYPTO_ALGORITHM_UNSUPPORTED, "不支持的加解密算法：" + resolved);
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_ALGORITHM_UNSUPPORTED, "不支持的加解密算法：" + resolved);
         }
         return strategy;
     }

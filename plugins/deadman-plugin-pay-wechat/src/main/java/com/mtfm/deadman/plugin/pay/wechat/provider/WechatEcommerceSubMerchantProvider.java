@@ -22,6 +22,7 @@ import com.mtfm.deadman.plugin.pay.wechat.vo.WechatEcommerceApplymentResult;
 import com.mtfm.deadman.plugin.pay.wechat.vo.WechatMediaUploadResult;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 微信收付通二级商户进件 Provider。
@@ -71,7 +72,7 @@ public class WechatEcommerceSubMerchantProvider implements SubMerchantProvider {
     public SubMerchantMediaUploadResult uploadMedia(String fileName, byte[] content) {
         WechatMediaUploadResult result = wechatPayApiGateway.uploadMedia(fileName, content);
         if (result == null || !StringUtils.hasText(result.mediaId())) {
-            throw new BusinessException(ResultCode.PAY_MEDIA_UPLOAD_FAILED, "微信媒体上传无 MediaID");
+            throw new BusinessException(PayErrorCodes.PAY_MEDIA_UPLOAD_FAILED, "微信媒体上传无 MediaID");
         }
         return new SubMerchantMediaUploadResult(result.mediaId());
     }
@@ -165,7 +166,7 @@ public class WechatEcommerceSubMerchantProvider implements SubMerchantProvider {
 
     private static SubMerchantApplyResult toResult(WechatEcommerceApplymentResult result) {
         if (result == null) {
-            throw new BusinessException(ResultCode.PAY_SUB_MERCHANT_APPLY_FAILED, "微信进件无响应");
+            throw new BusinessException(PayErrorCodes.PAY_SUB_MERCHANT_APPLY_FAILED, "微信进件无响应");
         }
         return new SubMerchantApplyResult(
                 result.outRequestNo(),

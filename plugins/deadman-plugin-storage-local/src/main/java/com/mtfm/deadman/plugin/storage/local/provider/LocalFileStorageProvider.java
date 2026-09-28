@@ -1,7 +1,6 @@
 package com.mtfm.deadman.plugin.storage.local.provider;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.file.spi.FileStorageProvider;
 import com.mtfm.deadman.plugin.file.spi.FileStorageUploadContext;
 import com.mtfm.deadman.plugin.file.spi.StoredFileRef;
@@ -19,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import com.mtfm.deadman.plugin.file.support.FileErrorCodes;
+import com.mtfm.deadman.plugin.file.support.FileMessages;
 
 /**
  * 本地磁盘文件存储 Provider，文件落盘至配置目录并生成公开访问 URL。
@@ -52,7 +53,7 @@ public class LocalFileStorageProvider implements FileStorageProvider {
             Files.createDirectories(targetPath.getParent());
             Files.copy(context.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "本地文件写入失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "本地文件写入失败");
         }
         String accessUrl = buildAccessUrl(storageKey);
         return new StoredFileRef(PROVIDER_ID, storageKey, accessUrl, null);
@@ -65,12 +66,12 @@ public class LocalFileStorageProvider implements FileStorageProvider {
     public InputStream open(StoredFileRef ref) {
         Path filePath = resolveBasePath().resolve(ref.storageKey());
         if (!Files.exists(filePath)) {
-            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+            throw FileMessages.of(FileErrorCodes.FILE_NOT_FOUND);
         }
         try {
             return Files.newInputStream(filePath);
         } catch (IOException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "本地文件读取失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "本地文件读取失败");
         }
     }
 
@@ -83,7 +84,7 @@ public class LocalFileStorageProvider implements FileStorageProvider {
         try {
             Files.deleteIfExists(filePath);
         } catch (IOException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "本地文件删除失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "本地文件删除失败");
         }
     }
 

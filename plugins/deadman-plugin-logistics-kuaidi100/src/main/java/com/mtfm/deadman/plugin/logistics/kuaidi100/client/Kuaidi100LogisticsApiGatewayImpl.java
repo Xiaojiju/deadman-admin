@@ -38,7 +38,6 @@ import com.kuaidi100.sdk.response.labelV2.OrderResult;
 import com.kuaidi100.sdk.response.labelV2.Result;
 import com.kuaidi100.sdk.utils.SignUtils;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.logistics.kuaidi100.config.Kuaidi100LogisticsPluginProperties;
 import com.mtfm.deadman.plugin.logistics.kuaidi100.constant.Kuaidi100ProviderIds;
 import com.mtfm.deadman.plugin.logistics.kuaidi100.util.Kuaidi100PrintRequestBuilder;
@@ -71,6 +70,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import com.mtfm.deadman.plugin.logistics.support.LogisticsErrorCodes;
 
 /**
  * 快递100 API 真实网关实现，基于官方 SDK 调用查单、订阅、面单与寄件接口。
@@ -108,7 +108,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
                     context.carrierCode(),
                     context.trackingNo(),
                     ex);
-            throw new BusinessException(ResultCode.LOGISTICS_TRACK_QUERY_FAILED, "快递100查单失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_TRACK_QUERY_FAILED, "快递100查单失败：" + ex.getMessage());
         }
     }
 
@@ -136,7 +136,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100快递公司识别失败：trackingNo={}", trackingNo, ex);
-            throw new BusinessException(ResultCode.LOGISTICS_CARRIER_DETECT_FAILED, "快递100识别失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_CARRIER_DETECT_FAILED, "快递100识别失败：" + ex.getMessage());
         }
     }
 
@@ -156,7 +156,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
             SubscribeResp response = new Subscribe().subscribe(request);
             if (response == null) {
-                throw new BusinessException(ResultCode.LOGISTICS_SUBSCRIBE_FAILED, "快递100订阅返回为空");
+                throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SUBSCRIBE_FAILED, "快递100订阅返回为空");
             }
             return new LogisticsSubscribeResult(
                     response.isResult(), response.getReturnCode(), response.getMessage());
@@ -168,7 +168,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
                     context.carrierCode(),
                     context.trackingNo(),
                     ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SUBSCRIBE_FAILED, "快递100订阅失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SUBSCRIBE_FAILED, "快递100订阅失败：" + ex.getMessage());
         }
     }
 
@@ -203,7 +203,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             Result<OrderResult> response = new LabelV2().order(printReq);
             if (response == null || !response.isSuccess()) {
                 String message = response == null ? "面单下单返回为空" : response.getMessage();
-                throw new BusinessException(ResultCode.LOGISTICS_WAYBILL_FAILED, message);
+                throw new BusinessException(LogisticsErrorCodes.LOGISTICS_WAYBILL_FAILED, message);
             }
             OrderResult data = response.getData();
             return new LogisticsWaybillOrderResult(
@@ -218,7 +218,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100电子面单下单失败：carrier={}, bizOrderId={}", context.carrierCode(), context.bizOrderId(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_WAYBILL_FAILED, "快递100面单下单失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_WAYBILL_FAILED, "快递100面单下单失败：" + ex.getMessage());
         }
     }
 
@@ -244,7 +244,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100电子面单取消失败：trackingNo={}", context.trackingNo(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_WAYBILL_FAILED, "快递100面单取消失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_WAYBILL_FAILED, "快递100面单取消失败：" + ex.getMessage());
         }
     }
 
@@ -263,7 +263,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100商家官方寄件下单失败：carrier={}, bizOrderId={}", context.carrierCode(), context.bizOrderId(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100商家官方寄件下单失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "快递100商家官方寄件下单失败：" + ex.getMessage());
         }
     }
 
@@ -286,7 +286,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100商家官方寄件取消失败：orderId={}", context.orderId(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "快递100商家官方寄件取消失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_CANCEL_FAILED, "快递100商家官方寄件取消失败：" + ex.getMessage());
         }
     }
 
@@ -310,7 +310,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100商家官方寄件询价失败：carrier={}", context.carrierCode(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100商家官方寄件询价失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "快递100商家官方寄件询价失败：" + ex.getMessage());
         }
     }
 
@@ -329,7 +329,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100 C 端寄件下单失败：carrier={}", context.carrierCode(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100 C 端寄件下单失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "快递100 C 端寄件下单失败：" + ex.getMessage());
         }
     }
 
@@ -352,7 +352,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100 C 端寄件取消失败：orderId={}", context.orderId(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "快递100 C 端寄件取消失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_CANCEL_FAILED, "快递100 C 端寄件取消失败：" + ex.getMessage());
         }
     }
 
@@ -376,7 +376,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
             throw ex;
         } catch (Exception ex) {
             log.error("快递100 C 端寄件询价失败：carrier={}", context.carrierCode(), ex);
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100 C 端寄件询价失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "快递100 C 端寄件询价失败：" + ex.getMessage());
         }
     }
 
@@ -386,13 +386,13 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private void validateQueryCredentials() {
         if (!StringUtils.hasText(properties.getKey()) || !StringUtils.hasText(properties.getCustomer())) {
-            throw new BusinessException(ResultCode.LOGISTICS_CONFIG_INVALID, "快递100 key 或 customer 未配置");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_CONFIG_INVALID, "快递100 key 或 customer 未配置");
         }
     }
 
     private void validateKey() {
         if (!StringUtils.hasText(properties.getKey())) {
-            throw new BusinessException(ResultCode.LOGISTICS_CONFIG_INVALID, "快递100 key 未配置");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_CONFIG_INVALID, "快递100 key 未配置");
         }
     }
 
@@ -409,11 +409,11 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private LogisticsTrackQueryResult mapTrackResponse(LogisticsTrackQueryContext context, QueryTrackResp response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_TRACK_QUERY_FAILED, "快递100返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_TRACK_QUERY_FAILED, "快递100返回为空");
         }
         if (!response.isResult()) {
             String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "查单失败";
-            throw new BusinessException(ResultCode.LOGISTICS_TRACK_QUERY_FAILED, message);
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_TRACK_QUERY_FAILED, message);
         }
         return Kuaidi100TrackMapper.toQueryResult(Kuaidi100ProviderIds.KUAIDI100, context, response);
     }
@@ -538,7 +538,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
     @SuppressWarnings("unchecked")
     private PrintBaseResp<Map<String, Object>> parsePrintBaseResp(HttpResult httpResult) {
         if (httpResult == null || !StringUtils.hasText(httpResult.getBody())) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "快递100返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "快递100返回为空");
         }
         try {
             JsonNode root = JSON_MAPPER.readTree(httpResult.getBody());
@@ -554,13 +554,13 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "解析快递100响应失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "解析快递100响应失败：" + ex.getMessage());
         }
     }
 
     private LogisticsMerchantShipOrderResult mapMerchantShipOrderResult(PrintBaseResp<?> response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "商家官方寄件返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "商家官方寄件返回为空");
         }
         if (!response.isResult()) {
             String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "商家官方寄件下单失败";
@@ -577,7 +577,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private LogisticsMerchantShipCancelResult mapMerchantShipCancelResult(PrintBaseResp<?> response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "商家官方寄件取消返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_CANCEL_FAILED, "商家官方寄件取消返回为空");
         }
         if (!response.isResult()) {
             String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "商家官方寄件取消失败";
@@ -588,7 +588,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private LogisticsMerchantShipPriceResult mapMerchantShipPriceResult(HttpResult httpResult) {
         if (httpResult == null || !StringUtils.hasText(httpResult.getBody())) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "商家官方寄件询价返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "商家官方寄件询价返回为空");
         }
         String rawData = httpResult.getBody();
         try {
@@ -608,13 +608,13 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
                     extractString(data, "totalPrice"));
             return new LogisticsMerchantShipPriceResult(true, message, price, rawData);
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "解析商家官方寄件询价响应失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "解析商家官方寄件询价响应失败：" + ex.getMessage());
         }
     }
 
     private LogisticsConsumerShipOrderResult mapConsumerShipOrderResult(PrintBaseResp<?> response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "C 端寄件返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "C 端寄件返回为空");
         }
         if (!response.isResult()) {
             String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "C 端寄件下单失败";
@@ -630,7 +630,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private LogisticsConsumerShipCancelResult mapConsumerShipCancelResult(PrintBaseResp<?> response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_CANCEL_FAILED, "C 端寄件取消返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_CANCEL_FAILED, "C 端寄件取消返回为空");
         }
         if (!response.isResult()) {
             String message = StringUtils.hasText(response.getMessage()) ? response.getMessage() : "C 端寄件取消失败";
@@ -641,7 +641,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
 
     private LogisticsConsumerShipPriceResult mapConsumerShipPriceResult(HttpResult httpResult) {
         if (httpResult == null || !StringUtils.hasText(httpResult.getBody())) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "C 端寄件询价返回为空");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "C 端寄件询价返回为空");
         }
         String rawData = httpResult.getBody();
         try {
@@ -661,7 +661,7 @@ public class Kuaidi100LogisticsApiGatewayImpl implements Kuaidi100LogisticsApiGa
                     extractString(data, "totalPrice"));
             return new LogisticsConsumerShipPriceResult(true, message, price, rawData);
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.LOGISTICS_SHIP_ORDER_FAILED, "解析 C 端寄件询价响应失败：" + ex.getMessage());
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SHIP_ORDER_FAILED, "解析 C 端寄件询价响应失败：" + ex.getMessage());
         }
     }
 

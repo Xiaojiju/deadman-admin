@@ -27,6 +27,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
+import com.mtfm.deadman.system.support.SystemErrorCodes;
+import com.mtfm.deadman.system.support.SystemMessages;
 
 /**
  * 角色与权限分配管理。
@@ -102,7 +104,7 @@ public class RoleAdminService implements UserRoleAssignment {
     public RoleDetailVO createRole(CreateRoleRequest request) {
         assertCustomRoleCode(request.roleCode());
         if (sysRoleService.findByCode(request.roleCode()) != null) {
-            throw new BusinessException(ResultCode.ROLE_CODE_EXISTS);
+            throw SystemMessages.of(SystemErrorCodes.ROLE_CODE_EXISTS);
         }
         validatePermissionCodes(request.permissionCodes());
         SysRole role = SysRole.builder()
@@ -136,7 +138,7 @@ public class RoleAdminService implements UserRoleAssignment {
         }
         if (request.status() != null) {
             if (sysRoleService.isSystemBuiltin(role) && request.status() != UserStatus.ACTIVE.getValue()) {
-                throw new BusinessException(ResultCode.ROLE_SYSTEM_PROTECTED);
+                throw SystemMessages.of(SystemErrorCodes.ROLE_SYSTEM_PROTECTED);
             }
             role.setStatus(request.status());
         }
@@ -258,14 +260,14 @@ public class RoleAdminService implements UserRoleAssignment {
         Set<String> valid = permissionCatalog.allPermissionCodes();
         for (String code : permissionCodes) {
             if (!valid.contains(code)) {
-                throw new BusinessException(ResultCode.PERMISSION_INVALID, "无效权限码: " + code);
+                throw new BusinessException(SystemErrorCodes.PERMISSION_INVALID, "无效权限码: " + code);
             }
         }
     }
 
     private void assertCustomRoleCode(String roleCode) {
         if (SysRoleCodes.SUPER_ADMIN.equals(roleCode) || SysRoleCodes.USER.equals(roleCode)) {
-            throw new BusinessException(ResultCode.ROLE_SYSTEM_PROTECTED, "系统保留角色编码不可用于新建");
+            throw new BusinessException(SystemErrorCodes.ROLE_SYSTEM_PROTECTED, "系统保留角色编码不可用于新建");
         }
     }
 
