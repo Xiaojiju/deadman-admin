@@ -49,19 +49,7 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-plugin-wechat</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-support-wechat</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
             <artifactId>deadman-component-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
-            <artifactId>deadman-support-client-wechat</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
