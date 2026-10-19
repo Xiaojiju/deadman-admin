@@ -53,10 +53,7 @@ public class LocalFileStorageProvider implements FileStorageProvider {
             Files.createDirectories(targetPath.getParent());
             Files.copy(context.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException ex) {
-<<<<<<< HEAD
             log.error("本地文件写入失败，目标 {}", targetPath, ex);
-=======
->>>>>>> refs/remotes/origin/develop-1.0.1
             throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "本地文件写入失败");
         }
         String accessUrl = buildAccessUrl(storageKey);
