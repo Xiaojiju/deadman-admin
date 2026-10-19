@@ -22,6 +22,7 @@ public class ClientFileBizTypeContributor implements FileBizTypeContributor, Sen
     @Override
     public Collection<String> contribute() {
         return List.of("merchant-license", "avatar", "banner");
+<<<<<<< HEAD
     }
 
     /**
@@ -32,5 +33,7 @@ public class ClientFileBizTypeContributor implements FileBizTypeContributor, Sen
     @Override
     public Collection<String> sensitiveBizTypes() {
         return List.of("merchant-license");
+=======
+>>>>>>> refs/remotes/origin/develop-1.0.1
     }
 }

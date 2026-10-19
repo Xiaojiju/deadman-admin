@@ -1,10 +1,13 @@
 package com.mtfm.deadman.plugin.sms;
 
 import java.security.SecureRandom;
+<<<<<<< HEAD
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+=======
+>>>>>>> refs/remotes/origin/develop-1.0.1
 
 import com.mtfm.deadman.common.validation.PhoneNumber;
 import com.mtfm.deadman.plugin.sms.config.SmsPluginProperties;
@@ -14,12 +17,17 @@ import com.mtfm.deadman.plugin.sms.config.SmsPluginProperties;
  */
 public class SmsCodeService {
 
+<<<<<<< HEAD
     private static final Logger log = LoggerFactory.getLogger(SmsCodeService.class);
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private static final AtomicBoolean FIXED_CODE_WARNED = new AtomicBoolean();
 
+=======
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+>>>>>>> refs/remotes/origin/develop-1.0.1
     private final SmsCodeStore smsCodeStore;
     private final SmsSender smsSender;
     private final SmsPluginProperties properties;
@@ -48,7 +56,11 @@ public class SmsCodeService {
         if (!smsCodeStore.markIfAbsent(limitKey(scene, normalized), properties.getResendInterval())) {
             throw SmsMessages.of(SmsErrorCodes.TOO_FREQUENT, "sms.code.too_frequent", "验证码发送过于频繁");
         }
+<<<<<<< HEAD
         String code = nextCode();
+=======
+        String code = nextCode(properties.getCodeLength());
+>>>>>>> refs/remotes/origin/develop-1.0.1
         smsSender.send(normalized, scene, code);
         smsCodeStore.save(codeKey(scene, normalized), code, properties.getCodeTtl());
     }
@@ -67,6 +79,7 @@ public class SmsCodeService {
         }
     }
 
+<<<<<<< HEAD
     /**
      * 开启固定码时返回配置值，否则按位数随机生成。
      */
@@ -85,6 +98,9 @@ public class SmsCodeService {
     }
 
     private static String randomCode(int length) {
+=======
+    private String nextCode(int length) {
+>>>>>>> refs/remotes/origin/develop-1.0.1
         int digits = Math.max(4, Math.min(length, 8));
         int bound = (int)Math.pow(10, digits);
         int floor = bound / 10;

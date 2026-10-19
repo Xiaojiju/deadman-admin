@@ -53,6 +53,26 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-identity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-sms</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-plugin-sms-login</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-support-client-sms</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
+            <artifactId>deadman-component-wgb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-data-scope</artifactId>
         </dependency>
         <dependency>

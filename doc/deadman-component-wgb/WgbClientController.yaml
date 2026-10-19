@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: WGB 用户资料与实名认证
+  version: 1.0.0
+  description: |
+    用户端资料维护、更换手机号、个人实名与企业认证。
+    登录验证码由 `deadman-plugin-sms` 与 `deadman-support-client-sms` 提供：
+    `POST /client/api/auth/sms/send` 发送，`POST /client/api/auth/login/sms` 登录（未注册则自动开通）。
+    管理端在已有 `GET /api/client-users/{userId}` 之外，用 `GET /api/wgb/users/{userId}` 查看认证材料。
+    实名流程在 `deadman-plugin-identity`，由 `deadman.plugin.identity.*` 开关控制。注册接口不强制实名。
+servers:
+  - url: http://localhost:8080
+paths:
+  /client/api/auth/sms/send:
+    post:
+      summary: 发送登录验证码
+      operationId: clientSendLoginSms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: 成功
+  /client/api/auth/login/sms:
+    post:
+      summary: 手机验证码登录（未注册则自动开通）
+      operationId: wgbSmsLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+      responses:
+        '200':
+          description: 返回用户端 JWT
+  /client/api/wgb/identity/settings:
+    get:
+      summary: 实名与企业认证开关
+      operationId: wgbIdentitySettings
+      responses:
+        '200':
+          description: 含 realNameEnabled、requiredOnRegister、matchScoreThreshold（默认 70）、livenessScoreThreshold（默认 40）
+  /client/api/wgb/identity/personal:
+    post:
+      summary: 个人实名（先活体，再与身份证人像面比对）
+      operationId: wgbSubmitPersonal
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 通过后回写性别、出生日期与身份证号；证件号脱敏
+    get:
+      summary: 查询本人实名材料
+      operationId: wgbGetPersonal
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 身份证号脱敏
+  /client/api/wgb/identity/enterprise:
+    post:
+      summary: 企业认证（法人活体与人脸比对）
+      operationId: wgbSubmitEnterprise
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 法人身份证号脱敏
+    get:
+      summary: 查询本人企业认证
+      operationId: wgbGetEnterprise
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 法人身份证号脱敏
+  /client/api/wgb/users/me:
+    get:
+      summary: 本人扩展资料
+      operationId: wgbMyProfile
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 性别、出生日期、脱敏身份证号
+    put:
+      summary: 更新性别与出生日期
+      operationId: wgbUpdateMyProfile
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 已通过实名后不可再改这两项
+  /client/api/wgb/users/me/phone/code:
+    post:
+      summary: 向新手机号发送换绑验证码
+      operationId: wgbSendChangePhoneCode
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 成功
+  /client/api/wgb/users/me/phone:
+    put:
+      summary: 校验新手机号验证码并换绑
+      operationId: wgbChangePhone
+      security:
+        - clientBearer: []
+      responses:
+        '200':
+          description: 成功
+  /api/wgb/users/{userId}:
+    get:
+      summary: 管理端查看用户资料与认证材料
+      operationId: wgbAdminUserDetail
+      security:
+        - adminBearer: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: |
+            需要权限 `wgb-user:profile:read`。
+            同时具备 `wgb-user:sensitive:read` 时身份证号为明文，否则脱敏。
+components:
+  securitySchemes:
+    clientBearer:
+      type: http
+      scheme: bearer
+    adminBearer:
+      type: http
+      scheme: bearer

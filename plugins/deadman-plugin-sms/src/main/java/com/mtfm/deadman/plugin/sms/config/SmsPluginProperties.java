@@ -25,12 +25,15 @@ public class SmsPluginProperties {
     /** 验证码位数 */
     private int codeLength = 6;
 
+<<<<<<< HEAD
     /** 是否发送固定验证码。上线后必须关闭，关闭后恢复随机码 */
     private boolean fixedCodeEnabled = false;
 
     /** 固定验证码，仅 fixedCodeEnabled 为 true 且非空时使用 */
     private String fixedCode = "";
 
+=======
+>>>>>>> refs/remotes/origin/develop-1.0.1
     /** 默认日志发送器是否打印验证码。接入真实通道后应关闭 */
     private boolean logCode = true;
 }
