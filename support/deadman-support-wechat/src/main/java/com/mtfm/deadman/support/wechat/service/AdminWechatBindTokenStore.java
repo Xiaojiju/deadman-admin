@@ -12,6 +12,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.util.UUID;
+import com.mtfm.deadman.plugin.wechat.support.WechatErrorCodes;
+import com.mtfm.deadman.plugin.wechat.support.WechatMessages;
 
 /**
  * 管理端微信 OAuth 待绑定临时令牌 Redis 存储。
@@ -51,17 +53,17 @@ public class AdminWechatBindTokenStore {
      */
     public AdminWechatPendingSession consume(String bindToken) {
         if (!StringUtils.hasText(bindToken)) {
-            throw new BusinessException(ResultCode.WECHAT_BIND_TOKEN_INVALID);
+            throw WechatMessages.of(WechatErrorCodes.WECHAT_BIND_TOKEN_INVALID);
         }
         String key = RedisKeyConstants.adminWechatBindKey(bindToken.trim());
         String payload = stringRedisTemplate.opsForValue().getAndDelete(key);
         if (!StringUtils.hasText(payload)) {
-            throw new BusinessException(ResultCode.WECHAT_BIND_TOKEN_INVALID);
+            throw WechatMessages.of(WechatErrorCodes.WECHAT_BIND_TOKEN_INVALID);
         }
         try {
             return jsonMapper.readValue(payload, AdminWechatPendingSession.class);
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.WECHAT_BIND_TOKEN_INVALID);
+            throw WechatMessages.of(WechatErrorCodes.WECHAT_BIND_TOKEN_INVALID);
         }
     }
 

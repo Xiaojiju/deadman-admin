@@ -26,6 +26,7 @@ import com.mtfm.deadman.plugin.pay.spi.payment.PaymentQueryResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * Mock 支付 Provider：本地/测试环境模拟预下单、查单与回调，无需真实渠道。
@@ -122,7 +123,7 @@ public class MockPaymentProvider implements PaymentProvider {
         String transactionId = readJsonStringField(context.rawBody(), "transaction_id");
         String status = readJsonStringField(context.rawBody(), "status");
         if (!StringUtils.hasText(outTradeNo) || !StringUtils.hasText(status)) {
-            throw new BusinessException(ResultCode.PAY_NOTIFY_PARSE_FAILED, "Mock 回调缺少 out_trade_no 或 status");
+            throw new BusinessException(PayErrorCodes.PAY_NOTIFY_PARSE_FAILED, "Mock 回调缺少 out_trade_no 或 status");
         }
         if (!StringUtils.hasText(transactionId)) {
             transactionId = "mock_tx_" + UUID.randomUUID().toString().replace("-", "");
@@ -150,7 +151,7 @@ public class MockPaymentProvider implements PaymentProvider {
         return switch (normalized) {
             case "SUCCESS", "NOT_PAY", "CLOSED", "REFUND" -> normalized;
             case "NOTPAY" -> PaymentOrderStatus.NOT_PAY;
-            default -> throw new BusinessException(ResultCode.PAY_NOTIFY_PARSE_FAILED, "Mock 回调 status 无效：" + status);
+            default -> throw new BusinessException(PayErrorCodes.PAY_NOTIFY_PARSE_FAILED, "Mock 回调 status 无效：" + status);
         };
     }
 

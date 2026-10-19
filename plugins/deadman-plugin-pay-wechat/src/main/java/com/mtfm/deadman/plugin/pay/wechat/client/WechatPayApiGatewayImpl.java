@@ -113,6 +113,8 @@ import com.wechat.pay.java.service.refund.model.Refund;
 import com.wechat.pay.java.service.refund.model.RefundNotification;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 微信支付 APIv3 真实网关实现（优先官方 SDK Service；无 Service 的 API 使用强类型模型 + HttpClient）。
@@ -212,7 +214,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return new WechatPayJsapiPrepayResult(prepayId, params);
         } catch (RuntimeException ex) {
             log.warn("微信预下单失败：outTradeNo={}", command.outTradeNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "微信预下单失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "微信预下单失败");
         }
     }
 
@@ -222,7 +224,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
     @Override
     public WechatPayRequestPaymentParams signJsapiRequestPayment(String appId, String prepayId) {
         if (!StringUtils.hasText(appId) || !StringUtils.hasText(prepayId)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "缺少 AppId 或 prepay_id，无法继续支付");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "缺少 AppId 或 prepay_id，无法继续支付");
         }
         return signRequestPayment(ordinary, appId.trim(), prepayId.trim());
     }
@@ -244,7 +246,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toParseResult(transaction);
         } catch (RuntimeException ex) {
             log.warn("微信支付回调验签或解密失败", ex);
-            throw new BusinessException(ResultCode.PAY_NOTIFY_PARSE_FAILED, "微信支付回调验签或解密失败");
+            throw new BusinessException(PayErrorCodes.PAY_NOTIFY_PARSE_FAILED, "微信支付回调验签或解密失败");
         }
     }
 
@@ -261,7 +263,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toParseResult(transaction);
         } catch (RuntimeException ex) {
             log.warn("微信查单失败：outTradeNo={}", outTradeNo, ex);
-            throw new BusinessException(ResultCode.PAY_QUERY_FAILED, "微信查单失败");
+            throw new BusinessException(PayErrorCodes.PAY_QUERY_FAILED, "微信查单失败");
         }
     }
 
@@ -299,7 +301,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                         ex.getErrorCode(),
                         ex);
                 throw new BusinessException(
-                        ResultCode.WECHAT_PAY_REFUND_FAILED,
+                        WechatPayErrorCodes.WECHAT_PAY_REFUND_FAILED,
                         "微信退款申请失败：" + ex.getErrorCode(),
                         ex);
             }
@@ -308,10 +310,10 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     command.outRefundNo(),
                     ex.getErrorCode(),
                     ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_FAILED, "微信退款调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_FAILED, "微信退款调用异常，结果不确定", ex);
         } catch (RuntimeException ex) {
             log.warn("微信退款申请异常（结果不确定）：outRefundNo={}", command.outRefundNo(), ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_FAILED, "微信退款调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_FAILED, "微信退款调用异常，结果不确定", ex);
         }
     }
 
@@ -333,7 +335,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toRefundNotifyParseResult(notification);
         } catch (RuntimeException ex) {
             log.warn("微信退款回调验签或解密失败", ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_NOTIFY_PARSE_FAILED, "微信退款回调验签或解密失败");
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_NOTIFY_PARSE_FAILED, "微信退款回调验签或解密失败");
         }
     }
 
@@ -349,7 +351,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toRefundParseResult(refund);
         } catch (RuntimeException ex) {
             log.warn("微信查退款失败：outRefundNo={}", outRefundNo, ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_QUERY_FAILED, "微信查退款失败");
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_QUERY_FAILED, "微信查退款失败");
         }
     }
 
@@ -370,7 +372,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toEcommerceRefundParseResult(refund);
         } catch (RuntimeException ex) {
             log.warn("微信收付通查退款失败：outRefundNo={}, subMchid={}", outRefundNo, subMchid, ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_QUERY_FAILED, "微信收付通查退款失败");
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_QUERY_FAILED, "微信收付通查退款失败");
         }
     }
 
@@ -392,7 +394,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toEcommerceRefundNotifyParseResult(notification);
         } catch (RuntimeException ex) {
             log.warn("微信收付通退款回调验签或解密失败", ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_NOTIFY_PARSE_FAILED, "微信收付通退款回调验签或解密失败");
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_NOTIFY_PARSE_FAILED, "微信收付通退款回调验签或解密失败");
         }
     }
 
@@ -402,7 +404,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
     @Override
     public WechatRefundParseResult createAbnormalRefund(WechatAbnormalRefundCommand command) {
         if (!StringUtils.hasText(command.channelRefundId()) || !StringUtils.hasText(command.outRefundNo())) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_ABNORMAL_REFUND_FAILED,
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_ABNORMAL_REFUND_FAILED,
                     "异常退款缺少 refund_id 或 out_refund_no");
         }
         String receiveType = StringUtils.hasText(command.receiveType())
@@ -430,7 +432,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                         ex.getErrorCode(),
                         ex);
                 throw new BusinessException(
-                        ResultCode.WECHAT_PAY_ABNORMAL_REFUND_FAILED,
+                        WechatPayErrorCodes.WECHAT_PAY_ABNORMAL_REFUND_FAILED,
                         "微信异常退款申请失败：" + ex.getErrorCode(),
                         ex);
             }
@@ -440,14 +442,14 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     command.channelRefundId(),
                     ex.getErrorCode(),
                     ex);
-            throw new BusinessException(ResultCode.PAY_ABNORMAL_REFUND_FAILED, "微信异常退款调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_ABNORMAL_REFUND_FAILED, "微信异常退款调用异常，结果不确定", ex);
         } catch (RuntimeException ex) {
             log.warn(
                     "微信异常退款申请异常（结果不确定）：outRefundNo={}, refundId={}",
                     command.outRefundNo(),
                     command.channelRefundId(),
                     ex);
-            throw new BusinessException(ResultCode.PAY_ABNORMAL_REFUND_FAILED, "微信异常退款调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_ABNORMAL_REFUND_FAILED, "微信异常退款调用异常，结果不确定", ex);
         }
     }
 
@@ -481,7 +483,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                         ex.getErrorCode(),
                         ex);
                 throw new BusinessException(
-                        ResultCode.WECHAT_PAY_TRANSFER_FAILED,
+                        WechatPayErrorCodes.WECHAT_PAY_TRANSFER_FAILED,
                         "微信商家转账申请失败：" + ex.getErrorCode(),
                         ex);
             }
@@ -490,10 +492,10 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     command.outBillNo(),
                     ex.getErrorCode(),
                     ex);
-            throw new BusinessException(ResultCode.PAY_TRANSFER_FAILED, "微信商家转账调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_FAILED, "微信商家转账调用异常，结果不确定", ex);
         } catch (RuntimeException ex) {
             log.warn("微信商家转账申请异常（结果不确定）：outBillNo={}", command.outBillNo(), ex);
-            throw new BusinessException(ResultCode.PAY_TRANSFER_FAILED, "微信商家转账调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_FAILED, "微信商家转账调用异常，结果不确定", ex);
         }
     }
 
@@ -521,7 +523,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     notification.getFailReason());
         } catch (RuntimeException ex) {
             log.warn("微信商家转账回调验签或解密失败", ex);
-            throw new BusinessException(ResultCode.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "微信商家转账回调验签或解密失败");
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_NOTIFY_PARSE_FAILED, "微信商家转账回调验签或解密失败");
         }
     }
 
@@ -544,7 +546,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toTransferParseResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信商家转账查单失败：outBillNo={}", outBillNo, ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_TRANSFER_FAILED, "微信商家转账查单失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_TRANSFER_FAILED, "微信商家转账查单失败");
         }
     }
 
@@ -595,7 +597,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             CombinePrepayResponse resp = response.getServiceResponse();
             String prepayId = resp == null ? null : resp.getPrepayId();
             if (!StringUtils.hasText(prepayId)) {
-                throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "收付通合单预下单未返回 prepay_id");
+                throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "收付通合单预下单未返回 prepay_id");
             }
             WechatPayRequestPaymentParams params = signRequestPayment(partner, command.combineAppid(), prepayId);
             return new WechatEcommerceCombinePrepayResult(prepayId, params);
@@ -603,7 +605,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             throw ex;
         } catch (RuntimeException ex) {
             log.warn("收付通合单预下单失败：combineOutTradeNo={}", command.combineOutTradeNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "收付通合单预下单失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "收付通合单预下单失败");
         }
     }
 
@@ -626,7 +628,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toCombineParseResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("收付通合单查单失败：combineOutTradeNo={}", combineOutTradeNo, ex);
-            throw new BusinessException(ResultCode.PAY_QUERY_FAILED, "收付通合单查单失败");
+            throw new BusinessException(PayErrorCodes.PAY_QUERY_FAILED, "收付通合单查单失败");
         }
     }
 
@@ -648,7 +650,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toCombineParseResult(decrypted);
         } catch (RuntimeException ex) {
             log.warn("收付通合单支付回调验签或解密失败", ex);
-            throw new BusinessException(ResultCode.PAY_NOTIFY_PARSE_FAILED, "收付通合单支付回调验签或解密失败");
+            throw new BusinessException(PayErrorCodes.PAY_NOTIFY_PARSE_FAILED, "收付通合单支付回调验签或解密失败");
         }
     }
 
@@ -683,7 +685,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toProfitSharingCreateResult(response);
         } catch (RuntimeException ex) {
             log.warn("收付通请求分账失败：outOrderNo={}", command.outOrderNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "收付通请求分账失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "收付通请求分账失败");
         }
     }
 
@@ -708,7 +710,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     resp.getReceivers() == null ? null : GsonUtil.toJson(resp.getReceivers()));
         } catch (RuntimeException ex) {
             log.warn("收付通分账查询失败：outOrderNo={}", outOrderNo, ex);
-            throw new BusinessException(ResultCode.PAY_QUERY_FAILED, "收付通分账查询失败");
+            throw new BusinessException(PayErrorCodes.PAY_QUERY_FAILED, "收付通分账查询失败");
         }
     }
 
@@ -732,7 +734,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     null);
         } catch (RuntimeException ex) {
             log.warn("收付通完结分账失败：outOrderNo={}", command.outOrderNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "收付通完结分账失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "收付通完结分账失败");
         }
     }
 
@@ -766,7 +768,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     resp.getResult());
         } catch (RuntimeException ex) {
             log.warn("收付通分账回退失败：outReturnNo={}", command.outReturnNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_REFUND_FAILED, "收付通分账回退失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_REFUND_FAILED, "收付通分账回退失败");
         }
     }
 
@@ -784,7 +786,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             partner.ecommerceProfitSharingService().addReceiver(request);
         } catch (RuntimeException ex) {
             log.warn("收付通添加分账接收方失败：account={}", command.account(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "收付通添加分账接收方失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "收付通添加分账接收方失败");
         }
     }
 
@@ -796,7 +798,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         // 官方文档：敏感字段用微信支付公钥 RSA-OAEP 加密，请求头 Wechatpay-Serial 填同一公钥 ID
         if (!partner.account().usePublicKeyVerifier()) {
             throw new BusinessException(
-                    ResultCode.WECHAT_PAY_CONFIG_INVALID,
+                    WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID,
                     "收付通进件需配置合作伙伴微信支付公钥 public-key-path 与 public-key-id（Wechatpay-Serial）");
         }
         PrivacyEncryptor encryptor = partner.encryptor();
@@ -871,7 +873,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toApplymentResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("收付通进件申请失败：outRequestNo={}, wechatpaySerial={}", command.outRequestNo(), wechatpaySerial, ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "收付通进件申请失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "收付通进件申请失败");
         }
     }
 
@@ -894,7 +896,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return toApplymentResult(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("收付通进件查询失败：outRequestNo={}", outRequestNo, ex);
-            throw new BusinessException(ResultCode.PAY_QUERY_FAILED, "收付通进件查询失败");
+            throw new BusinessException(PayErrorCodes.PAY_QUERY_FAILED, "收付通进件查询失败");
         }
     }
 
@@ -916,14 +918,14 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             FileUploadResponse response =
                     partner.fileUploadService().uploadImage(MERCHANT_MEDIA_UPLOAD_URL, meta, normalizedName, content);
             if (response == null || !StringUtils.hasText(response.getMediaId())) {
-                throw new BusinessException(ResultCode.PAY_MEDIA_UPLOAD_FAILED, "微信媒体上传未返回 media_id");
+                throw new BusinessException(PayErrorCodes.PAY_MEDIA_UPLOAD_FAILED, "微信媒体上传未返回 media_id");
             }
             return new WechatMediaUploadResult(response.getMediaId());
         } catch (BusinessException ex) {
             throw ex;
         } catch (RuntimeException ex) {
             log.warn("微信媒体文件上传失败：fileName={}", normalizedName, ex);
-            throw new BusinessException(ResultCode.PAY_MEDIA_UPLOAD_FAILED, "微信媒体文件上传失败");
+            throw new BusinessException(PayErrorCodes.PAY_MEDIA_UPLOAD_FAILED, "微信媒体文件上传失败");
         }
     }
 
@@ -1008,7 +1010,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                         ex.getErrorCode(),
                         ex);
                 throw new BusinessException(
-                        ResultCode.WECHAT_PAY_REFUND_FAILED,
+                        WechatPayErrorCodes.WECHAT_PAY_REFUND_FAILED,
                         "收付通退款申请失败：" + ex.getErrorCode(),
                         ex);
             }
@@ -1017,10 +1019,10 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     command.outRefundNo(),
                     ex.getErrorCode(),
                     ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_FAILED, "收付通退款调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_FAILED, "收付通退款调用异常，结果不确定", ex);
         } catch (RuntimeException ex) {
             log.warn("收付通退款申请异常（结果不确定）：outRefundNo={}", command.outRefundNo(), ex);
-            throw new BusinessException(ResultCode.PAY_REFUND_FAILED, "收付通退款调用异常，结果不确定", ex);
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_FAILED, "收付通退款调用异常，结果不确定", ex);
         }
     }
 
@@ -1065,7 +1067,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分创建服务订单失败：outOrderNo={}", cmd.outOrderNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分创建服务订单失败", ex);
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分创建服务订单失败", ex);
         }
     }
 
@@ -1095,7 +1097,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分查询服务订单失败：outOrderNo={}", outOrderNo, ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分查询服务订单失败", ex);
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分查询服务订单失败", ex);
         }
     }
 
@@ -1116,7 +1118,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分取消服务订单失败：outOrderNo={}", cmd.outOrderNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分取消服务订单失败", ex);
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分取消服务订单失败", ex);
         }
     }
 
@@ -1148,7 +1150,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return requirePayScoreOrderResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分完结服务订单失败：outOrderNo={}", cmd.outOrderNo(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分完结服务订单失败", ex);
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分完结服务订单失败", ex);
         }
     }
 
@@ -1170,7 +1172,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return requirePayScorePermissionResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分创建授权失败：serviceId={}", cmd.serviceId(), ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分创建授权失败", ex);
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分创建授权失败", ex);
         }
     }
 
@@ -1198,7 +1200,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             return requirePayScorePermissionResponse(response.getServiceResponse());
         } catch (RuntimeException ex) {
             log.warn("微信支付分查询授权失败：openid={}", openid, ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分查询授权失败", ex);
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分查询授权失败", ex);
         }
     }
 
@@ -1218,7 +1220,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
             postJson(ordinary, url, body, PayScorePermissionResponse.class);
         } catch (RuntimeException ex) {
             log.warn("微信支付分解除授权失败：openid={}", openid, ex);
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分解除授权失败", ex);
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分解除授权失败", ex);
         }
     }
 
@@ -1248,7 +1250,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
                     notification.getEventType());
         } catch (RuntimeException ex) {
             log.warn("微信支付分回调验签或解密失败", ex);
-            throw new BusinessException(ResultCode.PAY_SCORE_NOTIFY_PARSE_FAILED, "微信支付分回调验签或解密失败");
+            throw new BusinessException(PayErrorCodes.PAY_SCORE_NOTIFY_PARSE_FAILED, "微信支付分回调验签或解密失败");
         }
     }
 
@@ -1318,12 +1320,12 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
      */
     private static String encryptRequiredSensitive(PrivacyEncryptor encryptor, String fieldName, String plaintext) {
         if (!StringUtils.hasText(plaintext)) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "进件敏感字段「" + fieldName + "」不能为空");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "进件敏感字段「" + fieldName + "」不能为空");
         }
         String ciphertext = encryptor.encrypt(plaintext.trim());
         if (!looksLikeOaepCiphertext(ciphertext)) {
             throw new BusinessException(
-                    ResultCode.WECHAT_PAY_CONFIG_INVALID, "进件敏感字段「" + fieldName + "」加密结果不是合法密文");
+                    WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "进件敏感字段「" + fieldName + "」加密结果不是合法密文");
         }
         return ciphertext;
     }
@@ -1360,7 +1362,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
 
     private static WechatEcommerceApplymentResult toApplymentResult(EcommerceApplymentResponse resp) {
         if (resp == null) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_CONFIG_INVALID, "收付通进件响应为空");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_CONFIG_INVALID, "收付通进件响应为空");
         }
         return new WechatEcommerceApplymentResult(
                 resp.getApplymentId(),
@@ -1372,7 +1374,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
 
     private static WechatPayNotifyParseResult toCombineParseResult(CombineOrderNotification resp) {
         if (resp == null) {
-            throw new BusinessException(ResultCode.PAY_NOTIFY_PARSE_FAILED, "收付通合单响应为空");
+            throw new BusinessException(PayErrorCodes.PAY_NOTIFY_PARSE_FAILED, "收付通合单响应为空");
         }
         String combineOutTradeNo = resp.getCombineOutTradeNo();
         String transactionId = null;
@@ -1411,7 +1413,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
 
     private static WechatTransferParseResult toTransferParseResult(TransferBillResponse response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_TRANSFER_FAILED, "微信商家转账响应为空");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_TRANSFER_FAILED, "微信商家转账响应为空");
         }
         return new WechatTransferParseResult(
                 response.getOutBillNo(),
@@ -1425,7 +1427,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
     private static PayScoreServiceOrderResponse requirePayScoreOrderResponse(
             PayScoreServiceOrderResponse response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分服务订单响应为空");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分服务订单响应为空");
         }
         return response;
     }
@@ -1433,7 +1435,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
     private static PayScorePermissionResponse requirePayScorePermissionResponse(
             PayScorePermissionResponse response) {
         if (response == null) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_SCORE_FAILED, "微信支付分授权响应为空");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_SCORE_FAILED, "微信支付分授权响应为空");
         }
         return response;
     }
@@ -1550,7 +1552,7 @@ public class WechatPayApiGatewayImpl implements WechatPayApiGateway {
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.WECHAT_PAY_PREPAY_FAILED, "生成支付签名失败");
+            throw new BusinessException(WechatPayErrorCodes.WECHAT_PAY_PREPAY_FAILED, "生成支付签名失败");
         }
     }
 }

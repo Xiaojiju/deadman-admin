@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mtfm.deadman.common.auth.AuthRealm;
@@ -49,12 +50,14 @@ public class ClientNotificationInboxController {
      * 未读数量。
      *
      * @param loginUser 当前用户
+     * @param category 分类，空表示全部。SYSTEM 系统，POLICY 政策，ORDER 订单
      * @return 未读条数
      */
     @GetMapping("/unread-count")
     @RequireAuth(AuthRealm.CLIENT)
-    public Result<Long> unreadCount(@AuthenticationPrincipal ClientLoginUser loginUser) {
-        return Result.ok(clientNotificationInboxService.countUnread(loginUser.getUserId()));
+    public Result<Long> unreadCount(@AuthenticationPrincipal ClientLoginUser loginUser,
+            @RequestParam(required = false) String category) {
+        return Result.ok(clientNotificationInboxService.countUnread(loginUser.getUserId(), category));
     }
 
     /**

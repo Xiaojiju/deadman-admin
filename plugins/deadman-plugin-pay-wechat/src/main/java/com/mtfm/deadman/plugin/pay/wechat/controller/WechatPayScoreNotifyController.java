@@ -24,10 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-        prefix = "deadman.plugin.pay-wechat.providers.wechat-payscore",
-        name = "enabled",
-        havingValue = "true")
+@ConditionalOnProperty(prefix = "deadman.plugin.pay-wechat.providers.wechat-payscore", name = "enabled", havingValue = "true")
 public class WechatPayScoreNotifyController {
 
     private final PayScoreFacade payScoreFacade;
@@ -40,11 +37,10 @@ public class WechatPayScoreNotifyController {
      * @param request HTTP 请求
      * @return 微信要求的应答体
      */
-    @PostMapping(
-            "${deadman.plugin.pay-wechat.providers.wechat-payscore.pay-score-notify-endpoint:/client/api/pay/wechat/payscore/notify}")
+    @PostMapping("${deadman.plugin.pay-wechat.providers.wechat-payscore.pay-score-notify-endpoint:/client/api/pay/wechat/payscore/notify}")
     public WechatPayNotifyAck notify(@RequestBody String body, HttpServletRequest request) {
-        WechatPayProviderBindingProperties binding =
-                wechatPayPluginProperties.providerBinding(WechatPayProviderIds.WECHAT_PAY_SCORE);
+        WechatPayProviderBindingProperties binding = wechatPayPluginProperties
+                .providerBinding(WechatPayProviderIds.WECHAT_PAY_SCORE);
         try {
             PayScoreNotifyResult result = payScoreFacade.parseNotify(
                     WechatPayScoreProvider.PROVIDER_ID,

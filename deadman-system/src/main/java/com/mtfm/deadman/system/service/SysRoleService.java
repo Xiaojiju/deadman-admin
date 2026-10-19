@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mtfm.deadman.common.constants.SysRoleCodes;
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.system.entity.SysRole;
-import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.system.mapper.SysRoleMapper;
 import org.springframework.stereotype.Service;
+import com.mtfm.deadman.system.support.SystemErrorCodes;
+import com.mtfm.deadman.system.support.SystemMessages;
 
 /**
  * 系统角色服务
@@ -25,7 +25,7 @@ public class SysRoleService extends ServiceImpl<SysRoleMapper, SysRole> {
     public SysRole requireById(Long roleId) {
         SysRole role = getById(roleId);
         if (role == null) {
-            throw new BusinessException(ResultCode.ROLE_NOT_FOUND);
+            throw SystemMessages.of(SystemErrorCodes.ROLE_NOT_FOUND);
         }
         return role;
     }
@@ -39,7 +39,7 @@ public class SysRoleService extends ServiceImpl<SysRoleMapper, SysRole> {
     public SysRole requireByCode(String roleCode) {
         SysRole role = getOne(new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, roleCode));
         if (role == null) {
-            throw new BusinessException(ResultCode.ROLE_NOT_FOUND);
+            throw SystemMessages.of(SystemErrorCodes.ROLE_NOT_FOUND);
         }
         return role;
     }
@@ -51,7 +51,7 @@ public class SysRoleService extends ServiceImpl<SysRoleMapper, SysRole> {
      */
     public void assertDeletable(SysRole role) {
         if (role.getSystemBuiltin() != null && role.getSystemBuiltin() == 1) {
-            throw new BusinessException(ResultCode.ROLE_SYSTEM_PROTECTED);
+            throw SystemMessages.of(SystemErrorCodes.ROLE_SYSTEM_PROTECTED);
         }
     }
 
@@ -62,7 +62,7 @@ public class SysRoleService extends ServiceImpl<SysRoleMapper, SysRole> {
      */
     public void assertPermissionAssignable(SysRole role) {
         if (SysRoleCodes.SUPER_ADMIN.equals(role.getRoleCode())) {
-            throw new BusinessException(ResultCode.ROLE_SUPER_ADMIN_PROTECTED);
+            throw SystemMessages.of(SystemErrorCodes.ROLE_SUPER_ADMIN_PROTECTED);
         }
     }
 
@@ -95,7 +95,7 @@ public class SysRoleService extends ServiceImpl<SysRoleMapper, SysRole> {
     public SysRole requireActiveByCode(String roleCode) {
         SysRole role = requireByCode(roleCode);
         if (role.getStatus() == null || role.getStatus() != UserStatus.ACTIVE.getValue()) {
-            throw new BusinessException(ResultCode.ROLE_NOT_FOUND);
+            throw SystemMessages.of(SystemErrorCodes.ROLE_NOT_FOUND);
         }
         return role;
     }

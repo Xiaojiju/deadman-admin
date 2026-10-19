@@ -10,11 +10,11 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.crypto.config.CryptoPluginProperties;
 import com.mtfm.deadman.plugin.crypto.util.CryptoTokenIds;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.crypto.support.CryptoErrorCodes;
 
 /**
  * 密钥注册表：维护「默认 KEK + 各模块 KEK + 附加历史密钥」多轨道，并按场景解析。
@@ -118,7 +118,7 @@ public class CryptoKeyRegistry {
             }
             if (properties.isStrictModuleKey()) {
                 throw new BusinessException(
-                        ResultCode.CRYPTO_KEY_NOT_FOUND,
+                        CryptoErrorCodes.CRYPTO_KEY_NOT_FOUND,
                         "未配置模块密钥且已开启 strict-module-key：module=" + normalized);
             }
             log.warn("模块密钥未配置，回退默认密钥：module={}", normalized);
@@ -131,7 +131,7 @@ public class CryptoKeyRegistry {
         SecretKey key = keysById.get(defaultKeyId);
         if (key == null) {
             throw new BusinessException(
-                    ResultCode.CRYPTO_KEY_NOT_FOUND,
+                    CryptoErrorCodes.CRYPTO_KEY_NOT_FOUND,
                     "未配置可用加密密钥（模块=" + moduleCode + "，且无 default-key）");
         }
         return new ResolvedKey(defaultKeyId, key);
@@ -145,11 +145,11 @@ public class CryptoKeyRegistry {
      */
     public SecretKey requireByKeyId(String keyId) {
         if (!StringUtils.hasText(keyId)) {
-            throw new BusinessException(ResultCode.CRYPTO_KEY_NOT_FOUND, "密文缺少 keyId");
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_KEY_NOT_FOUND, "密文缺少 keyId");
         }
         SecretKey key = keysById.get(keyId.trim());
         if (key == null) {
-            throw new BusinessException(ResultCode.CRYPTO_KEY_NOT_FOUND, "加解密密钥不存在：" + keyId);
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_KEY_NOT_FOUND, "加解密密钥不存在：" + keyId);
         }
         return key;
     }
@@ -175,14 +175,14 @@ public class CryptoKeyRegistry {
             byte[] raw = Base64.getDecoder().decode(base64Key.trim());
             if (raw.length != AES_256_KEY_BYTES) {
                 throw new BusinessException(
-                        ResultCode.CRYPTO_CONFIG_INVALID,
+                        CryptoErrorCodes.CRYPTO_CONFIG_INVALID,
                         "密钥长度必须为 32 字节（Base64），当前标签=" + label + "，实际=" + raw.length);
             }
             return new SecretKeySpec(raw, "AES");
         } catch (BusinessException ex) {
             throw ex;
         } catch (IllegalArgumentException ex) {
-            throw new BusinessException(ResultCode.CRYPTO_CONFIG_INVALID, "密钥 Base64 非法：" + label, ex);
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_CONFIG_INVALID, "密钥 Base64 非法：" + label, ex);
         }
     }
 

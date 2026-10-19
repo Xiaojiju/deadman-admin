@@ -12,6 +12,7 @@
 |------|----------|------|
 | [deadman-support-wechat](#deadman-support-wechat) | `deadman.support.wechat` | 管理端微信小程序登录：未绑定时返回临时令牌，用户名密码认证后自动绑定 openid |
 | [deadman-support-client-im](#deadman-support-client-im) | `deadman.support.client-im` | 用户端与腾讯云 IM 桥接：C 端 UserSig 签发 |
+| deadman-support-client-sms | `deadman.plugin.sms-login` | 用户端与短信验证码登录桥接：`POST /client/api/auth/sms/send` 发送登录验证码，未注册手机号自动开通 |
 | [deadman-support-admin-im](#deadman-support-admin-im) | `deadman.support.admin-im` | 管理端与腾讯云 IM 桥接：UserSig 签发与用户映射查询 |
 
 完整接入说明（架构、接口、前端对接）：[ImClientAdminIntegration.md](../doc/deadman-plugin-im-tencent/ImClientAdminIntegration.md)

@@ -5,15 +5,18 @@ import java.time.LocalDateTime;
 /**
  * 用户端站内信收件箱列表项。
  *
- * @param recipientId    收件记录主键
+ * @param recipientId    收件记录主键，标记已读时使用
  * @param notificationId 通知主键
  * @param title          标题
  * @param content        正文
- * @param bizType        业务类型
+ * @param bizType        业务类型，用于跳到订单、资讯或招人信息
  * @param bizId          业务主键
  * @param readStatus     阅读状态：0-未读 1-已读
  * @param readTime       阅读时间
  * @param createTime     接收时间
+ * @param id             与收件记录主键相同，列表行主键
+ * @param category       分类：SYSTEM 系统，POLICY 政策，ORDER 订单
+ * @param read           是否已读
  */
 public record ClientNotificationInboxVO(
         Long recipientId,
@@ -24,5 +27,8 @@ public record ClientNotificationInboxVO(
         Long bizId,
         Integer readStatus,
         LocalDateTime readTime,
-        LocalDateTime createTime) {
+        LocalDateTime createTime,
+        Long id,
+        String category,
+        boolean read) {
 }

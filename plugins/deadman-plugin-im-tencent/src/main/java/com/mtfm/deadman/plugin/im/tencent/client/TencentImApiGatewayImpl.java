@@ -9,12 +9,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.im.tencent.config.ImTencentPluginProperties;
 
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import com.mtfm.deadman.plugin.im.tencent.support.ImErrorCodes;
 
 /**
  * 腾讯云 IM REST API 真实网关实现。
@@ -95,13 +95,13 @@ public class TencentImApiGatewayImpl implements TencentImApiGateway {
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.IM_ACCOUNT_SYNC_FAILED, "调用腾讯云 IM 失败：" + ex.getMessage());
+            throw new BusinessException(ImErrorCodes.IM_ACCOUNT_SYNC_FAILED, "调用腾讯云 IM 失败：" + ex.getMessage());
         }
     }
 
     private void assertSuccess(JsonNode response, String action) {
         if (response == null) {
-            throw new BusinessException(ResultCode.IM_ACCOUNT_SYNC_FAILED, action + "失败：响应为空");
+            throw new BusinessException(ImErrorCodes.IM_ACCOUNT_SYNC_FAILED, action + "失败：响应为空");
         }
         String actionStatus = response.get("ActionStatus") == null
                 ? null
@@ -110,7 +110,7 @@ public class TencentImApiGatewayImpl implements TencentImApiGateway {
         if (!"OK".equalsIgnoreCase(actionStatus) || errorCode != 0) {
             String errorInfo = response.get("ErrorInfo") == null ? "unknown" : response.get("ErrorInfo").asString();
             log.warn("腾讯云 IM {} 失败：code={}, info={}", action, errorCode, errorInfo);
-            throw new BusinessException(ResultCode.IM_ACCOUNT_SYNC_FAILED, action + "失败：" + errorInfo);
+            throw new BusinessException(ImErrorCodes.IM_ACCOUNT_SYNC_FAILED, action + "失败：" + errorInfo);
         }
     }
 }

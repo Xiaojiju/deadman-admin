@@ -27,6 +27,8 @@ import com.mtfm.deadman.plugin.pay.spi.refund.RefundResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 退款统一门面，编排「校验支付单 → 写退款单 → 调渠道 → 回调/查单 → 事件通知」。
@@ -59,7 +61,7 @@ public class RefundService {
             throw new BusinessException(ResultCode.BAD_REQUEST, "退款缺少平台支付单号");
         }
         if (request.getAmountRefund() <= 0) {
-            throw new BusinessException(ResultCode.PAY_REFUND_AMOUNT_INVALID, "退款金额必须大于 0");
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_AMOUNT_INVALID, "退款金额必须大于 0");
         }
         PaymentOrder payOrder = paymentOrderService.requireByOutTradeNo(request.getOutTradeNo().trim());
         RefundProvider provider = refundProviderManager.require(payOrder.getProviderId());
@@ -96,7 +98,7 @@ public class RefundService {
         } catch (RuntimeException ex) {
             // 超时/网络等不确定是否已受理：尝试查单同步；仍失败则保留 PROCESSING 交补偿任务
             tryRecoverAfterCreateFailure(outRefundNo, provider);
-            throw new BusinessException(ResultCode.PAY_REFUND_FAILED, "退款申请异常，请稍后查询退款结果", ex);
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_FAILED, "退款申请异常，请稍后查询退款结果", ex);
         }
         applyChannelRefundResult(
                 result.outRefundNo(),
@@ -270,11 +272,11 @@ public class RefundService {
         PaymentRefundOrder refundOrder =
                 paymentRefundOrderService.requireByOutRefundNo(context.getOutRefundNo().trim());
         if (!PaymentRefundStatus.ABNORMAL.equals(refundOrder.getStatus())) {
-            throw new BusinessException(ResultCode.PAY_ABNORMAL_REFUND_NOT_ALLOWED, "仅 ABNORMAL 状态可发起异常退款");
+            throw new BusinessException(PayErrorCodes.PAY_ABNORMAL_REFUND_NOT_ALLOWED, "仅 ABNORMAL 状态可发起异常退款");
         }
         String channelRefundId = firstNonBlank(context.getChannelRefundId(), refundOrder.getChannelRefundId());
         if (!StringUtils.hasText(channelRefundId)) {
-            throw new BusinessException(ResultCode.PAY_ABNORMAL_REFUND_FAILED, "缺少渠道退款单号，无法发起异常退款");
+            throw new BusinessException(PayErrorCodes.PAY_ABNORMAL_REFUND_FAILED, "缺少渠道退款单号，无法发起异常退款");
         }
         String receiveType = StringUtils.hasText(context.getReceiveType())
                 ? context.getReceiveType().trim()
@@ -388,7 +390,7 @@ public class RefundService {
      * 仅微信明确业务拒绝码对应 {@link ResultCode#WECHAT_PAY_REFUND_FAILED} 时可关单。
      */
     private static boolean isClearRefundReject(BusinessException ex) {
-        return ex != null && ex.getCode() == ResultCode.WECHAT_PAY_REFUND_FAILED.getCode();
+        return ex != null && ex.getCode() == WechatPayErrorCodes.WECHAT_PAY_REFUND_FAILED;
     }
 
     /**

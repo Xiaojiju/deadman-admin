@@ -2,7 +2,6 @@ package com.mtfm.deadman.support.wechat.service;
 
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.wechat.login.WechatLoginService;
 import com.mtfm.deadman.plugin.wechat.login.credential.WechatMiniprogramLoginCredential;
 import com.mtfm.deadman.plugin.wechat.login.session.WechatLoginSession;
@@ -25,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import com.mtfm.deadman.plugin.wechat.support.WechatErrorCodes;
 
 /**
  * 管理端微信 OAuth 登录与绑定业务服务。
@@ -79,7 +79,7 @@ public class AdminWechatAuthService {
         try {
             session = bindTokenStore.consume(bindToken);
         } catch (BusinessException ex) {
-            if (ex.getCode() == ResultCode.WECHAT_BIND_TOKEN_INVALID.getCode()) {
+            if (ex.getCode() == WechatErrorCodes.WECHAT_BIND_TOKEN_INVALID) {
                 throw new BadCredentialsException(ex.getMessage(), ex);
             }
             throw ex;

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentRefundStatus;
 import com.mtfm.deadman.plugin.pay.mock.config.MockPayPluginProperties;
 import com.mtfm.deadman.plugin.pay.mock.constant.MockPayProviderIds;
@@ -23,6 +22,7 @@ import com.mtfm.deadman.plugin.pay.spi.refund.RefundResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * Mock 退款 Provider：本地/测试环境模拟退款申请、查退款与回调。
@@ -96,7 +96,7 @@ public class MockRefundProvider implements RefundProvider {
         String status = readJsonStringField(context.rawBody(), "status");
         if (!StringUtils.hasText(outRefundNo) || !StringUtils.hasText(status)) {
             throw new BusinessException(
-                    ResultCode.PAY_REFUND_NOTIFY_PARSE_FAILED, "Mock 退款回调缺少 out_refund_no 或 status");
+                    PayErrorCodes.PAY_REFUND_NOTIFY_PARSE_FAILED, "Mock 退款回调缺少 out_refund_no 或 status");
         }
         String channelRefundId = readJsonStringField(context.rawBody(), "refund_id");
         if (!StringUtils.hasText(channelRefundId)) {
@@ -165,7 +165,7 @@ public class MockRefundProvider implements RefundProvider {
         return switch (normalized) {
             case "SUCCESS", "CLOSED", "PROCESSING", "ABNORMAL" -> normalized;
             default -> throw new BusinessException(
-                    ResultCode.PAY_REFUND_NOTIFY_PARSE_FAILED, "Mock 退款回调 status 无效：" + status);
+                    PayErrorCodes.PAY_REFUND_NOTIFY_PARSE_FAILED, "Mock 退款回调 status 无效：" + status);
         };
     }
 

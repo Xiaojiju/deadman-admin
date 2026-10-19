@@ -1,5 +1,6 @@
 package com.mtfm.deadman.common.exception;
 
+import com.mtfm.deadman.common.i18n.MessageSourceHolder;
 import com.mtfm.deadman.common.result.Result;
 import com.mtfm.deadman.common.result.ResultCode;
 import lombok.extern.slf4j.Slf4j;
@@ -25,11 +26,17 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /** 与文件模块 FileErrorCodes.FILE_NOT_FOUND 一致，common 不引用文件模块 */
+    private static final int FILE_NOT_FOUND = 13001;
+
+    /** 与文件模块 FileErrorCodes.FILE_TOO_LARGE 一致，common 不引用文件模块 */
+    private static final int FILE_TOO_LARGE = 13002;
+
     /** 业务异常：HTTP 200，body 内 code 为非 0 业务码 */
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.OK)
     public Result<Void> handleBusinessException(BusinessException ex) {
-        return Result.of(ex.getCode(), ex.getMessage());
+        return Result.of(ex.getCode(), ex.resolveMessage());
     }
 
     /** 参数校验失败（@Valid） */
@@ -61,7 +68,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
         log.warn("上传文件超过大小限制: {}", ex.getMessage());
-        return Result.of(ResultCode.FILE_TOO_LARGE);
+        return fileTooLarge();
     }
 
     /**
@@ -72,12 +79,14 @@ public class GlobalExceptionHandler {
     public Result<Void> handleMultipart(MultipartException ex) {
         if (isUploadSizeExceeded(ex)) {
             log.warn("上传文件超过大小限制: {}", ex.getMessage());
-            return Result.of(ResultCode.FILE_TOO_LARGE);
+            return fileTooLarge();
         }
         log.warn("文件上传请求格式错误: {}", ex.getMessage());
         return Result.of(
                 ResultCode.BAD_REQUEST.getCode(),
-                "请使用 multipart/form-data 上传，并包含名为 file 的文件字段");
+                MessageSourceHolder.resolve(
+                        "common.upload.multipart_invalid",
+                        "请使用 multipart/form-data 上传，并包含名为 file 的文件字段"));
     }
 
     /**
@@ -86,7 +95,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMissingParameter(MissingServletRequestParameterException ex) {
-        return Result.of(ResultCode.BAD_REQUEST.getCode(), "缺少必填参数：" + ex.getParameterName());
+        return Result.of(
+                ResultCode.BAD_REQUEST.getCode(),
+                MessageSourceHolder.resolve(
+                        "common.param.missing", "缺少必填参数：" + ex.getParameterName(), ex.getParameterName()));
     }
 
     /**
@@ -100,7 +112,7 @@ public class GlobalExceptionHandler {
         String resourcePath = ex.getResourcePath();
         log.warn("资源不存在: {} {}", ex.getHttpMethod(), resourcePath);
         if (resourcePath != null && resourcePath.startsWith("/files/")) {
-            return Result.of(ResultCode.FILE_NOT_FOUND);
+            return fileNotFound();
         }
         return Result.of(ResultCode.NOT_FOUND);
     }
@@ -110,10 +122,24 @@ public class GlobalExceptionHandler {
     public Result<Void> handleException(Exception ex) {
         if (isUploadSizeExceeded(ex)) {
             log.warn("上传文件超过大小限制: {}", ex.getMessage());
-            return Result.of(ResultCode.FILE_TOO_LARGE);
+            return fileTooLarge();
         }
         log.error("未处理异常", ex);
         return Result.of(ResultCode.INTERNAL_ERROR);
+    }
+
+    /**
+     * 文件不存在。文案键在文件模块资源包，缺失时使用回退文案。
+     */
+    private static Result<Void> fileNotFound() {
+        return Result.of(FILE_NOT_FOUND, MessageSourceHolder.resolve("result.FILE_NOT_FOUND", "文件不存在"));
+    }
+
+    /**
+     * 文件超过大小限制。文案键在文件模块资源包，缺失时使用回退文案。
+     */
+    private static Result<Void> fileTooLarge() {
+        return Result.of(FILE_TOO_LARGE, MessageSourceHolder.resolve("result.FILE_TOO_LARGE", "文件大小超出限制"));
     }
 
     /**

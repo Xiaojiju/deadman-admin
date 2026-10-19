@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.ess.tencent.event.EssFlowCallbackEvent;
 import com.mtfm.deadman.plugin.ess.tencent.event.EssOrgAuthCallbackEvent;
 import com.mtfm.deadman.plugin.ess.tencent.support.EssUserDataSupport;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import com.mtfm.deadman.plugin.ess.tencent.support.EssErrorCodes;
 
 /**
  * 腾讯电子签回调解密、解析并发布 {@link EssFlowCallbackEvent}。
@@ -98,7 +98,7 @@ public class EssCallbackDispatchService {
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.ESS_CALLBACK_INVALID, "电子签回调报文解析失败", ex);
+            throw new BusinessException(EssErrorCodes.ESS_CALLBACK_INVALID, "电子签回调报文解析失败", ex);
         }
     }
 
@@ -169,7 +169,7 @@ public class EssCallbackDispatchService {
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.ESS_CALLBACK_INVALID, "电子签子客认证回调解析失败", ex);
+            throw new BusinessException(EssErrorCodes.ESS_CALLBACK_INVALID, "电子签子客认证回调解析失败", ex);
         }
     }
 

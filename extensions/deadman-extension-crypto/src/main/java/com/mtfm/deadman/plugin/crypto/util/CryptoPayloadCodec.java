@@ -5,8 +5,8 @@ import java.util.Base64;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.crypto.spi.EncryptedPayload;
+import com.mtfm.deadman.plugin.crypto.support.CryptoErrorCodes;
 
 /**
  * 密文载荷与可落库字符串之间的编解码工具。
@@ -69,11 +69,11 @@ public final class CryptoPayloadCodec {
      */
     public static EncryptedPayload decode(String token) {
         if (!isEncryptedToken(token)) {
-            throw new BusinessException(ResultCode.CRYPTO_PAYLOAD_INVALID, "密文格式无效");
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_PAYLOAD_INVALID, "密文格式无效");
         }
         String[] parts = token.split("\\.", 6);
         if (parts.length != 6 || !"v1".equals(parts[0])) {
-            throw new BusinessException(ResultCode.CRYPTO_PAYLOAD_INVALID, "密文分段无效");
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_PAYLOAD_INVALID, "密文分段无效");
         }
         try {
             String algorithm = CryptoTokenIds.requireSafe(parts[1], "algorithm");
@@ -88,7 +88,7 @@ public final class CryptoPayloadCodec {
         } catch (BusinessException ex) {
             throw ex;
         } catch (IllegalArgumentException ex) {
-            throw new BusinessException(ResultCode.CRYPTO_PAYLOAD_INVALID, "密文 Base64 非法", ex);
+            throw new BusinessException(CryptoErrorCodes.CRYPTO_PAYLOAD_INVALID, "密文 Base64 非法", ex);
         }
     }
 }

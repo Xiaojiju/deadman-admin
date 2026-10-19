@@ -12,7 +12,6 @@ import org.springframework.util.StringUtils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.MerchantEntityType;
 import com.mtfm.deadman.plugin.pay.constant.TransferQuotaDefaults;
 import com.mtfm.deadman.plugin.pay.dto.transfer.UpdateTransferQuotaRequest;
@@ -23,6 +22,7 @@ import com.mtfm.deadman.plugin.pay.vo.transfer.TransferQuotaVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 商家转账额度配置服务（API 维护，非 yaml）。
@@ -226,12 +226,12 @@ public class TransferQuotaService {
 
     private static String normalizeEntityType(String merchantEntityType) {
         if (!StringUtils.hasText(merchantEntityType)) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_QUOTA_INVALID, "商户主体类型不能为空");
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID, "商户主体类型不能为空");
         }
         String normalized = merchantEntityType.trim().toUpperCase();
         if (!MerchantEntityType.NON_INDIVIDUAL.equals(normalized)
                 && !MerchantEntityType.INDIVIDUAL.equals(normalized)) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_QUOTA_INVALID, "商户主体类型无效：" + merchantEntityType);
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID, "商户主体类型无效：" + merchantEntityType);
         }
         return normalized;
     }
@@ -240,7 +240,7 @@ public class TransferQuotaService {
         if (request.singleLimitCents() < TransferQuotaDefaults.SINGLE_MIN
                 || request.singleLimitCents() > TransferQuotaDefaults.SINGLE_MAX) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_QUOTA_INVALID,
+                    PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID,
                     "单笔限额须在 " + TransferQuotaDefaults.SINGLE_MIN + "~" + TransferQuotaDefaults.SINGLE_MAX + " 分");
         }
         long userDailyMax = MerchantEntityType.INDIVIDUAL.equals(entityType)
@@ -252,19 +252,19 @@ public class TransferQuotaService {
         if (request.userDailyLimitCents() < TransferQuotaDefaults.SINGLE_MIN
                 || request.userDailyLimitCents() > userDailyMax) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_QUOTA_INVALID,
+                    PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID,
                     "单用户日限额超出可调范围：" + TransferQuotaDefaults.SINGLE_MIN + "~" + userDailyMax);
         }
         if (request.dailyLimitCents() < TransferQuotaDefaults.SINGLE_MIN || request.dailyLimitCents() > dailyMax) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_QUOTA_INVALID,
+                    PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID,
                     "单日总额度超出可调范围：" + TransferQuotaDefaults.SINGLE_MIN + "~" + dailyMax);
         }
         if (request.singleLimitCents() > request.userDailyLimitCents()) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_QUOTA_INVALID, "单笔限额不能大于单用户日限额");
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID, "单笔限额不能大于单用户日限额");
         }
         if (request.userDailyLimitCents() > request.dailyLimitCents()) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_QUOTA_INVALID, "单用户日限额不能大于单日总额度");
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID, "单用户日限额不能大于单日总额度");
         }
     }
 

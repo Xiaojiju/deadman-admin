@@ -18,6 +18,7 @@ import com.mtfm.deadman.plugin.pay.mapper.PluginPayOperateAccountFlowMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 平台双账户本地账本：BASIC / OPERATION 物理分表，场景与账户硬绑定。
@@ -94,7 +95,7 @@ public class PlatformFundLedgerService {
                         .idempotentKey(key)
                         .build());
             } else {
-                throw new BusinessException(ResultCode.PAY_FUND_ACCOUNT_MISMATCH, "未知资金账户类型");
+                throw new BusinessException(PayErrorCodes.PAY_FUND_ACCOUNT_MISMATCH, "未知资金账户类型");
             }
         } catch (DuplicateKeyException ex) {
             String raced = findExistingFlowNo(scene.accountType(), key);
@@ -122,7 +123,7 @@ public class PlatformFundLedgerService {
     public static void assertAccount(PlatformFundBizScene scene, String expectedAccount) {
         if (scene == null || !expectedAccount.equals(scene.accountType())) {
             throw new BusinessException(
-                    ResultCode.PAY_FUND_ACCOUNT_MISMATCH,
+                    PayErrorCodes.PAY_FUND_ACCOUNT_MISMATCH,
                     "资金场景与账户不匹配：scene=" + scene + ", expected=" + expectedAccount);
         }
     }

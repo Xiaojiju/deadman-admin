@@ -7,10 +7,10 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.im.tencent.spi.ImUserRealmBridge;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.im.tencent.support.ImErrorCodes;
 
 /**
  * IM 用户域桥接注册表，聚合所有 {@link ImUserRealmBridge} 实现。
@@ -48,7 +48,7 @@ public class ImUserRealmBridgeRegistry {
     public ImUserRealmBridge require(String realmId) {
         ImUserRealmBridge bridge = bridges.get(realmId);
         if (bridge == null) {
-            throw new BusinessException(ResultCode.IM_REALM_UNKNOWN, "IM 用户域未注册：" + realmId);
+            throw new BusinessException(ImErrorCodes.IM_REALM_UNKNOWN, "IM 用户域未注册：" + realmId);
         }
         return bridge;
     }

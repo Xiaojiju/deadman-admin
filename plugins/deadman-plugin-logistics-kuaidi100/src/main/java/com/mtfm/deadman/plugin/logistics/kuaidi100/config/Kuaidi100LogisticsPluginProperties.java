@@ -4,9 +4,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 
 import lombok.Data;
+import com.mtfm.deadman.plugin.logistics.support.LogisticsErrorCodes;
 
 /**
  * 快递100 物流插件配置。
@@ -62,7 +62,7 @@ public class Kuaidi100LogisticsPluginProperties {
      */
     public void requireSecret() {
         if (!StringUtils.hasText(key) || !StringUtils.hasText(secret)) {
-            throw new BusinessException(ResultCode.LOGISTICS_CONFIG_INVALID, "快递100 key 或 secret 未配置");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_CONFIG_INVALID, "快递100 key 或 secret 未配置");
         }
     }
 

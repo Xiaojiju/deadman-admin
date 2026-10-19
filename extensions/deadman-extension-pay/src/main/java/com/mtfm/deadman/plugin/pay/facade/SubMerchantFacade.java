@@ -16,6 +16,7 @@ import com.mtfm.deadman.plugin.pay.spi.merchant.SubMerchantProvider;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 二级商户（入驻商户）门面：进件 / 查询 / 手工绑号，渠道无关。
@@ -50,7 +51,7 @@ public class SubMerchantFacade {
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.PAY_SUB_MERCHANT_APPLY_FAILED, "二级商户进件失败：" + ex.getMessage());
+            throw new BusinessException(PayErrorCodes.PAY_SUB_MERCHANT_APPLY_FAILED, "二级商户进件失败：" + ex.getMessage());
         }
     }
 
@@ -93,7 +94,7 @@ public class SubMerchantFacade {
         } catch (UnsupportedOperationException ex) {
             throw new BusinessException(ResultCode.BAD_REQUEST, ex.getMessage());
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.PAY_MEDIA_UPLOAD_FAILED, "媒体文件上传失败：" + ex.getMessage());
+            throw new BusinessException(PayErrorCodes.PAY_MEDIA_UPLOAD_FAILED, "媒体文件上传失败：" + ex.getMessage());
         }
     }
 

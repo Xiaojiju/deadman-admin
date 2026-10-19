@@ -1,1 +1,2 @@
 com.mtfm.deadman.core.autoconfigure.DeadmanCoreAutoConfiguration
+com.mtfm.deadman.core.autoconfigure.DeadmanLocaleResolverAutoConfiguration

@@ -1,6 +1,7 @@
 package com.mtfm.deadman.common.result;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.mtfm.deadman.common.i18n.MessageSourceHolder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,7 +44,7 @@ public class Result<T> {
     public static <T> Result<T> of(ResultCode resultCode, T data) {
         return Result.<T>builder()
                 .code(resultCode.getCode())
-                .msg(resultCode.getMessage())
+                .msg(MessageSourceHolder.resolve(resultCode.messageKey(), resultCode.getMessage()))
                 .data(data)
                 .timestamp(System.currentTimeMillis())
                 .build();

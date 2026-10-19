@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
 import java.util.Locale;
+import com.mtfm.deadman.plugin.wechat.support.WechatErrorCodes;
 
 /**
  * 用户端微信 OAuth 登录与绑定业务服务。
@@ -291,7 +292,7 @@ public class ClientWechatAuthService {
         try {
             return bindTokenStore.consume(bindToken);
         } catch (BusinessException ex) {
-            if (ex.getCode() == ResultCode.WECHAT_BIND_TOKEN_INVALID.getCode()) {
+            if (ex.getCode() == WechatErrorCodes.WECHAT_BIND_TOKEN_INVALID) {
                 throw new BadCredentialsException(ex.getMessage(), ex);
             }
             throw ex;

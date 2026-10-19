@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.spi.merchant.SubMerchantProvider;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 二级商户 Provider 注册表。
@@ -32,7 +32,7 @@ public class SubMerchantProviderManager {
      */
     public SubMerchantProvider require(String providerId) {
         if (providers.isEmpty()) {
-            throw new BusinessException(ResultCode.PAY_SUB_MERCHANT_PROVIDER_NOT_FOUND, "未注册二级商户 Provider");
+            throw new BusinessException(PayErrorCodes.PAY_SUB_MERCHANT_PROVIDER_NOT_FOUND, "未注册二级商户 Provider");
         }
         if (!StringUtils.hasText(providerId)) {
             return providers.getFirst();
@@ -41,7 +41,7 @@ public class SubMerchantProviderManager {
                 .filter(p -> p.supports(providerId.trim()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(
-                        ResultCode.PAY_SUB_MERCHANT_PROVIDER_NOT_FOUND, "未知二级商户 Provider: " + providerId));
+                        PayErrorCodes.PAY_SUB_MERCHANT_PROVIDER_NOT_FOUND, "未知二级商户 Provider: " + providerId));
     }
 
     /**

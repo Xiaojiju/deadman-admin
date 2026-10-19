@@ -4,9 +4,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 
 import lombok.Data;
+import com.mtfm.deadman.plugin.ess.tencent.support.EssErrorCodes;
 
 /**
  * 腾讯电子签插件配置，支持企业版（ess）与渠道版（essbasic）两种接入模式。
@@ -121,16 +121,16 @@ public class EssTencentPluginProperties {
      */
     public void requireChannelConfig() {
         if (!StringUtils.hasText(secretId)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretId");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretId");
         }
         if (!StringUtils.hasText(secretKey)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretKey");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretKey");
         }
         if (!StringUtils.hasText(appId)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签渠道 AppId");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签渠道 AppId");
         }
         if (!StringUtils.hasText(resolveChannelEndpoint())) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签渠道 API Endpoint");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签渠道 API Endpoint");
         }
     }
 
@@ -147,7 +147,7 @@ public class EssTencentPluginProperties {
         if (StringUtils.hasText(this.templateId)) {
             return this.templateId;
         }
-        throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签模板 TemplateId");
+        throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签模板 TemplateId");
     }
 
     /**
@@ -155,19 +155,19 @@ public class EssTencentPluginProperties {
      */
     public void requireProductionConfig() {
         if (!StringUtils.hasText(secretId)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretId");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretId");
         }
         if (!StringUtils.hasText(secretKey)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretKey");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签 SecretKey");
         }
         if (!StringUtils.hasText(operatorUserId)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签经办人 OperatorUserId");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签经办人 OperatorUserId");
         }
         if (!StringUtils.hasText(endpoint)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签 API Endpoint");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签 API Endpoint");
         }
         if (!StringUtils.hasText(fileEndpoint)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签文件服务 Endpoint");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签文件服务 Endpoint");
         }
     }
 
@@ -182,7 +182,7 @@ public class EssTencentPluginProperties {
             return operatorUserId;
         }
         if (!StringUtils.hasText(this.operatorUserId)) {
-            throw new BusinessException(ResultCode.ESS_CONFIG_INVALID, "缺少腾讯电子签经办人 OperatorUserId");
+            throw new BusinessException(EssErrorCodes.ESS_CONFIG_INVALID, "缺少腾讯电子签经办人 OperatorUserId");
         }
         return this.operatorUserId;
     }

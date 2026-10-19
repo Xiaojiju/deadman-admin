@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS client_notification (
     id                BIGINT        NOT NULL COMMENT '主键',
     title             VARCHAR(128)  NOT NULL COMMENT '标题',
     content           VARCHAR(512)  NOT NULL COMMENT '正文',
+    category          VARCHAR(16)   NOT NULL DEFAULT 'SYSTEM' COMMENT '分类：SYSTEM 系统，POLICY 政策，ORDER 订单',
     biz_type          VARCHAR(64)   NOT NULL COMMENT '业务类型',
     biz_id            BIGINT        NULL COMMENT '业务主键',
     extra_json        JSON          NULL COMMENT '扩展载荷 JSON',

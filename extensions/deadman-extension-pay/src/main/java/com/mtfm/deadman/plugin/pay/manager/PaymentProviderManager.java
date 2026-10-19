@@ -14,6 +14,7 @@ import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.spi.payment.PaymentProvider;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 支付 Provider 管理器，聚合所有已注册的 Provider 实现。
@@ -64,7 +65,7 @@ public class PaymentProviderManager {
         String resolved = providerId == null || providerId.isBlank() ? defaultProviderId : providerId;
         PaymentProvider provider = providers.get(resolved);
         if (provider == null) {
-            throw new BusinessException(ResultCode.PAY_PROVIDER_NOT_FOUND, "支付 Provider 不存在：" + resolved);
+            throw new BusinessException(PayErrorCodes.PAY_PROVIDER_NOT_FOUND, "支付 Provider 不存在：" + resolved);
         }
         return provider;
     }
@@ -92,7 +93,7 @@ public class PaymentProviderManager {
             return byPayMethod.getFirst();
         }
         if (byPayMethod.isEmpty()) {
-            throw new BusinessException(ResultCode.PAY_PROVIDER_NOT_FOUND, "支付方式不可用：" + trimmed);
+            throw new BusinessException(PayErrorCodes.PAY_PROVIDER_NOT_FOUND, "支付方式不可用：" + trimmed);
         }
         String candidates = byPayMethod.stream()
                 .map(PaymentProvider::providerId)

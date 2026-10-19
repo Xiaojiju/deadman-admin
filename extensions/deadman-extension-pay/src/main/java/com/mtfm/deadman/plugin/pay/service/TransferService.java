@@ -11,7 +11,6 @@ import org.springframework.util.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mtfm.deadman.common.exception.BusinessException;
 import com.mtfm.deadman.common.page.PageVO;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.config.PayPluginProperties;
 import com.mtfm.deadman.plugin.pay.dto.transfer.CreateTransferRequest;
 import com.mtfm.deadman.plugin.pay.dto.transfer.TransferBatchPageQuery;
@@ -27,6 +26,7 @@ import com.mtfm.deadman.plugin.pay.vo.transfer.TransferBatchVO;
 import com.mtfm.deadman.plugin.pay.vo.transfer.TransferBillVO;
 
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 商家转账门面：拆单落库、回调/查单回写、批次查询。
@@ -77,7 +77,7 @@ public class TransferService {
      */
     public TransferBatchVO createTransfer(CreateTransferRequest request) {
         if (request.amountCents() == null || request.amountCents() <= 0) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_AMOUNT_INVALID, "转账金额必须大于 0");
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_AMOUNT_INVALID, "转账金额必须大于 0");
         }
         String bizOrderNo = request.bizOrderNo().trim();
         Optional<PaymentTransferBatch> existing = paymentTransferOrderService.findByBizOrderNo(bizOrderNo);
@@ -92,19 +92,19 @@ public class TransferService {
         PayPluginProperties.TransferLimits limits = payPluginProperties.getTransferLimits();
         if (request.amountCents() > limits.getMaxAmountCents()) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_LIMIT_EXCEEDED,
+                    PayErrorCodes.PAY_TRANSFER_LIMIT_EXCEEDED,
                     "转账总金额超过平台上限：" + limits.getMaxAmountCents() + " 分");
         }
         TransferProvider provider = transferProviderManager.require(request.providerId());
         PaymentTransferQuota quota = transferQuotaService.requireCurrent();
         long singleLimit = quota.getSingleLimitCents();
         if (singleLimit < 1) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_QUOTA_INVALID, "单笔限额配置无效");
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_QUOTA_INVALID, "单笔限额配置无效");
         }
         List<Long> splits = splitAmount(request.amountCents(), singleLimit);
         if (splits.size() > limits.getMaxBillsPerBatch()) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_LIMIT_EXCEEDED,
+                    PayErrorCodes.PAY_TRANSFER_LIMIT_EXCEEDED,
                     "拆单笔数超过平台上限：" + limits.getMaxBillsPerBatch()
                             + "（当前=" + splits.size() + "，可提高单笔限额或拆分业务单）");
         }
@@ -145,27 +145,27 @@ public class TransferService {
     private static void assertIdempotentMatch(PaymentTransferBatch existing, CreateTransferRequest request) {
         if (!java.util.Objects.equals(existing.getAmountTotalCents(), request.amountCents())) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
+                    PayErrorCodes.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
                     "转账业务单号已存在但金额不一致：" + existing.getBizOrderNo());
         }
         String requestOpenid = request.openid() == null ? null : request.openid().trim();
         if (!java.util.Objects.equals(existing.getOpenid(), requestOpenid)) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
+                    PayErrorCodes.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
                     "转账业务单号已存在但 openid 不一致：" + existing.getBizOrderNo());
         }
         String requestScene =
                 request.transferSceneId() == null ? null : request.transferSceneId().trim();
         if (!java.util.Objects.equals(existing.getTransferSceneId(), requestScene)) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
+                    PayErrorCodes.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
                     "转账业务单号已存在但转账场景不一致：" + existing.getBizOrderNo());
         }
         String requestProvider = request.providerId() == null ? null : request.providerId().trim();
         if (StringUtils.hasText(requestProvider)
                 && !java.util.Objects.equals(existing.getProviderId(), requestProvider)) {
             throw new BusinessException(
-                    ResultCode.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
+                    PayErrorCodes.PAY_TRANSFER_IDEMPOTENT_CONFLICT,
                     "转账业务单号已存在但 Provider 不一致：" + existing.getBizOrderNo());
         }
     }
@@ -270,7 +270,7 @@ public class TransferService {
      */
     static List<Long> splitAmount(long totalCents, long singleLimit) {
         if (totalCents <= 0 || singleLimit <= 0) {
-            throw new BusinessException(ResultCode.PAY_TRANSFER_AMOUNT_INVALID, "拆单金额不合法");
+            throw new BusinessException(PayErrorCodes.PAY_TRANSFER_AMOUNT_INVALID, "拆单金额不合法");
         }
         List<Long> parts = new ArrayList<>();
         long remain = totalCents;

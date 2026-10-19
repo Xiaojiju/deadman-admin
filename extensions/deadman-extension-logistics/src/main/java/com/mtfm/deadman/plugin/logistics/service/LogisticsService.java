@@ -36,6 +36,7 @@ import com.mtfm.deadman.plugin.logistics.spi.track.LogisticsTrackProvider;
 import com.mtfm.deadman.plugin.logistics.vo.LogisticsCarrierOptionVO;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.logistics.support.LogisticsErrorCodes;
 
 /**
  * 物流能力编排服务，按领域 Provider 路由到对应实现。
@@ -145,7 +146,7 @@ public class LogisticsService {
         String resolvedProviderId = provider.providerId();
         LogisticsSubscribePushPayload payload = provider.parseSubscribePush(rawParam, sign);
         if (payload == null) {
-            throw new BusinessException(ResultCode.LOGISTICS_SUBSCRIBE_PUSH_INVALID, "订阅推送验签失败");
+            throw new BusinessException(LogisticsErrorCodes.LOGISTICS_SUBSCRIBE_PUSH_INVALID, "订阅推送验签失败");
         }
         LogisticsSubscribePushPayload unifiedPayload = logisticsCarrierCodeSupport
                 .toUnifiedSubscribePushPayload(resolvedProviderId, payload);

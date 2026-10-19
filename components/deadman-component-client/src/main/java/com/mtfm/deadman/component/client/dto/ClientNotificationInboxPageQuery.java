@@ -13,4 +13,7 @@ public class ClientNotificationInboxPageQuery extends PageParam {
 
     /** 阅读状态：0-未读 1-已读，null 表示全部 */
     private Integer readStatus;
+
+    /** 分类：SYSTEM 系统，POLICY 政策，ORDER 订单，空表示全部 */
+    private String category;
 }

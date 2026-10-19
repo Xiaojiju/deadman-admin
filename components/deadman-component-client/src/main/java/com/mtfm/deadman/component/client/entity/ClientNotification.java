@@ -32,7 +32,10 @@ public class ClientNotification {
     /** 正文 */
     private String content;
 
-    /** 业务类型（如 banner_start） */
+    /** 分类：SYSTEM 系统，POLICY 政策，ORDER 订单 */
+    private String category;
+
+    /** 业务类型，用于跳到订单、资讯或招人信息 */
     private String bizType;
 
     /** 业务主键（如轮播图 ID） */

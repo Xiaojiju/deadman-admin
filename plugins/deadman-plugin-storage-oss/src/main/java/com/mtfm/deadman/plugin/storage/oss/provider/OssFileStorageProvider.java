@@ -15,7 +15,6 @@ import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSException;
 import com.aliyun.oss.model.OSSObject;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.file.spi.FileStorageProvider;
 import com.mtfm.deadman.plugin.file.spi.FileStorageUploadContext;
 import com.mtfm.deadman.plugin.file.spi.StoredFileRef;
@@ -26,6 +25,8 @@ import com.mtfm.deadman.plugin.storage.oss.routing.OssBucketResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.file.support.FileErrorCodes;
+import com.mtfm.deadman.plugin.file.support.FileMessages;
 
 /**
  * 阿里云 OSS 文件存储 Provider。
@@ -60,7 +61,7 @@ public class OssFileStorageProvider implements FileStorageProvider {
         try {
             oss.putObject(bucket, storageKey, context.getInputStream());
         } catch (RuntimeException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "OSS 文件上传失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "OSS 文件上传失败");
         }
         String accessUrl = buildAccessUrl(bucket, storageKey);
         return new StoredFileRef(PROVIDER_ID, storageKey, accessUrl, bucket);
@@ -78,11 +79,11 @@ public class OssFileStorageProvider implements FileStorageProvider {
             return object.getObjectContent();
         } catch (OSSException ex) {
             if ("NoSuchKey".equals(ex.getErrorCode())) {
-                throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+                throw FileMessages.of(FileErrorCodes.FILE_NOT_FOUND);
             }
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "OSS 文件读取失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "OSS 文件读取失败");
         } catch (RuntimeException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "OSS 文件读取失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "OSS 文件读取失败");
         }
     }
 
@@ -96,7 +97,7 @@ public class OssFileStorageProvider implements FileStorageProvider {
         try {
             oss.deleteObject(bucket, ref.storageKey());
         } catch (RuntimeException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "OSS 文件删除失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "OSS 文件删除失败");
         }
     }
 
@@ -136,7 +137,7 @@ public class OssFileStorageProvider implements FileStorageProvider {
             URL url = oss.generatePresignedUrl(bucket, storageKey, expiration);
             return url == null ? null : url.toString();
         } catch (RuntimeException ex) {
-            throw new BusinessException(ResultCode.FILE_STORAGE_ERROR, "OSS 签名 URL 生成失败");
+            throw new BusinessException(FileErrorCodes.FILE_STORAGE_ERROR, "OSS 签名 URL 生成失败");
         }
     }
 

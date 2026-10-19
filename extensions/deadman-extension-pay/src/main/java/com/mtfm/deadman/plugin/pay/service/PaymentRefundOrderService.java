@@ -12,7 +12,6 @@ import org.springframework.util.StringUtils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.pay.constant.PaymentChannelParams;
 import com.mtfm.deadman.plugin.pay.constant.PaymentOrderStatus;
 import com.mtfm.deadman.plugin.pay.constant.PaymentRefundStatus;
@@ -24,6 +23,8 @@ import com.mtfm.deadman.plugin.pay.spi.refund.RefundProvider;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
+import com.mtfm.deadman.plugin.pay.support.PayMessages;
 
 /**
  * 退款单持久化服务，统一管理退款单创建与状态流转。
@@ -116,7 +117,7 @@ public class PaymentRefundOrderService {
         PaymentRefundOrder refundOrder = paymentRefundOrderMapper.selectOne(new LambdaQueryWrapper<PaymentRefundOrder>()
                 .eq(PaymentRefundOrder::getOutRefundNo, outRefundNo));
         if (refundOrder == null) {
-            throw new BusinessException(ResultCode.PAY_REFUND_ORDER_NOT_FOUND);
+            throw PayMessages.of(PayErrorCodes.PAY_REFUND_ORDER_NOT_FOUND);
         }
         return refundOrder;
     }
@@ -299,19 +300,19 @@ public class PaymentRefundOrderService {
     private void validatePayOrderRefundable(PaymentOrder payOrder, int amountRefund) {
         String status = payOrder.getStatus();
         if (!PaymentOrderStatus.SUCCESS.equals(status) && !PaymentOrderStatus.REFUND.equals(status)) {
-            throw new BusinessException(ResultCode.PAY_REFUND_NOT_ALLOWED, "仅已支付或已转入退款的订单可退款");
+            throw new BusinessException(PayErrorCodes.PAY_REFUND_NOT_ALLOWED, "仅已支付或已转入退款的订单可退款");
         }
         long refundCount = countByOutTradeNo(payOrder.getOutTradeNo());
         if (refundCount >= MAX_REFUNDS_PER_ORDER) {
             throw new BusinessException(
-                    ResultCode.PAY_REFUND_LIMIT_EXCEEDED, "单笔订单退款次数已达上限：" + MAX_REFUNDS_PER_ORDER);
+                    PayErrorCodes.PAY_REFUND_LIMIT_EXCEEDED, "单笔订单退款次数已达上限：" + MAX_REFUNDS_PER_ORDER);
         }
         int refunded = payOrder.getAmountRefunded() == null ? 0 : payOrder.getAmountRefunded();
         int outstanding = sumOutstandingAmount(payOrder.getOutTradeNo());
         int remain = payOrder.getAmountTotal() - refunded - outstanding;
         if (amountRefund > remain) {
             throw new BusinessException(
-                    ResultCode.PAY_REFUND_AMOUNT_INVALID,
+                    PayErrorCodes.PAY_REFUND_AMOUNT_INVALID,
                     "退款金额超出可退余额，可退：" + Math.max(remain, 0) + " 分");
         }
     }

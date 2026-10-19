@@ -1,11 +1,11 @@
 package com.mtfm.deadman.system.service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.system.entity.SysDepartment;
 import com.mtfm.deadman.system.mapper.SysDepartmentMapper;
 import org.springframework.stereotype.Service;
+import com.mtfm.deadman.system.support.SystemErrorCodes;
+import com.mtfm.deadman.system.support.SystemMessages;
 
 /**
  * 部门基础数据服务。
@@ -22,7 +22,7 @@ public class SysDepartmentService extends ServiceImpl<SysDepartmentMapper, SysDe
     public SysDepartment requireById(Long departmentId) {
         SysDepartment department = getById(departmentId);
         if (department == null) {
-            throw new BusinessException(ResultCode.DEPARTMENT_NOT_FOUND);
+            throw SystemMessages.of(SystemErrorCodes.DEPARTMENT_NOT_FOUND);
         }
         return department;
     }

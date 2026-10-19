@@ -9,7 +9,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
+import com.mtfm.deadman.plugin.ess.tencent.support.EssErrorCodes;
 
 /**
  * 腾讯电子签回调解密工具（AES/CBC + PKCS7）。
@@ -37,7 +37,7 @@ public final class EssCallbackAes {
         } catch (BusinessException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BusinessException(ResultCode.ESS_CALLBACK_INVALID, "电子签回调解密失败", ex);
+            throw new BusinessException(EssErrorCodes.ESS_CALLBACK_INVALID, "电子签回调解密失败", ex);
         }
     }
 
@@ -90,7 +90,7 @@ public final class EssCallbackAes {
     private static byte[] pkcs7UnPadding(byte[] origData) {
         int unpadding = origData[origData.length - 1] & 0xFF;
         if (unpadding <= 0 || unpadding > origData.length) {
-            throw new BusinessException(ResultCode.ESS_CALLBACK_INVALID, "电子签回调解密填充非法");
+            throw new BusinessException(EssErrorCodes.ESS_CALLBACK_INVALID, "电子签回调解密填充非法");
         }
         return Arrays.copyOf(origData, origData.length - unpadding);
     }

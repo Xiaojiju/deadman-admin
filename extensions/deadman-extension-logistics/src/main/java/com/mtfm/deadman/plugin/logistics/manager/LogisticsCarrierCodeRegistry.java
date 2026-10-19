@@ -20,6 +20,7 @@ import com.mtfm.deadman.plugin.logistics.spi.carrier.LogisticsCarrierCodeContrib
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.logistics.support.LogisticsErrorCodes;
 
 /**
  * 快递公司编码注册表：维护各 Provider 的统一编码与厂商编码双向映射。
@@ -50,7 +51,7 @@ public class LogisticsCarrierCodeRegistry implements ApplicationListener<Context
         String providerCode = lookupProviderCode(providerId, normalizedUnified);
         if (!StringUtils.hasText(providerCode)) {
             throw new BusinessException(
-                    ResultCode.LOGISTICS_CARRIER_CODE_UNKNOWN,
+                    LogisticsErrorCodes.LOGISTICS_CARRIER_CODE_UNKNOWN,
                     "快递公司编码未注册或不支持当前渠道: " + normalizedUnified);
         }
         return providerCode;

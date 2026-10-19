@@ -18,6 +18,7 @@ import com.mtfm.deadman.plugin.pay.spi.refund.RefundContext;
 import com.mtfm.deadman.plugin.pay.spi.refund.RefundOrderSnapshot;
 
 import lombok.RequiredArgsConstructor;
+import com.mtfm.deadman.plugin.pay.support.PayErrorCodes;
 
 /**
  * 直连支付门面：平台自营等普通支付，资金链路固定为 {@link PayFundLane#DIRECT}。
@@ -95,7 +96,7 @@ public class DirectPayFacade {
         }
         if (context.isCombinePay()) {
             throw new BusinessException(
-                    ResultCode.PAY_FUND_LANE_MISMATCH, "直连支付门面禁止合单，请使用 EcommerceTradeFacade");
+                    PayErrorCodes.PAY_FUND_LANE_MISMATCH, "直连支付门面禁止合单，请使用 EcommerceTradeFacade");
         }
     }
 
@@ -104,7 +105,7 @@ public class DirectPayFacade {
         String lane = StringUtils.hasText(order.getFundLane()) ? order.getFundLane() : PayFundLane.DIRECT;
         if (!expectedLane.equals(lane)) {
             throw new BusinessException(
-                    ResultCode.PAY_FUND_LANE_MISMATCH,
+                    PayErrorCodes.PAY_FUND_LANE_MISMATCH,
                     "支付单资金链路不匹配：actual=" + lane + ", expected=" + expectedLane);
         }
     }

@@ -18,6 +18,7 @@ import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.component.client.dto.ClientNotificationInboxPageQuery;
 import com.mtfm.deadman.component.client.entity.ClientNotification;
 import com.mtfm.deadman.component.client.entity.ClientNotificationRecipient;
+import com.mtfm.deadman.component.client.enums.ClientNotificationCategory;
 import com.mtfm.deadman.component.client.enums.ClientNotificationReadStatus;
 import com.mtfm.deadman.component.client.mapper.ClientNotificationMapper;
 import com.mtfm.deadman.component.client.vo.ClientNotificationInboxVO;
@@ -48,6 +49,7 @@ public class ClientNotificationInboxService {
         if (query.getReadStatus() != null) {
             wrapper.eq(ClientNotificationRecipient::getReadStatus, query.getReadStatus());
         }
+        applyCategory(wrapper, query.getCategory());
         Page<ClientNotificationRecipient> page = recipientService.page(
                 new Page<>(query.resolvedCurrent(), query.resolvedSize()), wrapper);
         if (page.getRecords().isEmpty()) {
@@ -67,6 +69,8 @@ public class ClientNotificationInboxService {
             if (notification == null) {
                 continue;
             }
+            boolean read = recipient.getReadStatus() != null
+                    && recipient.getReadStatus() == ClientNotificationReadStatus.READ.getValue();
             records.add(new ClientNotificationInboxVO(
                     recipient.getId(),
                     notification.getId(),
@@ -76,7 +80,10 @@ public class ClientNotificationInboxService {
                     notification.getBizId(),
                     recipient.getReadStatus(),
                     recipient.getReadTime(),
-                    recipient.getCreateTime()));
+                    recipient.getCreateTime(),
+                    recipient.getId(),
+                    categoryOf(notification),
+                    read));
         }
         return PageVO.of(records, page.getTotal(), query);
     }
@@ -88,9 +95,22 @@ public class ClientNotificationInboxService {
      * @return 未读条数
      */
     public long countUnread(Long userId) {
-        return recipientService.count(new LambdaQueryWrapper<ClientNotificationRecipient>()
+        return countUnread(userId, null);
+    }
+
+    /**
+     * 按分类统计未读数量。分类为空时统计全部。
+     *
+     * @param userId 当前用户端用户 ID
+     * @param category 分类，空表示全部
+     * @return 未读条数
+     */
+    public long countUnread(Long userId, String category) {
+        LambdaQueryWrapper<ClientNotificationRecipient> wrapper = new LambdaQueryWrapper<ClientNotificationRecipient>()
                 .eq(ClientNotificationRecipient::getUserId, userId)
-                .eq(ClientNotificationRecipient::getReadStatus, ClientNotificationReadStatus.UNREAD.getValue()));
+                .eq(ClientNotificationRecipient::getReadStatus, ClientNotificationReadStatus.UNREAD.getValue());
+        applyCategory(wrapper, category);
+        return recipientService.count(wrapper);
     }
 
     /**
@@ -131,6 +151,22 @@ public class ClientNotificationInboxService {
             recipient.setReadTime(now);
         }
         recipientService.updateBatchById(unread);
+    }
+
+    private static void applyCategory(LambdaQueryWrapper<ClientNotificationRecipient> wrapper, String category) {
+        ClientNotificationCategory parsed = ClientNotificationCategory.from(category);
+        if (parsed == null) {
+            return;
+        }
+        wrapper.inSql(ClientNotificationRecipient::getNotificationId,
+                "SELECT id FROM client_notification WHERE category = '" + parsed.name() + "'");
+    }
+
+    private static String categoryOf(ClientNotification notification) {
+        if (notification.getCategory() == null || notification.getCategory().isBlank()) {
+            return ClientNotificationCategory.SYSTEM.name();
+        }
+        return notification.getCategory();
     }
 
     private ClientNotificationRecipient requireOwnedRecipient(Long userId, Long recipientId) {

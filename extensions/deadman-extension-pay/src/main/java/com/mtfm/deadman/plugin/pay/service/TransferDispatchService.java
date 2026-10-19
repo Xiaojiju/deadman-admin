@@ -18,6 +18,7 @@ import com.mtfm.deadman.plugin.pay.spi.transfer.TransferResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.pay.support.WechatPayErrorCodes;
 
 /**
  * 待转明细派发服务：按额度逐笔发起渠道转账，额度不足时停止并保留 PENDING。
@@ -165,7 +166,7 @@ public class TransferDispatchService {
      * 超时/网络等不确定失败使用 {@link ResultCode#PAY_TRANSFER_FAILED}。
      */
     private static boolean isClearChannelReject(BusinessException ex) {
-        return ex.getCode() == ResultCode.WECHAT_PAY_TRANSFER_FAILED.getCode();
+        return ex.getCode() == WechatPayErrorCodes.WECHAT_PAY_TRANSFER_FAILED;
     }
 
     private void trySync(TransferProvider provider, String outBillNo) {

@@ -60,6 +60,16 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
     }
 
     /**
+     * 按手机号查询已验证的登录账号。
+     *
+     * @param phone 手机号
+     * @return 账号，不存在时返回 null；账号被禁用时抛出业务异常
+     */
+    public ClientUserAccount findByPhone(String phone) {
+        return findByTypeAndIdentifier(AccountType.PHONE.getCode(), phone, null);
+    }
+
+    /**
      * 查询用户绑定的手机号。
      *
      * @param userId 用户 ID
@@ -100,9 +110,7 @@ public class ClientUserAccountService extends ServiceImpl<ClientUserAccountMappe
         return list(new LambdaQueryWrapper<ClientUserAccount>()
             .eq(ClientUserAccount::getAccountType, AccountType.PHONE.getCode())
             .like(ClientUserAccount::getAccountIdentifier, phoneKeyword.trim())).stream()
-            .map(ClientUserAccount::getUserId)
-            .distinct()
-            .toList();
+            .map(ClientUserAccount::getUserId).distinct().toList();
     }
 
     /**

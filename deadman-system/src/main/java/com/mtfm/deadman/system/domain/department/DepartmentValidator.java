@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import com.mtfm.deadman.system.support.SystemErrorCodes;
+import com.mtfm.deadman.system.support.SystemMessages;
 
 /**
  * 部门领域校验：部门、用户、职位归属等业务不变量。
@@ -80,7 +82,7 @@ public class DepartmentValidator {
         if (position.getDepartmentId() != null
                 && departmentId != null
                 && !position.getDepartmentId().equals(departmentId)) {
-            throw new BusinessException(ResultCode.POSITION_DEPT_MISMATCH);
+            throw SystemMessages.of(SystemErrorCodes.POSITION_DEPT_MISMATCH);
         }
         return position;
     }

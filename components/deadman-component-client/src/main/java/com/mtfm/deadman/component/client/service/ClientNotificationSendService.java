@@ -21,6 +21,7 @@ import com.mtfm.deadman.common.spi.ClientInboxPushBridge;
 import com.mtfm.deadman.component.client.entity.ClientNotification;
 import com.mtfm.deadman.component.client.entity.ClientNotificationRecipient;
 import com.mtfm.deadman.component.client.entity.ClientUserBase;
+import com.mtfm.deadman.component.client.enums.ClientNotificationCategory;
 import com.mtfm.deadman.component.client.mapper.ClientNotificationMapper;
 import com.mtfm.deadman.component.client.mapper.ClientUserBaseMapper;
 
@@ -64,7 +65,29 @@ public class ClientNotificationSendService {
                         .eq(ClientUserBase::getStatus, UserStatus.ACTIVE.getValue())
                         .select(ClientUserBase::getId))
                 .stream().map(ClientUserBase::getId).toList();
-        return sendToUsers(userIds, title, content, bizType, bizId, extra);
+        return sendToUsers(userIds, title, content, ClientNotificationCategory.SYSTEM.name(), bizType, bizId, extra);
+    }
+
+    /**
+     * 向全部正常用户广播指定分类的站内信。
+     *
+     * @param title 标题
+     * @param content 正文
+     * @param category 分类：SYSTEM、POLICY、ORDER
+     * @param bizType 业务类型
+     * @param bizId 业务主键
+     * @param extra 扩展字段
+     * @return 通知主键
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Long broadcast(String title, String content, String category, String bizType, Long bizId,
+            Map<String, Object> extra) {
+        List<Long> userIds = clientUserBaseMapper
+                .selectList(new LambdaQueryWrapper<ClientUserBase>()
+                        .eq(ClientUserBase::getStatus, UserStatus.ACTIVE.getValue())
+                        .select(ClientUserBase::getId))
+                .stream().map(ClientUserBase::getId).toList();
+        return sendToUsers(userIds, title, content, category, bizType, bizId, extra);
     }
 
     /**
@@ -81,6 +104,24 @@ public class ClientNotificationSendService {
     @Transactional(rollbackFor = Exception.class)
     public Long sendToUsers(Collection<Long> userIds, String title, String content, String bizType, Long bizId,
             Map<String, Object> extra) {
+        return sendToUsers(userIds, title, content, ClientNotificationCategory.SYSTEM.name(), bizType, bizId, extra);
+    }
+
+    /**
+     * 向指定用户发送指定分类的站内信。
+     *
+     * @param userIds 收件人用户 ID 集合
+     * @param title 标题
+     * @param content 正文
+     * @param category 分类：SYSTEM、POLICY、ORDER。空则记为系统
+     * @param bizType 业务类型
+     * @param bizId 业务主键
+     * @param extra 扩展字段
+     * @return 通知主键；无有效收件人时返回 null
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Long sendToUsers(Collection<Long> userIds, String title, String content, String category, String bizType,
+            Long bizId, Map<String, Object> extra) {
         if (CollectionUtils.isEmpty(userIds) || !StringUtils.hasText(title) || !StringUtils.hasText(content)) {
             return null;
         }
@@ -103,7 +144,9 @@ public class ClientNotificationSendService {
             return null;
         }
 
+        ClientNotificationCategory parsed = ClientNotificationCategory.from(category);
         ClientNotification notification = ClientNotification.builder().title(title.trim()).content(content.trim())
+                .category(parsed == null ? ClientNotificationCategory.SYSTEM.name() : parsed.name())
                 .bizType(bizType).bizId(bizId).extraJson(serializeExtra(extra)).recipientCount(activeIds.size())
                 .build();
         clientNotificationMapper.insert(notification);
@@ -143,6 +186,7 @@ public class ClientNotificationSendService {
         payload.put("notificationId", notification.getId());
         payload.put("title", notification.getTitle());
         payload.put("content", notification.getContent());
+        payload.put("category", notification.getCategory());
         payload.put("bizType", notification.getBizType());
         payload.put("bizId", notification.getBizId());
         payload.put("createTime", notification.getCreateTime());

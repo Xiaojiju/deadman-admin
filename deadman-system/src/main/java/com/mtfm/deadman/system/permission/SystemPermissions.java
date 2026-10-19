@@ -58,4 +58,15 @@ public final class SystemPermissions {
         private Role() {
         }
     }
+
+    /** 数据字典 */
+    public static final class Dict {
+        public static final String LIST_READ = "dict:list:read";
+        public static final String CREATE = "dict:create";
+        public static final String UPDATE = "dict:update";
+        public static final String DELETE = "dict:delete";
+
+        private Dict() {
+        }
+    }
 }

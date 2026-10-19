@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS client_notification (
     id                BIGINT        NOT NULL,
     title             VARCHAR(128)  NOT NULL,
     content           VARCHAR(512)  NOT NULL,
+    category          VARCHAR(16)   NOT NULL DEFAULT 'SYSTEM',
     biz_type          VARCHAR(64)   NOT NULL,
     biz_id            BIGINT        NULL,
     extra_json        VARCHAR(2048) NULL,

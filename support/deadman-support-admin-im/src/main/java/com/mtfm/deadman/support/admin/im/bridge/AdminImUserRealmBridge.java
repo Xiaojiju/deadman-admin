@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import com.mtfm.deadman.common.enums.UserStatus;
 import com.mtfm.deadman.common.exception.BusinessException;
-import com.mtfm.deadman.common.result.ResultCode;
 import com.mtfm.deadman.plugin.file.service.FileService;
 import com.mtfm.deadman.plugin.im.tencent.spi.ImSubject;
 import com.mtfm.deadman.plugin.im.tencent.spi.ImUserProfileSource;
@@ -21,6 +20,7 @@ import com.mtfm.deadman.system.vo.user.UserProfileVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.mtfm.deadman.plugin.im.tencent.support.ImErrorCodes;
 
 /**
  * 管理端 IM 用户域桥接：system 用户体系 + file 换链后传入 IM（插件不直接依赖 FileService）。
@@ -63,7 +63,7 @@ public class AdminImUserRealmBridge implements ImUserRealmBridge {
     @Override
     public ImUserProfileSource resolveProfileSource(ImSubject subject) {
         if (!AdminImRealmConstants.REALM_ID.equals(subject.realmId())) {
-            throw new BusinessException(ResultCode.IM_REALM_UNKNOWN, "非 admin 用户域：" + subject.realmId());
+            throw new BusinessException(ImErrorCodes.IM_REALM_UNKNOWN, "非 admin 用户域：" + subject.realmId());
         }
         UserProfileVO profile = userService.getProfileByUserCode(subject.subjectId());
         boolean enabled = profile.getStatus() != null && profile.getStatus() == UserStatus.ACTIVE.getValue();
