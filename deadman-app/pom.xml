@@ -69,10 +69,6 @@
         </dependency>
         <dependency>
             <groupId>com.mtfm</groupId>
-            <artifactId>deadman-component-wgb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mtfm</groupId>
             <artifactId>deadman-plugin-data-scope</artifactId>
         </dependency>
         <dependency>

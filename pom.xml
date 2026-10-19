@@ -42,7 +42,6 @@
         <module>plugins/deadman-plugin-sms</module>
         <module>plugins/deadman-plugin-sms-login</module>
         <module>components/deadman-component-client</module>
-        <module>components/deadman-component-wgb</module>
         <module>components/deadman-component-open-auth</module>
         <module>support/deadman-support-wechat</module>
         <module>support/deadman-support-client-wechat</module>
@@ -116,11 +115,6 @@
             <dependency>
                 <groupId>com.mtfm</groupId>
                 <artifactId>deadman-plugin-sms-login</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.mtfm</groupId>
-                <artifactId>deadman-component-wgb</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

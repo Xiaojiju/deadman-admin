@@ -21,14 +21,11 @@ public class IdentityPluginProperties {
     private boolean enterpriseEnabled = true;
 
     /**
-<<<<<<< HEAD
      * 未接入腾讯云时的联调开关。为 true 时活体检测和人脸比对直接通过，不发起外部请求。生产必须保持 false。
      */
     private boolean mock = false;
 
     /**
-=======
->>>>>>> refs/remotes/origin/develop-1.0.1
      * 注册时是否要求先完成实名。插件不拦截注册接口，只把该开关暴露给业务侧。 当前用户端注册默认不强制。
      */
     private boolean requiredOnRegister = false;

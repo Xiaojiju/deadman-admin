@@ -8,10 +8,7 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 import com.mtfm.deadman.common.exception.BusinessException;
-<<<<<<< HEAD
 import com.mtfm.deadman.plugin.identity.client.MockFaceRecognitionClient;
-=======
->>>>>>> refs/remotes/origin/develop-1.0.1
 import com.mtfm.deadman.plugin.identity.spi.FaceRecognitionClient;
 import com.mtfm.deadman.plugin.identity.spi.FaceRecognitionResult;
 
@@ -69,7 +66,6 @@ class IdentityRulesTest {
         assertThat(passed.passed()).isTrue();
         assertThat(passed.matchScore()).isEqualTo(70F);
     }
-<<<<<<< HEAD
 
     @Test
     void mockClientPassesWithoutCallingTencent() {
@@ -79,6 +75,4 @@ class IdentityRulesTest {
         assertThat(outcome.livenessScore()).isEqualTo(MockFaceRecognitionClient.MOCK_SCORE);
         assertThat(outcome.matchScore()).isEqualTo(MockFaceRecognitionClient.MOCK_SCORE);
     }
-=======
->>>>>>> refs/remotes/origin/develop-1.0.1
 }

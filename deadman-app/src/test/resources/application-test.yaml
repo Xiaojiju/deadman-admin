@@ -15,9 +15,7 @@ spring:
         - classpath:db/schema-h2.sql
         - classpath:db/client/schema-h2.sql
         - classpath:db/identity/schema-h2.sql
-        - classpath:db/wgb/schema-h2.sql
         - classpath:db/open-auth/schema-h2.sql
-        - classpath:db/engineering/schema-h2.sql
         - classpath:db/file/schema-h2.sql
 
 deadman:
@@ -37,37 +35,6 @@ deadman:
     storage-local:
       enabled: true
       base-path: ${java.io.tmpdir}/deadman-test-files
-    wechat-miniprogram:
-      enabled: true
-      app-id: test-wechat-app-id
-      app-secret: test-wechat-app-secret
-    pay:
-      enabled: true
-      default-provider: wechat-jsapi
-    pay-mock:
-      enabled: true
-    pay-wechat:
-      enabled: true
-      mock-enabled: true
-      mch-id: test-mch
-      partner-mchid: test-partner-mch
-      providers:
-        wechat-jsapi:
-          enabled: true
-          app-id: test-app
-        wechat-ecommerce-combine-jsapi:
-          enabled: true
-          app-id: test-app
-    logistics:
-      enabled: true
-      default-provider: kuaidi100
-      cache:
-        enabled: true
-        track-query-ttl: 10m
-        carrier-detect-ttl: 30m
-    logistics-kuaidi100:
-      enabled: true
-      mock-enabled: true
   component:
     client:
       enabled: true
@@ -78,15 +45,3 @@ deadman:
         expiration-ms: 3600000
       user:
         user-code-prefix: CL
-    engineering:
-      enabled: true
-      ecommerce-settle:
-        partner-mchid: test-partner-mch
-        combine-app-id: test-app
-        profit-sharing-provider-id: wechat-ecommerce-profitsharing
-        platform-fee-rate-bp: 300
-        staff-withdraw-min-cents: 100
-    open-auth:
-      enabled: true
-      jwt:
-        secret: deadman-open-auth-test-secret-key-at-least-32b

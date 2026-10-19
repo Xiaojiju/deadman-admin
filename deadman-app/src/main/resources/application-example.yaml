@@ -77,13 +77,6 @@ deadman:
         user-code-prefix: ${DEADMAN_CLIENT_USER_CODE_PREFIX:CL}
       cache:
         user-profile-ttl: ${DEADMAN_CLIENT_CACHE_USER_PROFILE_TTL:30m}
-    wgb:
-      enabled: ${DEADMAN_COMPONENT_WGB_ENABLED:true}
-      job:
-        skill-group-code: ${DEADMAN_WGB_JOB_SKILL_GROUP_CODE:SKILL}
-        position-group-code: ${DEADMAN_WGB_JOB_POSITION_GROUP_CODE:POSITION}
-      attendance:
-        judge-cron: "${DEADMAN_WGB_ATTENDANCE_JUDGE_CRON:0 * * * * ?}"
   plugin:
     websocket:
       enabled: ${DEADMAN_PLUGIN_WEBSOCKET_ENABLED:true}
@@ -109,6 +102,8 @@ deadman:
       code-ttl: ${DEADMAN_PLUGIN_SMS_CODE_TTL:5m}
       resend-interval: ${DEADMAN_PLUGIN_SMS_RESEND_INTERVAL:60s}
       code-length: ${DEADMAN_PLUGIN_SMS_CODE_LENGTH:6}
+      fixed-code-enabled: ${DEADMAN_PLUGIN_SMS_FIXED_CODE_ENABLED:false}
+      fixed-code: ${DEADMAN_PLUGIN_SMS_FIXED_CODE:}
       log-code: ${DEADMAN_PLUGIN_SMS_LOG_CODE:true}
     sms-login:
       enabled: ${DEADMAN_PLUGIN_SMS_LOGIN_ENABLED:true}
@@ -117,6 +112,7 @@ deadman:
           login-path-segment: sms
     identity:
       enabled: ${DEADMAN_PLUGIN_IDENTITY_ENABLED:true}
+      mock: ${DEADMAN_PLUGIN_IDENTITY_MOCK:false}
       real-name-enabled: ${DEADMAN_PLUGIN_IDENTITY_REAL_NAME_ENABLED:true}
       enterprise-enabled: ${DEADMAN_PLUGIN_IDENTITY_ENTERPRISE_ENABLED:true}
       required-on-register: ${DEADMAN_PLUGIN_IDENTITY_REQUIRED_ON_REGISTER:false}
